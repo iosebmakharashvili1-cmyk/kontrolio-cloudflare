@@ -1,15 +1,4 @@
 // site/functions/api/[[path]].js
-//
-// server.js-ის ანალოგი Cloudflare Pages Functions-ისთვის.
-// მონაცემები ინახება KV namespace-ში (env.KONTROLIO_KV) ერთი key-ით "store",
-// fs/store.json-ის ნაცვლად. ლოგიკა (service-day, validაცია, rate-ის სტრუქტურა) იგივეა.
-//
-// საჭირო binding Cloudflare Dashboard-ში:
-//   Pages project → Settings → Functions → KV namespace bindings
-//   Variable name: KONTROLIO_KV  →  აირჩიე/შექმენი KV namespace
-//
-// საჭირო environment variables (Settings → Environment variables):
-//   TTC_COOKIE, TTC_API_KEY  (არსებითი /api/arrivals-სთვის)
 
 import STOP_NAMES from "./stopNames.json";
 
@@ -17,7 +6,7 @@ const VALID_STATUSES = new Set(["inspector", "clear"]);
 const MAX_ACTIVITY_ENTRIES = 500;
 const CUTOFF_HOUR = 23;
 const CUTOFF_MINUTE = 30;
-const HEARTBEAT_TTL_SEC = 30; // KV-ის საკუთარი expiration
+const HEARTBEAT_TTL_SEC = 30;
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -68,8 +57,11 @@ export async function onRequest(context) {
   if (method === "OPTIONS") return new Response(null, { headers: corsHeaders });
   if (!kv) return json({ error: "KV ar aris dakavshirebuli (KONTROLIO_KV binding)" }, 500);
 
-  // GET /api/reports
-  if (url.pathname === "/api/reports" && method === "GET") {
+  // მოდიფიცირებული როუტინგი: ვამოწმებთ ენდპოინტს endsWith-ით, რათა თავიდან ავიცილოთ /api-ს დუბლირება
+  const path = url.pathname.replace(/\/$/, ""); // ვაშორებთ ბოლო სლეშს ასეთის არსებობის შემთხვევაში
+
+  // GET /reports
+  if (path.endsWith("/reports") && method === "GET") {
     const store = await loadStore(kv);
     const current = serviceDayKey();
     const out = {};
@@ -79,8 +71,8 @@ export async function onRequest(context) {
     return json(out);
   }
 
-  // POST /api/reports
-  if (url.pathname === "/api/reports" && method === "POST") {
+  // POST /reports
+  if (path.endsWith("/reports") && method === "POST") {
     let body;
     try { body = await request.json(); } catch { return json({ error: "invalid json" }, 400); }
     const { stopId, status } = body || {};
@@ -101,7 +93,6 @@ export async function onRequest(context) {
     if (store.activity.length > MAX_ACTIVITY_ENTRIES) {
       store.activity = store.activity.slice(-MAX_ACTIVITY_ENTRIES);
     }
-    // ძველი (წინა service-day) ჩანაწერების მსუბუქი გასუფთავება ჩაწერისას
     for (const id of Object.keys(store.reports)) {
       if (store.reports[id].reportDate !== reportDate) delete store.reports[id];
     }
@@ -111,8 +102,8 @@ export async function onRequest(context) {
     return json({ stopId, status, ts });
   }
 
-  // GET /api/activity
-  if (url.pathname === "/api/activity" && method === "GET") {
+  // GET /activity
+  if (path.endsWith("/activity") && method === "GET") {
     const store = await loadStore(kv);
     const current = serviceDayKey();
     const todays = store.activity.filter((a) => a.reportDate === current);
@@ -120,13 +111,13 @@ export async function onRequest(context) {
     return json(recent.map((a) => ({ stopName: a.stopName, status: a.status, ts: a.ts })));
   }
 
-  // GET /api/health
-  if (url.pathname === "/api/health" && method === "GET") {
+  // GET /health
+  if (path.endsWith("/health") && method === "GET") {
     return json({ ok: true, time: new Date().toISOString() });
   }
 
-  // GET /api/arrivals?ids=1,2
-  if (url.pathname === "/api/arrivals" && method === "GET") {
+  // GET /arrivals
+  if (path.endsWith("/arrivals") && method === "GET") {
     const idsParam = url.searchParams.get("ids");
     if (!idsParam || !idsParam.trim()) return json({ error: "ids query param is required" }, 400);
     const ids = idsParam.split(",").map((s) => s.trim()).filter(Boolean).slice(0, 4);
@@ -154,8 +145,8 @@ export async function onRequest(context) {
     return json({ stops: ok });
   }
 
-  // GET /api/heartbeat?sid=...
-  if (url.pathname === "/api/heartbeat" && method === "GET") {
+  // GET /heartbeat
+  if (path.endsWith("/heartbeat") && method === "GET") {
     const sid = (url.searchParams.get("sid") || "").slice(0, 64);
     if (!sid) return json({ error: "sid required" }, 400);
     await kv.put(`online:${sid}`, "1", { expirationTtl: HEARTBEAT_TTL_SEC });
@@ -163,11 +154,11 @@ export async function onRequest(context) {
     return json({ online: list.keys.length });
   }
 
-  // GET /api/online
-  if (url.pathname === "/api/online" && method === "GET") {
+  // GET /online
+  if (path.endsWith("/online") && method === "GET") {
     const list = await kv.list({ prefix: "online:" });
     return json({ online: list.keys.length });
   }
 
-  return json({ error: "Route not found" }, 404);
+  return json({ error: "Route not found", debugPath: url.pathname }, 404);
 }
