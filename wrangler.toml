@@ -1,0 +1,12 @@
+name = "kontrolio"
+compatibility_date = "2024-09-23"
+pages_build_output_dir = "."
+
+[[kv_namespaces]]
+binding = "KV"
+id = 693f5575e5fa4b7d8b219e8ea3a56916
+
+[vars]
+# TTC credentials — ეს sensitive-ია, ამიტომ ეს ფაილი მხოლოდ
+# non-secret values-ისთვისაა. TTC_COOKIE და TTC_API_KEY — Pages-ის
+# dashboard-ში ცალკე "Environment Variables" (encrypted) სექციაში ჩაწერე.
