@@ -7,7 +7,7 @@ export async function onRequestGet({ request, env }) {
   if (!sid) return Response.json({ error: "sid required" }, { status: 400 });
   const safeSid = sid.slice(0, 64).replace(/[^a-zA-Z0-9_-]/g, "");
   if (!safeSid) return Response.json({ error: "invalid sid" }, { status: 400 });
-  await env.KV.put(`hb:${safeSid}`, "1", { expirationTtl: 25 });
+  await env.KV.put(`hb:${safeSid}`, "1", { expirationTtl: 60 });
   const listed = await env.KV.list({ prefix: "hb:" });
   return Response.json({ online: listed.keys.length });
 }
