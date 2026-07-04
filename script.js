@@ -16,7 +16,7 @@ const STOPS_BY_ID = {};
 STOPS.forEach((s) => (STOPS_BY_ID[s.id] = s));
 
 /* ---------- DATA LAYER (backend API) ---------- */
-const API_BASE = "/api";
+const API_BASE = "/functions/api";
 let reportsCache = {};
 
 /* ---------- სესიის იდენტიფიკატორი ----------
