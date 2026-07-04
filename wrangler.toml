@@ -4,7 +4,7 @@ pages_build_output_dir = "."
 
 [[kv_namespaces]]
 binding = "KV"
-id = 693f5575e5fa4b7d8b219e8ea3a56916
+id = "693f5575e5fa4b7d8b219e8ea3a56916"
 
 [vars]
 # TTC credentials — ეს sensitive-ია, ამიტომ ეს ფაილი მხოლოდ
