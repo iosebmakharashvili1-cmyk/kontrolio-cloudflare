@@ -1126,6 +1126,7 @@ function renderCommunitySection() {
    ირჩევს — ეს არავითარ ვალდებულებას არ წარმოადგენს, უბრალოდ
    ტოპ სიაში საკუთარი თავის ამოცნობის საშუალებაა. */
 const NICKNAME_ASKED_KEY = "kontrolio-nickname-asked";
+let lastLeaderboardMe = null;
 
 function medalFor(rank) {
   if (rank === 1) return "🥇";
@@ -1146,6 +1147,7 @@ async function renderLeaderboardSection() {
   }
 
   const { top, me } = data;
+  lastLeaderboardMe = me || null;
 
   if (!top || top.length === 0) {
     listEl.innerHTML = `<p class="leaderboardEmpty">ჯერ არავის მოუპოვებია ქულა — იყავი პირველი! 🏆</p>`;
@@ -1193,7 +1195,8 @@ const nicknameError = document.getElementById("nicknameError");
 function openNicknamePrompt() {
   if (!nicknameOverlay) return;
   nicknameError.textContent = "";
-  nicknameInput.value = "";
+  const meNickname = lastLeaderboardMe && lastLeaderboardMe.nickname;
+  nicknameInput.value = meNickname || "";
   nicknameOverlay.classList.remove("hidden");
   nicknameModal.classList.remove("hidden");
   nicknameInput.focus();
@@ -1230,6 +1233,13 @@ if (nicknameSkip) {
 if (nicknameInput) {
   nicknameInput.addEventListener("keydown", (e) => {
     if (e.key === "Enter") nicknameSave.click();
+  });
+}
+
+const leaderboardEditNickname = document.getElementById("leaderboardEditNickname");
+if (leaderboardEditNickname) {
+  leaderboardEditNickname.addEventListener("click", () => {
+    openNicknamePrompt();
   });
 }
 
