@@ -6,17 +6,19 @@
 
    POST /api/reports
      body: { stopId, status, sid }
-     → { stopId, status, ts, confirmCount, reportsToday }
+     → { stopId, status, ts, confirmCount, reportsToday, scored }
 
    KV keys:
      report:<day>:<stopId>      → JSON: {status, ts, confirmations:{sid:ts,...}}
      activity:<day>             → JSON: [{stopName,status,ts}, ...] (max 100)
      dailycount:<day>:<stopId>  → string (number)
      viewers:<stopId>           → JSON: {sid: ts, ...}  (TTL 26h, in-request only)
+     score:<sid>                → string (number) — მუდმივი, არ იშლება დღიურად
    ============================================================ */
 
 import { serviceDayKey, checkRateLimit } from "./_middleware.js";
 import { STOP_NAMES } from "./_stopNames.js";
+import { awardFirstReportPoint } from "./_leaderboard.js";
 
 const VALID_STATUSES = new Set(["inspector", "clear"]);
 const CONFIRM_WINDOW_MS = 90 * 60 * 1000; // 90 წუთი
@@ -109,6 +111,15 @@ export async function onRequestPost({ request, env }) {
   const existing = existingRaw ? JSON.parse(existingRaw) : null;
   const statusChanged = !existing || existing.status !== status;
 
+  /* "პირველობის" ქულა — მხოლოდ მაშინ, როცა ეს კონკრეტული report
+     აქცევს გაჩერებას "თავისუფლიდან/უცნობიდან" → "კონტროლიორზე".
+     განმეორებითი დადასტურება (statusChanged === false) ან
+     "თავისუფალია"-ს მონიშვნა ქულას არ იძლევა. */
+  let scored = false;
+  if (statusChanged && status === "inspector" && safeSid) {
+    scored = await awardFirstReportPoint(env, safeSid);
+  }
+
   let confirmations = statusChanged ? {} : { ...(existing.confirmations || {}) };
   if (safeSid) confirmations[safeSid] = ts;
 
@@ -139,5 +150,6 @@ export async function onRequestPost({ request, env }) {
     stopId, status, ts,
     confirmCount: confirmCount(confirmations),
     reportsToday: newCount,
+    scored,
   });
 }
