@@ -350,60 +350,52 @@ html, body{
 /* ---------- ჩაკეცილი ზოლი (sheetPeek) ---------- */
 .sheetPeek{
   position:absolute; left:0; right:0; bottom:0; z-index:940;
-  display:flex; align-items:center; gap:8px;
-  width:100%; max-width:480px;
-  margin:0 auto;
-  padding: 10px 10px calc(10px + env(safe-area-inset-bottom, 0px)) 20px;
+  max-width: 480px;
+  margin: 0 auto 14px;
+  display:flex; align-items:center; gap:10px;
   background: var(--surface);
-  border-radius: 18px 18px 0 0;
-  box-shadow: 0 -6px 20px rgba(0,0,0,0.22);
+  border-radius: 16px;
+  padding: 12px 14px;
+  box-shadow: 0 6px 20px rgba(0,0,0,0.3);
   transform: translateY(0);
+  opacity: 1;
   visibility: visible;
-  transition: transform 0.3s cubic-bezier(0.25, 1, 0.5, 1), visibility 0.3s;
+  transition: transform 0.28s cubic-bezier(0.25, 1, 0.5, 1), opacity 0.22s ease, visibility 0.28s;
 }
 .sheetPeek.hidden{
-  transform: translateY(105%);
+  transform: translateY(140%);
+  opacity: 0;
   visibility: hidden;
 }
 .sheetPeek__main{
-  flex:1; min-width:0;
+  flex: 1;
   display:flex; align-items:center; gap:10px;
-  border:none; background:none; padding:6px 0;
-  font-family: inherit;
-  color: var(--text);
-  cursor: pointer;
-}
-.sheetPeek__name{
-  flex:1;
-  text-align:left;
-  font-size:15px; font-weight:700;
-  overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
+  cursor:pointer;
+  min-width: 0;
 }
 .sheetPeek__chevron{
-  flex:none;
-  display:flex; align-items:center; justify-content:center;
-  width:26px; height:26px; border-radius:50%;
-  background: var(--chrome-btn-bg);
-  color: var(--text);
+  font-size: 12px;
+  color: var(--text-muted, #9a9aa5);
+  flex-shrink: 0;
 }
-.sheetPeek__chevron i{ width:16px; height:16px; }
-.sheetPeek__main:hover .sheetPeek__chevron{ background: var(--chrome-btn-bg-hover); }
-
+.sheetPeek__name{
+  font-weight: 600;
+  font-size: 15px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
 .sheetPeek__deselect{
-  flex:none;
-  display:flex; align-items:center; justify-content:center;
-  width:34px; height:34px; border-radius:50%;
-  border:none;
-  background: var(--chrome-btn-bg);
-  color: var(--grey);
+  flex-shrink: 0;
+  width: 30px; height: 30px; border-radius: 50%;
+  border: none;
+  background: var(--grey-soft);
+  color: inherit;
+  font-size: 14px;
   cursor: pointer;
-  transition: background-color 0.15s ease, color 0.15s ease;
+  display:flex; align-items:center; justify-content:center;
 }
-.sheetPeek__deselect i{ width:17px; height:17px; }
-.sheetPeek__deselect:hover{
-  background: var(--red-soft);
-  color: var(--red);
-}
+.sheetPeek__deselect:hover{ background: var(--red); color: #fff; }
 
 .sheet__handle{
   width:40px; height:4px; border-radius:4px;
@@ -954,6 +946,18 @@ html, body{
   line-height: 1.45;
 }
 .leaderboardMe:empty{ display:none; }
+.leaderboardEditNickname{
+  margin-top: 8px;
+  padding: 0;
+  border: none;
+  background: none;
+  color: var(--bus-blue);
+  font-size: 12.5px;
+  font-weight: 600;
+  cursor: pointer;
+  text-decoration: underline;
+}
+.leaderboardEditNickname:hover{ opacity: 0.8; }
 
 /* ---------- Nickname prompt ---------- */
 .nicknameInput{
