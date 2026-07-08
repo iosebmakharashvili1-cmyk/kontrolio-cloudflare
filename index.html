@@ -100,6 +100,17 @@
     <button class="sheet__close" id="sheetClose">დახურვა</button>
   </div>
 
+  <!-- "ჩაკეცილი" ზოლი — ჩანს, როცა sheet დაკეცილია, მაგრამ გაჩერება
+       კვლავ მონიშნულია. მთავარ არეზე დაჭერით isev იხსნება sheet,
+       X ღილაკზე დაჭერით მთლიანად იხსნება მონიშვნა. -->
+  <div class="sheetPeek hidden" id="sheetPeek">
+    <div class="sheetPeek__main" id="sheetPeekMain">
+      <span class="sheetPeek__chevron">▲</span>
+      <span class="sheetPeek__name" id="sheetPeekName"></span>
+    </div>
+    <button class="sheetPeek__deselect" id="sheetPeekDeselect" type="button" aria-label="მონიშვნის მოხსნა">✕</button>
+  </div>
+
   <!-- Burger menu -->
   <div class="menuOverlay hidden" id="menuOverlay"></div>
   <div class="menuDrawer hidden" id="menuDrawer">
