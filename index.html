@@ -100,17 +100,15 @@
     <button class="sheet__close" id="sheetClose">დახურვა</button>
   </div>
 
-  <!-- გაჩერების "ჩაკეცილი" პანელი — ჩანს, როცა sheet დახურულია, მაგრამ
-       გაჩერება მაინც მონიშნულია რუკაზე. სახელზე/ისარზე დაჭერით isev
-       იხსნება sheet; ✕-ზე დაჭერით მონიშვნა საერთოდ იხსნება (deselect). -->
+  <!-- "ჩაკეცილი" ზოლი — ჩანს, როცა sheet დაკეცილია, მაგრამ გაჩერება
+       კვლავ მონიშნულია. მთავარ არეზე დაჭერით isev იხსნება sheet,
+       X ღილაკზე დაჭერით მთლიანად იხსნება მონიშვნა. -->
   <div class="sheetPeek hidden" id="sheetPeek">
-    <button class="sheetPeek__main" id="sheetPeekMain" type="button">
+    <div class="sheetPeek__main" id="sheetPeekMain">
+      <span class="sheetPeek__chevron">▲</span>
       <span class="sheetPeek__name" id="sheetPeekName"></span>
-      <span class="sheetPeek__chevron"><i data-lucide="chevron-up"></i></span>
-    </button>
-    <button class="sheetPeek__deselect" id="sheetPeekDeselect" type="button" title="მონიშვნის მოხსნა" aria-label="მონიშვნის მოხსნა">
-      <i data-lucide="x"></i>
-    </button>
+    </div>
+    <button class="sheetPeek__deselect" id="sheetPeekDeselect" type="button" aria-label="მონიშვნის მოხსნა">✕</button>
   </div>
 
   <!-- Burger menu -->
@@ -163,6 +161,9 @@
           <p class="leaderboardEmpty">იტვირთება...</p>
         </div>
         <p class="menuDrawer__text leaderboardMe" id="leaderboardMe"></p>
+        <button class="leaderboardEditNickname" id="leaderboardEditNickname" type="button">
+          მეტსახელის შეცვლა
+        </button>
       </div>
 
       <div class="menuDrawer__divider"></div>
