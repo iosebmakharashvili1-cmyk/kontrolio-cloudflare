@@ -350,52 +350,60 @@ html, body{
 /* ---------- ჩაკეცილი ზოლი (sheetPeek) ---------- */
 .sheetPeek{
   position:absolute; left:0; right:0; bottom:0; z-index:940;
-  max-width: 480px;
-  margin: 0 auto 14px;
-  display:flex; align-items:center; gap:10px;
+  display:flex; align-items:center; gap:8px;
+  width:100%; max-width:480px;
+  margin:0 auto;
+  padding: 10px 10px calc(10px + env(safe-area-inset-bottom, 0px)) 20px;
   background: var(--surface);
-  border-radius: 16px;
-  padding: 12px 14px;
-  box-shadow: 0 6px 20px rgba(0,0,0,0.3);
+  border-radius: 18px 18px 0 0;
+  box-shadow: 0 -6px 20px rgba(0,0,0,0.22);
   transform: translateY(0);
-  opacity: 1;
   visibility: visible;
-  transition: transform 0.28s cubic-bezier(0.25, 1, 0.5, 1), opacity 0.22s ease, visibility 0.28s;
+  transition: transform 0.3s cubic-bezier(0.25, 1, 0.5, 1), visibility 0.3s;
 }
 .sheetPeek.hidden{
-  transform: translateY(140%);
-  opacity: 0;
+  transform: translateY(105%);
   visibility: hidden;
 }
 .sheetPeek__main{
-  flex: 1;
+  flex:1; min-width:0;
   display:flex; align-items:center; gap:10px;
-  cursor:pointer;
-  min-width: 0;
-}
-.sheetPeek__chevron{
-  font-size: 12px;
-  color: var(--text-muted, #9a9aa5);
-  flex-shrink: 0;
+  border:none; background:none; padding:6px 0;
+  font-family: inherit;
+  color: var(--text);
+  cursor: pointer;
 }
 .sheetPeek__name{
-  font-weight: 600;
-  font-size: 15px;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  flex:1;
+  text-align:left;
+  font-size:15px; font-weight:700;
+  overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
 }
-.sheetPeek__deselect{
-  flex-shrink: 0;
-  width: 30px; height: 30px; border-radius: 50%;
-  border: none;
-  background: var(--grey-soft);
-  color: inherit;
-  font-size: 14px;
-  cursor: pointer;
+.sheetPeek__chevron{
+  flex:none;
   display:flex; align-items:center; justify-content:center;
+  width:26px; height:26px; border-radius:50%;
+  background: var(--chrome-btn-bg);
+  color: var(--text);
 }
-.sheetPeek__deselect:hover{ background: var(--red); color: #fff; }
+.sheetPeek__chevron i{ width:16px; height:16px; }
+.sheetPeek__main:hover .sheetPeek__chevron{ background: var(--chrome-btn-bg-hover); }
+
+.sheetPeek__deselect{
+  flex:none;
+  display:flex; align-items:center; justify-content:center;
+  width:34px; height:34px; border-radius:50%;
+  border:none;
+  background: var(--chrome-btn-bg);
+  color: var(--grey);
+  cursor: pointer;
+  transition: background-color 0.15s ease, color 0.15s ease;
+}
+.sheetPeek__deselect i{ width:17px; height:17px; }
+.sheetPeek__deselect:hover{
+  background: var(--red-soft);
+  color: var(--red);
+}
 
 .sheet__handle{
   width:40px; height:4px; border-radius:4px;
@@ -936,12 +944,14 @@ html, body{
   padding: 12px 0;
 }
 .leaderboardMe{
-  font-size: 12.5px;
-  font-weight:600;
-  color: var(--text);
-  background: var(--green-soft);
-  padding: 8px 12px;
+  margin-top: 4px;
+  padding: 10px 12px;
   border-radius: 10px;
+  background: var(--green-soft);
+  color: #14685f;
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1.45;
 }
 .leaderboardMe:empty{ display:none; }
 
