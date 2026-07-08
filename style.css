@@ -959,7 +959,14 @@ html, body{
 }
 .leaderboardEditNickname:hover{ opacity: 0.8; }
 
-/* ---------- Nickname prompt ---------- */
+/* ---------- Nickname prompt ----------
+   nickname prompt-ს ხელით ვხსნით menu drawer-იდანაც
+   ("მეტსახელის შეცვლა" ღილაკით), ამიტომ z-index მენიუზე
+   (1000/1010) მაღლა უნდა იყოს — თორემ modal იხსნება, მაგრამ
+   drawer-ს ქვეშ ეფარება და არაფერი ჩანს. */
+#nicknameOverlay{ z-index: 1100; }
+#nicknameModal{ z-index: 1110; }
+
 .nicknameInput{
   width:100%;
   border: 1.5px solid var(--grey-soft);
