@@ -886,18 +886,14 @@ html, body{
   transform: rotate(180deg);
 }
 .menuDrawer__accBody{
-  display:grid;
-  grid-template-rows: 0fr;
-  transition: grid-template-rows 0.25s ease;
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height 0.3s ease;
 }
 .menuDrawer__accHeader[aria-expanded="true"] + .menuDrawer__accBody{
-  grid-template-rows: 1fr;
+  max-height: 600px;
 }
 .menuDrawer__accBodyInner{
-  overflow:hidden;
-  padding: 0 20px;
-}
-.menuDrawer__accHeader[aria-expanded="true"] + .menuDrawer__accBody .menuDrawer__accBodyInner{
   padding: 0 20px 18px;
 }
 
