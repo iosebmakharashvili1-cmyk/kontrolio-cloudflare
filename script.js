@@ -33,6 +33,7 @@ const cityCfg = CITIES[CURRENT_CITY];
    იმუშაოს. try/catch — defense-in-depth. */
 (function initCitySwitcher() {
   try {
+    document.documentElement.setAttribute("data-city", CURRENT_CITY);
     const badge = document.getElementById("topbarCityBadge");
     if (badge && CURRENT_CITY === "rustavi") {
       badge.textContent = "· " + cityCfg.label;
@@ -494,7 +495,7 @@ map.addLayer(clusterGroup);
 const routeLinesLayer = L.layerGroup().addTo(map);
 
 const ROUTE_LINE_COLORS = {
-  bus: "#2ec4b6",       // მწვანე — ემთხვევა routeChip--bus ფერს
+  bus: CURRENT_CITY === "rustavi" ? "#11518a" : "#2ec4b6",  // რუსთავი — TTC აპის ლურჯი; თბილისი — routeChip--bus მწვანე
   minibus: "#1f6fd6",   // ლურჯი — routeChip--minibus
   seasonal: "#9333ea",  // იასამნისფერი — routeChip--seasonal
 };
