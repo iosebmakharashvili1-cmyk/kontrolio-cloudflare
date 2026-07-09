@@ -25,7 +25,7 @@
     <div class="topbar__title">
       <button id="menuBtn" class="iconbtn menuBtn" aria-label="მენიუ" title="მენიუ"><i data-lucide="menu"></i></button>
       <span class="topbar__dot"></span>
-      <h1>სად არის კონტროლიორი?</h1>
+      <h1>სად არის კონტროლიორი?<span class="topbar__cityBadge" id="topbarCityBadge"></span></h1>
     </div>
     <div class="topbar__actions">
       <div class="onlineBadge" id="onlineBadge" title="ახლა საიტზეა">
@@ -123,6 +123,20 @@
     </div>
 
     <div class="menuDrawer__body">
+
+      <div class="menuDrawer__citySection">
+        <h3 class="menuDrawer__sectionTitle menuDrawer__sectionTitle--city">ქალაქი</h3>
+        <div class="citySwitcher" id="citySwitcher" role="group" aria-label="ქალაქის არჩევა">
+          <button type="button" class="citySwitcher__btn" data-city="tbilisi">
+            <i data-lucide="map-pin"></i> თბილისი
+          </button>
+          <button type="button" class="citySwitcher__btn" data-city="rustavi">
+            <i data-lucide="map-pin"></i> რუსთავი
+          </button>
+        </div>
+      </div>
+
+      <div class="menuDrawer__divider"></div>
 
       <a class="menuDrawer__navItem" id="openLeaderboardBtn" href="leaderboard.html">
         <div class="menuDrawer__sectionIcon"><i data-lucide="trophy"></i></div>
@@ -271,8 +285,18 @@
 
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
-  <script src="stops.js"></script>
-  <script src="routes.js"></script>
+  <script>
+    /* ქალაქის მიხედვით stops/routes ფაილების არჩევა — localStorage-ში
+       შენახული არჩევანით. document.write აქ უსაფრთხოა, ვინაიდან
+       page-ის parse-ის დროს, ამ <script> ტეგის ადგილას გამოძახებულია. */
+    (function () {
+      var city = localStorage.getItem("kontrolio-city") || "tbilisi";
+      var stopsSrc = city === "rustavi" ? "rustavi-stops.js" : "stops.js";
+      var routesSrc = city === "rustavi" ? "rustavi-routes.js" : "routes.js";
+      document.write('<script src="' + stopsSrc + '"><\/script>');
+      document.write('<script src="' + routesSrc + '"><\/script>');
+    })();
+  </script>
   <script src="script.js"></script>
 </body>
 </html>

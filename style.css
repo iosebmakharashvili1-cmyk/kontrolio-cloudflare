@@ -138,6 +138,12 @@ html, body{
   flex-shrink:0;
 }
 .topbar__dot--small{ width:12px; height:12px; }
+.topbar__cityBadge{
+  font-size: 13px;
+  font-weight: 600;
+  opacity: 0.75;
+  margin-left: 4px;
+}
 
 .topbar__actions{
   display:flex; align-items:center; gap:8px;
@@ -838,6 +844,41 @@ html, body{
 }
 .menuDrawer__link [data-lucide]{ width:13px; height:13px; }
 .menuDrawer__link:hover{ background: var(--chrome-btn-bg-hover); }
+
+/* ---------- ქალაქის switcher (menu drawer-ის თავში) ---------- */
+.menuDrawer__citySection{
+  padding: 16px 20px 4px;
+}
+.menuDrawer__sectionTitle--city{
+  margin-bottom: 10px;
+}
+.citySwitcher{
+  display:flex;
+  gap: 8px;
+  background: var(--grey-soft);
+  padding: 4px;
+  border-radius: 14px;
+}
+.citySwitcher__btn{
+  flex:1;
+  display:flex; align-items:center; justify-content:center; gap:6px;
+  padding: 10px 8px;
+  border:none; border-radius: 10px;
+  background: transparent;
+  color: var(--text);
+  font-family: inherit;
+  font-size: 13.5px; font-weight:700;
+  cursor:pointer;
+  transition: background-color 0.15s, color 0.15s, box-shadow 0.15s;
+}
+.citySwitcher__btn [data-lucide]{ width:15px; height:15px; }
+.citySwitcher__btn:hover{ background: var(--chrome-btn-bg-hover); }
+.citySwitcher__btn--active{
+  background: var(--bus-blue);
+  color: #fff;
+  box-shadow: 0 2px 8px rgba(31,111,214,0.35);
+}
+.citySwitcher__btn--active:hover{ background: var(--bus-blue); }
 
 /* ---------- ლიდერბორდზე გადამყვანი ღილაკი (menu drawer-ის თავში) ---------- */
 .menuDrawer__navItem{

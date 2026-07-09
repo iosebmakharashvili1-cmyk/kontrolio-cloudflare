@@ -12,6 +12,21 @@
      routesBus: [...], routesMinibus: [...] }
    ============================================================ */
 
+/* ============================================================
+   ქალაქები (City switcher)
+   ------------------------------------------------------------
+   STOPS/ROUTES უკვე ჩატვირთულია (index.html-ის bootstrap script-მა
+   აირჩია სწორი stops.js/routes.js თუ rustavi-stops.js/rustavi-routes.js
+   localStorage-ის მიხედვით). აქ მხოლოდ ვიცით რომელ ქალაქზეა საუბარი,
+   რომ რუკის ცენტრი/ზუმი და UI შესაბამისად მოვირგოთ. */
+const CITY_KEY = "kontrolio-city";
+const CITIES = {
+  tbilisi: { label: "თბილისი", center: [41.7151, 44.8271], zoom: 12.5 },
+  rustavi: { label: "რუსთავი", center: [41.5495, 45.0086], zoom: 13.3 },
+};
+const CURRENT_CITY = localStorage.getItem(CITY_KEY) === "rustavi" ? "rustavi" : "tbilisi";
+const cityCfg = CITIES[CURRENT_CITY];
+
 const STOPS_BY_ID = {};
 STOPS.forEach((s) => (STOPS_BY_ID[s.id] = s));
 
@@ -270,7 +285,7 @@ const map = L.map("map", {
   zoomAnimation: true,
   markerZoomAnimation: true,
   fadeAnimation: true
-}).setView([41.7151, 44.8271], 12.5);
+}).setView(cityCfg.center, cityCfg.zoom);
 
 L.control.zoom({ position: "bottomright" }).addTo(map);
 
@@ -897,6 +912,28 @@ function closeMenu() {
 menuBtn.addEventListener("click", openMenu);
 menuClose.addEventListener("click", closeMenu);
 menuOverlay.addEventListener("click", closeMenu);
+
+/* ---------- City switcher ---------- */
+const citySwitcher = document.getElementById("citySwitcher");
+const topbarCityBadge = document.getElementById("topbarCityBadge");
+
+if (topbarCityBadge && CURRENT_CITY === "rustavi") {
+  topbarCityBadge.textContent = "· " + cityCfg.label;
+}
+
+if (citySwitcher) {
+  citySwitcher.querySelectorAll(".citySwitcher__btn").forEach((btn) => {
+    if (btn.dataset.city === CURRENT_CITY) btn.classList.add("citySwitcher__btn--active");
+    btn.addEventListener("click", () => {
+      const city = btn.dataset.city;
+      if (city === CURRENT_CITY) return;
+      localStorage.setItem(CITY_KEY, city);
+      /* ლოკალურ UI-სტეიტს (თემა, sid, ლოკაცია) ხელს არ ვახლებთ —
+         მხოლოდ stops/routes ფაილი და რუკის ცენტრი იცვლება reload-ზე. */
+      window.location.reload();
+    });
+  });
+}
 
 /* ---------- ბურგერ მენიუს ჩამოკეცილი სექციები (accordion) ----------
    ერთხელ ერთი სექცია ღიაა — მეორეზე დაჭერისას წინა იკეტება,
