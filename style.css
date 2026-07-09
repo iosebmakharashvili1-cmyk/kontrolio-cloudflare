@@ -12,6 +12,11 @@
   --shadow: 0 12px 30px rgba(20,25,43,0.25);
   --radius: 18px;
 
+  /* ავტობუსის მარშრუტის ფერი (route line / route chip) — სტატუსის
+     "მწვანისგან" (--green, თავისუფალია) განზრახ დამოუკიდებელია, რომ
+     ქალაქის მიხედვით ცალ-ცალკე შეიცვალოს ერთმანეთზე გავლენის გარეშე. */
+  --route-bus-color: #2ec4b6;
+
   --page-bg: #dfe5e0;
   --surface: #f4f3ee;
   --text: #14192b;
@@ -24,6 +29,13 @@
   --chrome-btn-border: rgba(20,25,43,0.16);
 
   font-family: 'Noto Sans Georgian', system-ui, sans-serif;
+}
+
+/* რუსთავის ავტობუსის მარშრუტის ფერი — TTC აპის სქრინშოთიდან აღებული
+   ლურჯი (badge-ების ფერი), თბილისის მწვანისგან განსხვავებული, რომ
+   ქალაქები ვიზუალურადაც გაირჩეს. */
+[data-city="rustavi"]{
+  --route-bus-color: #11518a;
 }
 
 [data-theme="dark"]{
@@ -455,7 +467,7 @@ html, body{
 }
 .routeChip:hover{ opacity: 0.85; }
 .routeChip:active{ transform: scale(0.94); }
-.routeChip--bus{ background: var(--green); }
+.routeChip--bus{ background: var(--route-bus-color); }
 .routeChip--minibus{ background: var(--bus-blue); }
 .routeChip--seasonal{ background: #9333ea; }
 .routeChip--empty{
