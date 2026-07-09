@@ -889,7 +889,6 @@ const menuClose = document.getElementById("menuClose");
 function openMenu() {
   menuOverlay.classList.remove("hidden");
   menuDrawer.classList.remove("hidden");
-  renderLeaderboardSection();
 }
 function closeMenu() {
   menuOverlay.classList.add("hidden");
@@ -898,6 +897,19 @@ function closeMenu() {
 menuBtn.addEventListener("click", openMenu);
 menuClose.addEventListener("click", closeMenu);
 menuOverlay.addEventListener("click", closeMenu);
+
+/* ---------- ბურგერ მენიუს ჩამოკეცილი სექციები (accordion) ----------
+   ერთხელ ერთი სექცია ღიაა — მეორეზე დაჭერისას წინა იკეტება,
+   რომ სია გრძელი და გადატვირთული არ იყოს. */
+document.querySelectorAll(".menuDrawer__accHeader").forEach((header) => {
+  header.addEventListener("click", () => {
+    const isOpen = header.getAttribute("aria-expanded") === "true";
+    document.querySelectorAll(".menuDrawer__accHeader").forEach((h) => {
+      h.setAttribute("aria-expanded", "false");
+    });
+    header.setAttribute("aria-expanded", isOpen ? "false" : "true");
+  });
+});
 
 /* ---------- Theme toggle ---------- */
 const themeBtn = document.getElementById("themeBtn");
@@ -1178,10 +1190,11 @@ async function renderLeaderboardSection() {
 }
 
 function refreshLeaderboardWidgetIfOpen() {
-  const drawer = document.getElementById("menuDrawer");
-  if (drawer && !drawer.classList.contains("hidden")) {
-    renderLeaderboardSection();
-  }
+  /* ლიდერბორდის სექცია აღარ არსებობს მთავარ გვერდზე — ცალკე
+     leaderboard.html-ზეა. ეს ფუნქცია მხოლოდ იმ ID-ებს ეხმარება,
+     რომლებიც ჯერ კიდევ სხვა კონტექსტიდან შეიძლება გამოძახებულ იქნეს. */
+  const listEl = document.getElementById("leaderboardList");
+  if (listEl) renderLeaderboardSection();
 }
 
 /* ---------- Nickname prompt ---------- */

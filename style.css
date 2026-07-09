@@ -839,6 +839,68 @@ html, body{
 .menuDrawer__link [data-lucide]{ width:13px; height:13px; }
 .menuDrawer__link:hover{ background: var(--chrome-btn-bg-hover); }
 
+/* ---------- ლიდერბორდზე გადამყვანი ღილაკი (menu drawer-ის თავში) ---------- */
+.menuDrawer__navItem{
+  width: 100%;
+  display:flex; align-items:center; gap:12px;
+  padding: 14px 20px;
+  border:none; background:none;
+  cursor:pointer;
+  text-align:left;
+  font-family: inherit;
+}
+.menuDrawer__navItem .menuDrawer__sectionIcon{ margin-bottom:0; flex-shrink:0; }
+.menuDrawer__navItemLabel{
+  flex:1;
+  font-size: 14px; font-weight:700;
+  color: var(--text);
+}
+.menuDrawer__navItemArrow{
+  width:18px; height:18px;
+  color: var(--grey);
+  flex-shrink:0;
+}
+.menuDrawer__navItem:hover{ background: var(--chrome-btn-bg); }
+
+/* ---------- ჩამოკეცილი სექციები (accordion) ---------- */
+.menuDrawer__accordion{ }
+.menuDrawer__accHeader{
+  width:100%;
+  display:flex; align-items:center; gap:12px;
+  padding: 16px 20px;
+  border:none; background:none;
+  cursor:pointer;
+  text-align:left;
+  font-family: inherit;
+}
+.menuDrawer__accHeader .menuDrawer__sectionIcon{ margin-bottom:0; flex-shrink:0; }
+.menuDrawer__accHeader .menuDrawer__sectionTitle{ flex:1; margin:0; }
+.menuDrawer__accHeader:hover{ background: var(--chrome-btn-bg); }
+.menuDrawer__accChevron{
+  width:18px; height:18px;
+  color: var(--grey);
+  flex-shrink:0;
+  transition: transform 0.25s ease;
+}
+.menuDrawer__accHeader[aria-expanded="true"] .menuDrawer__accChevron{
+  transform: rotate(180deg);
+}
+.menuDrawer__accBody{
+  display:grid;
+  grid-template-rows: 0fr;
+  transition: grid-template-rows 0.25s ease;
+}
+.menuDrawer__accHeader[aria-expanded="true"] + .menuDrawer__accBody{
+  grid-template-rows: 1fr;
+}
+.menuDrawer__accBodyInner{
+  overflow:hidden;
+  padding: 0 20px;
+}
+.menuDrawer__accHeader[aria-expanded="true"] + .menuDrawer__accBody .menuDrawer__accBodyInner{
+  padding: 0 20px 18px;
+}
+
 /* ---------- წვლილის ბეჯი (menu drawer) ---------- */
 .contribBadge{
   display:flex; align-items:center; gap:12px;

@@ -124,92 +124,84 @@
 
     <div class="menuDrawer__body">
 
-      <div class="menuDrawer__section" id="contribSection">
-        <div class="menuDrawer__sectionIcon"><i data-lucide="award"></i></div>
-        <h3 class="menuDrawer__sectionTitle">შენი წვლილი</h3>
-        <div class="contribBadge">
-          <span class="contribBadge__emoji" id="contribEmoji">🌱</span>
-          <div class="contribBadge__info">
-            <div class="contribBadge__tier" id="contribTier">ახალბედა</div>
-            <div class="contribBadge__count" id="contribCount">ჯერ არ გაგიგზავნია შეტყობინება</div>
+      <a class="menuDrawer__navItem" id="openLeaderboardBtn" href="leaderboard.html">
+        <div class="menuDrawer__sectionIcon"><i data-lucide="trophy"></i></div>
+        <span class="menuDrawer__navItemLabel">ლიდერბორდი და ჩემი წვლილი</span>
+        <i data-lucide="chevron-right" class="menuDrawer__navItemArrow"></i>
+      </a>
+
+      <div class="menuDrawer__divider"></div>
+
+      <div class="menuDrawer__accordion">
+        <button class="menuDrawer__accHeader" type="button" aria-expanded="false">
+          <div class="menuDrawer__sectionIcon"><i data-lucide="bus"></i></div>
+          <h3 class="menuDrawer__sectionTitle">როგორ მუშაობს</h3>
+          <i data-lucide="chevron-down" class="menuDrawer__accChevron"></i>
+        </button>
+        <div class="menuDrawer__accBody">
+          <div class="menuDrawer__accBodyInner">
+            <p class="menuDrawer__text">
+              დააწექი ნებისმიერ გაჩერებას რუკაზე და მონიშნე — არის თუ არა იქ კონტროლიორი.
+              ეს ინფორმაცია <strong>მაშინვე</strong> გამოჩნდება ყველასთვის, ვინც საიტზეა.
+              შეტყობინებები ანონიმურია და ავტომატურად წაიშლება ღამის 00:00 საათზე.
+            </p>
           </div>
         </div>
-        <div class="contribProgress"><div class="contribProgress__bar" id="contribProgressBar"></div></div>
-        <p class="menuDrawer__text contribNext" id="contribNext"></p>
-        <div class="contribToday" id="contribToday"></div>
       </div>
 
       <div class="menuDrawer__divider"></div>
 
-      <div class="menuDrawer__section" id="communitySection">
-        <div class="menuDrawer__sectionIcon"><i data-lucide="users"></i></div>
-        <h3 class="menuDrawer__sectionTitle">საზოგადოება დღეს</h3>
-        <p class="menuDrawer__text" id="communityStats">იტვირთება...</p>
-      </div>
-
-      <div class="menuDrawer__divider"></div>
-
-      <div class="menuDrawer__section" id="leaderboardSection">
-        <div class="menuDrawer__sectionIcon"><i data-lucide="trophy"></i></div>
-        <h3 class="menuDrawer__sectionTitle">ტოპ კონტრიბუტორები</h3>
-        <p class="menuDrawer__text leaderboardHint">
-          ქულა ეძლევა მას, ვინც <strong>პირველი</strong> შეამჩნევს კონტროლიორს
-          თითოეულ გაჩერებაზე. ანონიმური და უფასოა — მხოლოდ თანამებრძოლების
-          სანახავად 🏆
-        </p>
-        <div class="leaderboardList" id="leaderboardList">
-          <p class="leaderboardEmpty">იტვირთება...</p>
-        </div>
-        <p class="menuDrawer__text leaderboardMe" id="leaderboardMe"></p>
-        <button class="leaderboardEditNickname" id="leaderboardEditNickname" type="button">
-          მეტსახელის შეცვლა
+      <div class="menuDrawer__accordion">
+        <button class="menuDrawer__accHeader" type="button" aria-expanded="false">
+          <div class="menuDrawer__sectionIcon"><i data-lucide="user"></i></div>
+          <h3 class="menuDrawer__sectionTitle">ავტორი</h3>
+          <i data-lucide="chevron-down" class="menuDrawer__accChevron"></i>
         </button>
-      </div>
-
-      <div class="menuDrawer__divider"></div>
-
-      <div class="menuDrawer__section">
-        <div class="menuDrawer__sectionIcon"><i data-lucide="bus"></i></div>
-        <h3 class="menuDrawer__sectionTitle">როგორ მუშაობს</h3>
-        <p class="menuDrawer__text">
-          დააწექი ნებისმიერ გაჩერებას რუკაზე და მონიშნე — არის თუ არა იქ კონტროლიორი.
-          ეს ინფორმაცია <strong>მაშინვე</strong> გამოჩნდება ყველასთვის, ვინც საიტზეა.
-          შეტყობინებები ანონიმურია და ავტომატურად წაიშლება ღამის 00:00 საათზე.
-        </p>
-      </div>
-
-      <div class="menuDrawer__divider"></div>
-
-      <div class="menuDrawer__section">
-        <div class="menuDrawer__sectionIcon"><i data-lucide="user"></i></div>
-        <h3 class="menuDrawer__sectionTitle">ავტორი</h3>
-        <p class="menuDrawer__text">YS7 - BTU სტუდენტი</p>
-        <div class="menuDrawer__links">
-          <a href="https://www.linkedin.com/in/ioseb-makharashvili-93627a413/" class="menuDrawer__link"><i data-lucide="linkedin"></i>Linkedin</a>
-          <a href="mailto:makhrrr756@gmail.com" class="menuDrawer__link"><i data-lucide="mail"></i> კონტაქტი</a>
+        <div class="menuDrawer__accBody">
+          <div class="menuDrawer__accBodyInner">
+            <p class="menuDrawer__text">YS7 - BTU სტუდენტი</p>
+            <div class="menuDrawer__links">
+              <a href="https://www.linkedin.com/in/ioseb-makharashvili-93627a413/" class="menuDrawer__link"><i data-lucide="linkedin"></i>Linkedin</a>
+              <a href="mailto:makhrrr756@gmail.com" class="menuDrawer__link"><i data-lucide="mail"></i> კონტაქტი</a>
+            </div>
+          </div>
         </div>
       </div>
 
       <div class="menuDrawer__divider"></div>
 
-      <div class="menuDrawer__section">
-        <div class="menuDrawer__sectionIcon"><i data-lucide="database"></i></div>
-        <h3 class="menuDrawer__sectionTitle">მონაცემები</h3>
-        <p class="menuDrawer__text">
-          ავტობუსების მოსვლის დრო მალე დაემატება.
-          კონტროლიორების ინფო მომხმარებლებისგანაა და შეიძლება 100% ზუსტი არ იყოს.
-        </p>
+      <div class="menuDrawer__accordion">
+        <button class="menuDrawer__accHeader" type="button" aria-expanded="false">
+          <div class="menuDrawer__sectionIcon"><i data-lucide="database"></i></div>
+          <h3 class="menuDrawer__sectionTitle">მონაცემები</h3>
+          <i data-lucide="chevron-down" class="menuDrawer__accChevron"></i>
+        </button>
+        <div class="menuDrawer__accBody">
+          <div class="menuDrawer__accBodyInner">
+            <p class="menuDrawer__text">
+              ავტობუსების მოსვლის დრო მალე დაემატება.
+              კონტროლიორების ინფო მომხმარებლებისგანაა და შეიძლება 100% ზუსტი არ იყოს.
+            </p>
+          </div>
+        </div>
       </div>
 
       <div class="menuDrawer__divider"></div>
 
-      <div class="menuDrawer__section">
-        <div class="menuDrawer__sectionIcon"><i data-lucide="alert-triangle"></i></div>
-        <h3 class="menuDrawer__sectionTitle">შენიშვნა</h3>
-        <p class="menuDrawer__text">
-          საიტი TTC-ის ოფიციალური პროდუქტი არ არის.
-          მონაცემები შეიძლება სრული ან ზუსტი არ იყოს.
-        </p>
+      <div class="menuDrawer__accordion">
+        <button class="menuDrawer__accHeader" type="button" aria-expanded="false">
+          <div class="menuDrawer__sectionIcon"><i data-lucide="alert-triangle"></i></div>
+          <h3 class="menuDrawer__sectionTitle">შენიშვნა</h3>
+          <i data-lucide="chevron-down" class="menuDrawer__accChevron"></i>
+        </button>
+        <div class="menuDrawer__accBody">
+          <div class="menuDrawer__accBodyInner">
+            <p class="menuDrawer__text">
+              საიტი TTC-ის ოფიციალური პროდუქტი არ არის.
+              მონაცემები შეიძლება სრული ან ზუსტი არ იყოს.
+            </p>
+          </div>
+        </div>
       </div>
 
     </div>
