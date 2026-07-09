@@ -27,6 +27,34 @@ const CITIES = {
 const CURRENT_CITY = localStorage.getItem(CITY_KEY) === "rustavi" ? "rustavi" : "tbilisi";
 const cityCfg = CITIES[CURRENT_CITY];
 
+/* City switcher-ის DOM-ჯოხვა დამოუკიდებლად, სკრიპტის ყველაზე თავში —
+   განზრახ event delegation-ით (document-ზე), რომ თუნდაც სხვა კოდის
+   რომელიმე ნაწილმა მოგვიანებით შეცდომა გამოიწვიოს, ღილაკები მაინც
+   იმუშაოს. try/catch — defense-in-depth. */
+(function initCitySwitcher() {
+  try {
+    const badge = document.getElementById("topbarCityBadge");
+    if (badge && CURRENT_CITY === "rustavi") {
+      badge.textContent = "· " + cityCfg.label;
+    }
+    document.querySelectorAll(".citySwitcher__btn").forEach((btn) => {
+      if (btn.dataset.city === CURRENT_CITY) {
+        btn.classList.add("citySwitcher__btn--active");
+      }
+    });
+    document.addEventListener("click", (e) => {
+      const btn = e.target.closest(".citySwitcher__btn");
+      if (!btn) return;
+      const city = btn.dataset.city;
+      if (!city || city === CURRENT_CITY) return;
+      localStorage.setItem(CITY_KEY, city);
+      window.location.reload();
+    });
+  } catch (err) {
+    console.error("city switcher init failed:", err);
+  }
+})();
+
 const STOPS_BY_ID = {};
 STOPS.forEach((s) => (STOPS_BY_ID[s.id] = s));
 
@@ -912,28 +940,6 @@ function closeMenu() {
 menuBtn.addEventListener("click", openMenu);
 menuClose.addEventListener("click", closeMenu);
 menuOverlay.addEventListener("click", closeMenu);
-
-/* ---------- City switcher ---------- */
-const citySwitcher = document.getElementById("citySwitcher");
-const topbarCityBadge = document.getElementById("topbarCityBadge");
-
-if (topbarCityBadge && CURRENT_CITY === "rustavi") {
-  topbarCityBadge.textContent = "· " + cityCfg.label;
-}
-
-if (citySwitcher) {
-  citySwitcher.querySelectorAll(".citySwitcher__btn").forEach((btn) => {
-    if (btn.dataset.city === CURRENT_CITY) btn.classList.add("citySwitcher__btn--active");
-    btn.addEventListener("click", () => {
-      const city = btn.dataset.city;
-      if (city === CURRENT_CITY) return;
-      localStorage.setItem(CITY_KEY, city);
-      /* ლოკალურ UI-სტეიტს (თემა, sid, ლოკაცია) ხელს არ ვახლებთ —
-         მხოლოდ stops/routes ფაილი და რუკის ცენტრი იცვლება reload-ზე. */
-      window.location.reload();
-    });
-  });
-}
 
 /* ---------- ბურგერ მენიუს ჩამოკეცილი სექციები (accordion) ----------
    ერთხელ ერთი სექცია ღიაა — მეორეზე დაჭერისას წინა იკეტება,

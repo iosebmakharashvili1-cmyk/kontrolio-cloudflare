@@ -16,7 +16,7 @@
 <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css" />
 <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css" />
 
-<link rel="stylesheet" href="style.css">
+<link rel="stylesheet" href="style.css?v=2">
 <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
 </head>
 <body>
@@ -291,12 +291,12 @@
        page-ის parse-ის დროს, ამ <script> ტეგის ადგილას გამოძახებულია. */
     (function () {
       var city = localStorage.getItem("kontrolio-city") || "tbilisi";
-      var stopsSrc = city === "rustavi" ? "rustavi-stops.js" : "stops.js";
-      var routesSrc = city === "rustavi" ? "rustavi-routes.js" : "routes.js";
+      var stopsSrc = (city === "rustavi" ? "rustavi-stops.js" : "stops.js") + "?v=2";
+      var routesSrc = (city === "rustavi" ? "rustavi-routes.js" : "routes.js") + "?v=2";
       document.write('<script src="' + stopsSrc + '"><\/script>');
       document.write('<script src="' + routesSrc + '"><\/script>');
     })();
   </script>
-  <script src="script.js"></script>
+  <script src="script.js?v=2"></script>
 </body>
 </html>

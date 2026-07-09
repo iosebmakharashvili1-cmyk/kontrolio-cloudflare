@@ -854,27 +854,38 @@ html, body{
 }
 .citySwitcher{
   display:flex;
-  gap: 8px;
+  gap: 4px;
   background: var(--grey-soft);
   padding: 4px;
   border-radius: 14px;
 }
 .citySwitcher__btn{
+  /* ბრაუზერის default button chrome-ის სრული გამორთვა — წინააღმდეგ
+     შემთხვევაში native თეთრი/ნაცრისფერი ღილაკის სტილი ჩანს ჯერ
+     custom-სტილის დატვირთვამდე ან, თუ CSS არ ჩაიტვირთა, სულაც. */
+  -webkit-appearance: none;
+  appearance: none;
+  margin: 0;
+  box-shadow: none;
   flex:1;
   display:flex; align-items:center; justify-content:center; gap:6px;
   padding: 10px 8px;
-  border:none; border-radius: 10px;
+  border: 1.5px solid transparent;
+  border-radius: 10px;
   background: transparent;
   color: var(--text);
   font-family: inherit;
   font-size: 13.5px; font-weight:700;
+  line-height: 1.2;
   cursor:pointer;
-  transition: background-color 0.15s, color 0.15s, box-shadow 0.15s;
+  transition: background-color 0.15s, color 0.15s, box-shadow 0.15s, border-color 0.15s;
 }
-.citySwitcher__btn [data-lucide]{ width:15px; height:15px; }
+.citySwitcher__btn [data-lucide]{ width:15px; height:15px; flex-shrink:0; }
 .citySwitcher__btn:hover{ background: var(--chrome-btn-bg-hover); }
+.citySwitcher__btn:focus-visible{ border-color: var(--bus-blue); outline: none; }
 .citySwitcher__btn--active{
   background: var(--bus-blue);
+  border-color: var(--bus-blue);
   color: #fff;
   box-shadow: 0 2px 8px rgba(31,111,214,0.35);
 }
