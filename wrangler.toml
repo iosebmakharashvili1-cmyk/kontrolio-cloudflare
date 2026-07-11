@@ -10,3 +10,10 @@ id = "693f5575e5fa4b7d8b219e8ea3a56916"
 # TTC credentials — ეს sensitive-ია, ამიტომ ეს ფაილი მხოლოდ
 # non-secret values-ისთვისაა. TTC_COOKIE და TTC_API_KEY — Pages-ის
 # dashboard-ში ცალკე "Environment Variables" (encrypted) სექციაში ჩაწერე.
+#
+# ასევე Pages Dashboard → Environment Variables-ში საჭიროა:
+#   TELEGRAM_BOT_TOKEN     — BotFather-ისგან მიღებული token
+#   TELEGRAM_CHAT_ID       — შენი პირადი chat ID (admin, ვინც ამტკიცებს)
+#   TELEGRAM_WEBHOOK_SECRET — თვითონ შენ გამოგონილი შემთხვევითი სტრინგი,
+#                             Telegram-ის webhook-ის spoofing-ისგან დასაცავად
+#                             (setWebhook-ის დროს ერთხელ გამოიყენება)
