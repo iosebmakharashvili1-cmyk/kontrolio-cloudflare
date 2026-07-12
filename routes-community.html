@@ -402,6 +402,29 @@
         </div>
       </div>
     </div>
+
+    <!-- Route detail — სრულმასშტაბიანი, სრულად ინტერაქტიული (drag/zoom/scroll).
+         #rcPage-ის შიგნით უნდა იყოს (და არა მის გარეთ) — წინააღმდეგ
+         შემთხვევაში #rcPage-ის min-height:100vh ცარიელ სივრცეს ტოვებს
+         ზემოთ (სია დამალულია, მაგრამ container მაინც სრულ ეკრანს
+         იკავებს) და დეტალების ბლოკი მხოლოდ ჩამოსქროლვის შემდეგ ჩანს. -->
+    <div class="rcDetailWrap" id="rcDetailWrap">
+      <div class="rcDetailWrap__mapCol">
+        <div id="rcDetailFullMap"></div>
+      </div>
+      <div class="rcDetailWrap__infoCol">
+        <div class="rcDetailInfo">
+          <div class="rcDetailInfo__badgeRow">
+            <span class="rcCard__badge" id="rcDetailBadge"></span>
+            <span class="rcDetailInfo__name" id="rcDetailName">მარშრუტი</span>
+          </div>
+          <div class="rcDetailMeta2" id="rcDetailMeta2"></div>
+          <p class="rcDetailInfo__desc" id="rcDetailDesc"></p>
+          <div class="rcDetailStops" id="rcDetailStops"></div>
+          <button class="rcAdminDeleteBtn hidden" id="rcDetailDelete"><i data-lucide="trash-2"></i> მარშრუტის წაშლა (Admin)</button>
+        </div>
+      </div>
+    </div>
   </div>
 
   <div class="rcSubmitBar" id="rcSubmitBar">
@@ -435,25 +458,6 @@
     </div>
     <button class="sheet__close" id="spRemoveBtn" style="margin-top:8px;">ამ წერტილს არაფერი მივაბა</button>
     <button class="sheet__close" id="spCancelBtn">გაუქმება</button>
-  </div>
-
-  <!-- Route detail — სრულმასშტაბიანი, სრულად ინტერაქტიული (drag/zoom/scroll) -->
-  <div class="rcDetailWrap" id="rcDetailWrap">
-    <div class="rcDetailWrap__mapCol">
-      <div id="rcDetailFullMap"></div>
-    </div>
-    <div class="rcDetailWrap__infoCol">
-      <div class="rcDetailInfo">
-        <div class="rcDetailInfo__badgeRow">
-          <span class="rcCard__badge" id="rcDetailBadge"></span>
-          <span class="rcDetailInfo__name" id="rcDetailName">მარშრუტი</span>
-        </div>
-        <div class="rcDetailMeta2" id="rcDetailMeta2"></div>
-        <p class="rcDetailInfo__desc" id="rcDetailDesc"></p>
-        <div class="rcDetailStops" id="rcDetailStops"></div>
-        <button class="rcAdminDeleteBtn hidden" id="rcDetailDelete"><i data-lucide="trash-2"></i> მარშრუტის წაშლა (Admin)</button>
-      </div>
-    </div>
   </div>
 
   <div class="toast" id="toast"></div>
