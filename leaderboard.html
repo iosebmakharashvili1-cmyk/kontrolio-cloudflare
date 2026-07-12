@@ -29,6 +29,23 @@
     min-height: 100vh;
     background: var(--surface);
     display:flex; flex-direction:column;
+    transition: max-width 0.2s ease;
+  }
+  /* დესკტოპზე გვერდი უფრო ფართოა, სექციები ორსვეტიან grid-ად ლაგდება —
+     მობილურზე (default) ვიწრო, ერთსვეტიანი განლაგება რჩება. */
+  @media (min-width: 900px){
+    .lbPage{ max-width: 960px; }
+    .lbPage__body{
+      display:grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0 20px;
+      align-items:start;
+      padding: 16px 20px 40px;
+    }
+    .lbPage__body > .menuDrawer__divider{ display:none; }
+    #contribSection{ grid-column: 1; }
+    #communitySection{ grid-column: 1; margin-top:16px; }
+    #leaderboardSection{ grid-column: 2; grid-row: 1 / span 2; }
   }
   .lbPage__header{
     position: sticky; top:0; z-index:10;

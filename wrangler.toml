@@ -17,3 +17,5 @@ id = "693f5575e5fa4b7d8b219e8ea3a56916"
 #   TELEGRAM_WEBHOOK_SECRET — თვითონ შენ გამოგონილი შემთხვევითი სტრინგი,
 #                             Telegram-ის webhook-ის spoofing-ისგან დასაცავად
 #                             (setWebhook-ის დროს ერთხელ გამოიყენება)
+#   ADMIN_PASSWORD          — თვითონ შენ გამოგონილი პაროლი, custom route-ების
+#                             წასაშლელად (routes-community.html-ზე გამოგეთხოვება)
