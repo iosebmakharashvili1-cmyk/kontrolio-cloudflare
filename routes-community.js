@@ -650,6 +650,7 @@ function enterDetailMode(route) {
   backBtn.removeAttribute("href");
 
   renderDetailInfo(route);
+  window.scrollTo(0, 0); // თუ სია დაძვრილი იყო, დეტალები ზემოდან უნდა დაიწყოს
 
   // მცირე დაყოვნება — DOM-ს დრო სჭირდება container-ის ზომის დასადგენად
   setTimeout(() => {
