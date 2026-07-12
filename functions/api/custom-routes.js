@@ -14,6 +14,7 @@ import {
   isValidStopLinks,
   saveNewCustomRoute,
   getApprovedCustomRoutes,
+  deleteCustomRoute,
   notifyTelegram,
 } from "./_customRoutes.js";
 
@@ -22,6 +23,32 @@ export async function onRequestGet({ env }) {
   // public API-ში authorSid-ს არ ვაბრუნებთ — შიდა identifier-ია
   const publicView = approved.map(({ authorSid, ...rest }) => rest);
   return Response.json(publicView);
+}
+
+/* ---------- წაშლა (admin-only) ----------
+   DELETE /api/custom-routes?id=<routeId>
+   Header: X-Admin-Password — უნდა ემთხვეოდეს env.ADMIN_PASSWORD-ს.
+   ეს არ არის "ნამდვილი" auth-სისტემა — ერთი გაზიარებული პაროლია,
+   საკმარისი ამ scale-ის internal admin-ფუნქციისთვის (Telegram
+   ✅/❌-ის იგივე ნდობის დონე). */
+export async function onRequestDelete({ request, env }) {
+  const suppliedPassword = request.headers.get("X-Admin-Password");
+  if (!env.ADMIN_PASSWORD || suppliedPassword !== env.ADMIN_PASSWORD) {
+    return Response.json({ error: "unauthorized" }, { status: 401 });
+  }
+
+  const url = new URL(request.url);
+  const id = url.searchParams.get("id");
+  if (!id) {
+    return Response.json({ error: "id is required" }, { status: 400 });
+  }
+
+  const deleted = await deleteCustomRoute(env, id);
+  if (!deleted) {
+    return Response.json({ error: "not found" }, { status: 404 });
+  }
+
+  return Response.json({ ok: true });
 }
 
 export async function onRequestPost({ request, env }) {
@@ -36,7 +63,7 @@ export async function onRequestPost({ request, env }) {
   try { body = await request.json(); }
   catch { return Response.json({ error: "invalid JSON" }, { status: 400 }); }
 
-  const { vehicleType, vehicleModel, routeNumber, name, description, points, stopLinks, sid } = body || {};
+  const { vehicleType, vehicleModel, routeNumber, name, description, isLoop, points, stopLinks, sid } = body || {};
 
   if (vehicleType !== "bus" && vehicleType !== "minibus") {
     return Response.json({ error: "vehicleType must be bus or minibus" }, { status: 400 });
@@ -56,6 +83,9 @@ export async function onRequestPost({ request, env }) {
   if (!isValidPoints(points)) {
     return Response.json({ error: "invalid points (need 2-500 [lat,lng] pairs within Georgia bounds)" }, { status: 400 });
   }
+  if (isLoop && points.length < 3) {
+    return Response.json({ error: "loop routes need at least 3 points" }, { status: 400 });
+  }
   if (!isValidStopLinks(stopLinks || [], points.length)) {
     return Response.json({ error: "invalid stopLinks" }, { status: 400 });
   }
@@ -68,6 +98,7 @@ export async function onRequestPost({ request, env }) {
     routeNumber,
     name,
     description,
+    isLoop: !!isLoop,
     points,
     stopLinks: stopLinks || [],
     authorSid: safeSid,

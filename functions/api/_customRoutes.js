@@ -105,6 +105,7 @@ export async function saveNewCustomRoute(env, data) {
     routeNumber: data.routeNumber,
     name: data.name.trim().slice(0, MAX_NAME_LEN),
     description: (data.description || "").trim().slice(0, MAX_DESCRIPTION_LEN),
+    isLoop: !!data.isLoop,
     points: data.points,
     stopLinks: data.stopLinks || [],
     authorSid: data.authorSid,
@@ -137,6 +138,24 @@ export async function setCustomRouteStatus(env, id, status) {
     await env.KV.delete("customroutes-approved-cache");
   }
   return record;
+}
+
+/* ---------- სრული წაშლა (admin-only) ----------
+   ეს განსხვავდება status="rejected"-გან — ჩანაწერი მთლიანად ქრება
+   KV-დან და index-იდან, არა უბრალოდ იმალება public view-დან. */
+export async function deleteCustomRoute(env, id) {
+  const record = await getCustomRoute(env, id);
+  if (!record) return false;
+
+  await env.KV.delete(`customroute:${id}`);
+
+  const indexRaw = await env.KV.get("customroutes-index");
+  const index = indexRaw ? JSON.parse(indexRaw) : [];
+  const newIndex = index.filter((rid) => rid !== id);
+  await env.KV.put("customroutes-index", JSON.stringify(newIndex));
+
+  await env.KV.delete("customroutes-approved-cache");
+  return true;
 }
 
 export async function getApprovedCustomRoutes(env) {
@@ -173,10 +192,13 @@ export async function notifyTelegram(env, record) {
     (VEHICLE_MODELS[record.vehicleType] || []).find((m) => m.id === record.vehicleModel)?.label ||
     record.vehicleModel;
 
+  const shapeLabel = record.isLoop ? "🔄 წრიული" : "↔️ ორმხრივი";
+  const stopCount = Array.isArray(record.stopLinks) ? record.stopLinks.length : 0;
+
   const text =
     `🆕 <b>ახალი მარშრუტის შემოთავაზება</b>\n\n` +
     `<b>№${escapeHtmlTg(record.routeNumber)}</b> — ${escapeHtmlTg(record.name)}\n` +
-    `${escapeHtmlTg(vehicleLabel)}\n` +
+    `${escapeHtmlTg(vehicleLabel)} · ${shapeLabel} · ${stopCount} გაჩერება\n` +
     (record.description ? `\n${escapeHtmlTg(record.description)}\n` : "") +
     `\nID: <code>${record.id}</code>`;
 
