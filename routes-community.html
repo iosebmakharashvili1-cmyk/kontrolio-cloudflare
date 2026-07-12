@@ -271,7 +271,6 @@
 
   /* ---------- Stop picker modal (gaCherebis archevis prompt) ---------- */
   .stopPickerBody{ max-height:60vh; overflow-y:auto; }
-  .stopPickerTabs{ display:flex; gap:8px; margin-bottom:12px; }
   .stopPickerTabs button{
     flex:1; padding:9px; border-radius:10px;
     border:1.5px solid var(--grey-soft); background:var(--surface); color:var(--text);
@@ -295,9 +294,24 @@
     font-family:inherit; font-size:14px;
   }
 
-  /* ---------- Route detail (გაფართოებული) ---------- */
-  .rcDetailMap{ width:100%; height:220px; border-radius:12px; margin:10px 0; }
-  .rcDetailStops{ display:flex; flex-direction:column; gap:6px; margin-top:10px; }
+  /* ---------- Route detail — სრულმასშტაბიანი, ინტერაქტიული ---------- */
+  .rcDetailWrap{ display:none; flex-direction:column; flex:1; }
+  .rcDetailWrap.active{ display:flex; }
+  @media (min-width: 900px){
+    .rcDetailWrap.active{ flex-direction:row; align-items:flex-start; }
+    .rcDetailWrap__mapCol{ flex:1.3; position:sticky; top:69px; }
+    .rcDetailWrap__infoCol{ flex:1; min-width:360px; max-width:420px; }
+    #rcDetailFullMap{ height: calc(100vh - 69px); min-height:420px; }
+  }
+  #rcDetailFullMap{
+    width:100%; height: 52vh; min-height:320px;
+  }
+  .rcDetailInfo{ padding: 16px 18px 40px; overflow-y:auto; }
+  .rcDetailInfo__badgeRow{ display:flex; align-items:center; gap:10px; margin-bottom:6px; }
+  .rcDetailInfo__name{ font-size:19px; font-weight:800; color:var(--text); }
+  .rcDetailInfo__desc{ font-size:13.5px; color:var(--text); opacity:0.85; line-height:1.55; margin:10px 0; }
+
+  /* ---------- Stop picker: in-app sheet ---------- */
   .rcDetailStops h4{ margin:14px 0 6px; font-size:12.5px; color:var(--grey); text-transform:uppercase; letter-spacing:0.4px; }
   .rcDetailStopItem{
     display:flex; align-items:center; gap:8px;
@@ -423,17 +437,23 @@
     <button class="sheet__close" id="spCancelBtn">გაუქმება</button>
   </div>
 
-  <!-- Route detail preview modal (გაფართოებული) -->
-  <div class="overlay hidden" id="rcDetailOverlay"></div>
-  <div class="sheet hidden" id="rcDetailSheet">
-    <div class="sheet__handle"></div>
-    <h2 id="rcDetailName">მარშრუტი</h2>
-    <div class="rcDetailMeta2" id="rcDetailMeta2"></div>
-    <div id="rcDetailMap" class="rcDetailMap"></div>
-    <p class="menuDrawer__text" id="rcDetailDesc"></p>
-    <div class="rcDetailStops" id="rcDetailStops"></div>
-    <button class="sheet__close" id="rcDetailClose" style="margin-top:14px;">დახურვა</button>
-    <button class="rcAdminDeleteBtn hidden" id="rcDetailDelete"><i data-lucide="trash-2"></i> მარშრუტის წაშლა (Admin)</button>
+  <!-- Route detail — სრულმასშტაბიანი, სრულად ინტერაქტიული (drag/zoom/scroll) -->
+  <div class="rcDetailWrap" id="rcDetailWrap">
+    <div class="rcDetailWrap__mapCol">
+      <div id="rcDetailFullMap"></div>
+    </div>
+    <div class="rcDetailWrap__infoCol">
+      <div class="rcDetailInfo">
+        <div class="rcDetailInfo__badgeRow">
+          <span class="rcCard__badge" id="rcDetailBadge"></span>
+          <span class="rcDetailInfo__name" id="rcDetailName">მარშრუტი</span>
+        </div>
+        <div class="rcDetailMeta2" id="rcDetailMeta2"></div>
+        <p class="rcDetailInfo__desc" id="rcDetailDesc"></p>
+        <div class="rcDetailStops" id="rcDetailStops"></div>
+        <button class="rcAdminDeleteBtn hidden" id="rcDetailDelete"><i data-lucide="trash-2"></i> მარშრუტის წაშლა (Admin)</button>
+      </div>
+    </div>
   </div>
 
   <div class="toast" id="toast"></div>
