@@ -635,6 +635,7 @@ const rcDetailDelete = document.getElementById("rcDetailDelete");
 let detailMap = null;
 let activeDetailRouteId = null;
 let activeDetailRoute = null;
+let detailResizeObserver = null; // იხ. კომენტარი enterDetailMode-ში
 
 function enterDetailMode(route) {
   mode = "detail";
@@ -682,6 +683,28 @@ function enterDetailMode(route) {
     });
 
     detailMap.fitBounds(line.getBounds(), { padding: [30, 30] });
+
+    // rcDetailWrap display:none-დან active-ზე გადართვისას (განსაკუთრებით
+    // დესკტოპზე, position:sticky სვეტში) Leaflet ხანდახან container-ის
+    // ზომას არასწორად ითვლის შექმნის მომენტში — რუკა ცარიელი/ნაცრისფერი
+    // რჩება, სანამ scroll ან სხვა repaint არ აიძულებს ხელახლა გამოთვლას.
+    // ვასწორებთ ორნაირად: (1) invalidateSize() მომდევნო paint frame-ის
+    // შემდეგ, (2) ResizeObserver container-ზე, რომელიც ნებისმიერ შემდგომ
+    // ზომის ცვლილებაზეც (ფონტის ჩატვირთვა, sticky recalculation და ა.შ.)
+    // ავტომატურად ასწორებს ზომას — scroll-ის გარეშეც.
+    requestAnimationFrame(() => {
+      if (detailMap) detailMap.invalidateSize();
+    });
+
+    const mapEl = document.getElementById("rcDetailFullMap");
+    if (!detailResizeObserver) {
+      detailResizeObserver = new ResizeObserver(() => {
+        if (detailMap) detailMap.invalidateSize();
+      });
+    } else {
+      detailResizeObserver.disconnect();
+    }
+    detailResizeObserver.observe(mapEl);
   }, 60);
 
   if (window.lucide) lucide.createIcons();
@@ -740,6 +763,7 @@ function exitDetailMode() {
   backBtn.setAttribute("href", "index.html");
   activeDetailRouteId = null;
   activeDetailRoute = null;
+  if (detailResizeObserver) detailResizeObserver.disconnect();
   if (detailMap) {
     detailMap.remove();
     detailMap = null;
