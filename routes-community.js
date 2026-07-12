@@ -96,7 +96,7 @@ const backBtn = document.getElementById("rcBackBtn");
 const headerTitle = document.getElementById("rcHeaderTitle");
 const submitBar = document.getElementById("rcSubmitBar");
 
-let mode = "list";
+let mode = "list"; // "list" | "draw" | "detail"
 let map = null;
 
 function enterDrawMode() {
@@ -138,6 +138,10 @@ function exitDrawMode() {
 addBtn.addEventListener("click", enterDrawMode);
 backBtn.addEventListener("click", (e) => {
   if (mode === "draw") exitDrawModeConfirm(e);
+  else if (mode === "detail") {
+    e.preventDefault();
+    exitDetailMode();
+  }
 });
 
 /* ============================================================
@@ -613,7 +617,7 @@ async function loadRouteList() {
     listEl.querySelectorAll(".rcCard").forEach((card) => {
       card.addEventListener("click", () => {
         const route = currentRoutes.find((r) => r.id === card.dataset.id);
-        if (route) openDetailPreview(route);
+        if (route) enterDetailMode(route);
       });
     });
   } catch (err) {
@@ -622,16 +626,74 @@ async function loadRouteList() {
   if (window.lucide) lucide.createIcons();
 }
 
-/* ---------- დეტალების preview (გაფართოებული — რუკა + გაჩერებების სია) ---------- */
-const detailOverlay = document.getElementById("rcDetailOverlay");
-const detailSheet = document.getElementById("rcDetailSheet");
+/* ---------- დეტალების preview — სრულმასშტაბიანი, სრულად ინტერაქტიული ----------
+   ეს ცალკე "mode"-ია (ისევე, როგორც draw-mode), არა პატარა
+   sheet/modal. რუკა სრულ drag/zoom/scroll-ის საშუალებას იძლევა —
+   ისევე თავისუფლად შეგიძლია დააკვირდე, როგორც მთავარ გვერდზე. */
+const detailWrap = document.getElementById("rcDetailWrap");
 const rcDetailDelete = document.getElementById("rcDetailDelete");
 let detailMap = null;
 let activeDetailRouteId = null;
+let activeDetailRoute = null;
 
-function openDetailPreview(route) {
+function enterDetailMode(route) {
+  mode = "detail";
   activeDetailRouteId = route.id;
-  document.getElementById("rcDetailName").textContent = `${route.routeNumber} — ${route.name}`;
+  activeDetailRoute = route;
+
+  listBody.style.display = "none";
+  rcPage.classList.remove("wide-list");
+  detailWrap.classList.add("active");
+  addBtn.style.display = "none";
+  headerTitle.textContent = `№${route.routeNumber} — ${route.name}`;
+  backBtn.removeAttribute("href");
+
+  renderDetailInfo(route);
+
+  // მცირე დაყოვნება — DOM-ს დრო სჭირდება container-ის ზომის დასადგენად
+  setTimeout(() => {
+    if (detailMap) {
+      detailMap.remove();
+      detailMap = null;
+    }
+    detailMap = L.map("rcDetailFullMap", { zoomControl: true }); // სრული drag/zoom/scroll, default-ად ჩართული
+    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+      maxZoom: 19,
+      attribution: "&copy; OpenStreetMap contributors",
+    }).addTo(detailMap);
+
+    const line = route.isLoop
+      ? L.polygon(route.points, { color: "#1f6fd6", weight: 5, fill: false }).addTo(detailMap)
+      : L.polyline(route.points, { color: "#1f6fd6", weight: 5 }).addTo(detailMap);
+
+    // გაჩერებების მარკერები პირდაპირ რუკაზე — ისევე ცნობადი,
+    // როგორც მთავარ გვერდზეა
+    (route.stopLinks || []).forEach((link) => {
+      const pt = route.points[link.pointIndex];
+      if (!pt) return;
+      const label = link.stopId && typeof STOPS !== "undefined"
+        ? (STOPS.find((st) => st.id === link.stopId)?.name || link.customLabel || "?")
+        : (link.customLabel || "?");
+      L.circleMarker(pt, {
+        radius: 7, color: "#fff", weight: 2, fillColor: "#2ec4b6", fillOpacity: 1,
+      })
+        .addTo(detailMap)
+        .bindTooltip(escapeHtml(label), { direction: "top" });
+    });
+
+    detailMap.fitBounds(line.getBounds(), { padding: [30, 30] });
+  }, 60);
+
+  if (window.lucide) lucide.createIcons();
+}
+
+function renderDetailInfo(route) {
+  const badgeClass = route.vehicleType === "minibus" ? "rcCard__badge--minibus" : "rcCard__badge--bus";
+  const badgeEl = document.getElementById("rcDetailBadge");
+  badgeEl.className = `rcCard__badge ${badgeClass}`;
+  badgeEl.textContent = route.routeNumber;
+
+  document.getElementById("rcDetailName").textContent = route.name;
 
   const modelLabel = VEHICLE_LABEL_LOOKUP[route.vehicleModel] || route.vehicleModel;
   const vehicleIcon = route.vehicleType === "minibus" ? "🚐" : "🚌";
@@ -665,35 +727,24 @@ function openDetailPreview(route) {
     stopsEl.innerHTML = "";
   }
 
-  // admin-mode-ში delete-ღილაკი ჩანს
   rcDetailDelete.classList.toggle("hidden", !isAdminMode());
+}
 
-  detailOverlay.classList.remove("hidden");
-  detailSheet.classList.remove("hidden");
-
+function exitDetailMode() {
+  mode = "list";
+  listBody.style.display = "";
+  rcPage.classList.add("wide-list");
+  detailWrap.classList.remove("active");
+  addBtn.style.display = "";
+  headerTitle.textContent = "საზოგადოების მარშრუტები";
+  backBtn.setAttribute("href", "index.html");
+  activeDetailRouteId = null;
+  activeDetailRoute = null;
   if (detailMap) {
     detailMap.remove();
     detailMap = null;
   }
-  setTimeout(() => {
-    detailMap = L.map("rcDetailMap", { zoomControl: false, dragging: false, scrollWheelZoom: false });
-    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", { maxZoom: 19 }).addTo(detailMap);
-    const line = route.isLoop
-      ? L.polygon(route.points, { color: "#1f6fd6", weight: 4, fill: false }).addTo(detailMap)
-      : L.polyline(route.points, { color: "#1f6fd6", weight: 4 }).addTo(detailMap);
-    detailMap.fitBounds(line.getBounds(), { padding: [16, 16] });
-  }, 50);
-
-  if (window.lucide) lucide.createIcons();
 }
-
-function closeDetailPreview() {
-  detailOverlay.classList.add("hidden");
-  detailSheet.classList.add("hidden");
-  activeDetailRouteId = null;
-}
-document.getElementById("rcDetailClose").addEventListener("click", closeDetailPreview);
-detailOverlay.addEventListener("click", closeDetailPreview);
 
 /* ============================================================
    Admin delete
@@ -738,7 +789,7 @@ rcDetailDelete.addEventListener("click", async () => {
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
 
     showToast("წაშლილია 🗑️");
-    closeDetailPreview();
+    exitDetailMode();
     loadRouteList();
   } catch (err) {
     showToast("წაშლა ვერ მოხერხდა");
