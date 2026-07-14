@@ -41,6 +41,9 @@ const cityCfg = CITIES[CURRENT_CITY];
     document.querySelectorAll(".citySwitcher__btn").forEach((btn) => {
       if (btn.dataset.city === CURRENT_CITY) {
         btn.classList.add("citySwitcher__btn--active");
+        btn.setAttribute("aria-pressed", "true");
+      } else {
+        btn.setAttribute("aria-pressed", "false");
       }
     });
     document.addEventListener("click", (e) => {
@@ -316,7 +319,7 @@ const map = L.map("map", {
   fadeAnimation: true
 }).setView(cityCfg.center, cityCfg.zoom);
 
-L.control.zoom({ position: "bottomright" }).addTo(map);
+L.control.zoom({ position: "bottomright", zoomInTitle: "რუკის მიახლოება", zoomOutTitle: "რუკის დაშორება" }).addTo(map);
 
 /* ---------- Tile layers ---------- */
 L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
@@ -735,7 +738,12 @@ sheetRouteChips.addEventListener("click", (e) => {
 
 function renderArrivalsList(arrivals, stop) {
   if (!arrivals || arrivals.length === 0) {
-    arrivalsList.innerHTML = `<p class="arrivalsNote">ამ გაჩერებისთვის მონაცემი ვერ მოიძებნა</p>`;
+    arrivalsList.innerHTML = `
+      <div class="emptyState">
+        <div class="emptyState__icon">🚏</div>
+        <div class="emptyState__title">მონაცემი ვერ მოიძებნა</div>
+        <div class="emptyState__sub">ამ გაჩერებისთვის მოსვლის დროები ჯერ არ არის ხელმისაწვდომი</div>
+      </div>`;
     return;
   }
   arrivalsList.innerHTML = arrivals
@@ -756,7 +764,11 @@ function renderArrivalsList(arrivals, stop) {
 }
 
 async function loadArrivalsForStop(stopId, stop) {
-  arrivalsList.innerHTML = `<p class="arrivalsNote">იტვირთება...</p>`;
+  arrivalsList.innerHTML = `
+    <div class="emptyState">
+      <div class="emptyState__icon">⏳</div>
+      <div class="emptyState__title">იტვირთება...</div>
+    </div>`;
   const arrivals = await fetchArrivals(stop.ids && stop.ids.length ? stop.ids : [stop.id]);
   if (activeStopId === stopId) renderArrivalsList(arrivals, stop);
 }
@@ -886,15 +898,73 @@ async function handleReportClick(status, successMsg) {
 }
 
 btnInspector.addEventListener("click", () => {
+  vibrate(40);
   handleReportClick("inspector", "მადლობა! კონტროლიორი მონიშნულია");
 });
 
 btnClear.addEventListener("click", () => {
+  vibrate(30);
   handleReportClick("clear", "მადლობა! თავისუფალი მონიშნულია");
 });
 
-sheetClose.addEventListener("click", closeSheet);
+sheetClose.addEventListener("click", () => { vibrate(20); closeSheet(); });
 overlay.addEventListener("click", closeSheet);
+
+/* ============================================================
+   Swipe-to-close (თითით ჩამოსმა) bottom sheet-ისთვის
+   ------------------------------------------------------------
+   GPU-accelerated: transform: translateY() + opacity.
+   თითის მოძრაობა სინქრონულია, ყოველგვარი lag-ის გარეშე.
+   ============================================================ */
+(function initSwipeToClose() {
+  let startY = 0;
+  let startTranslate = 0;
+  let isDragging = false;
+
+  sheet.addEventListener("touchstart", (e) => {
+    if (e.target.closest("button, .routeChip, a, input")) return;
+    // მხოლოდ მაშინ გავააქტიუროთ, თუ scroll არის top-ზე
+    if (sheet.scrollTop > 5) return;
+    startY = e.touches[0].clientY;
+    startTranslate = 0;
+    isDragging = true;
+    sheet.style.transition = "none";
+  }, { passive: true });
+
+  sheet.addEventListener("touchmove", (e) => {
+    if (!isDragging) return;
+    const dy = e.touches[0].clientY - startY;
+    if (dy < 0) {
+      // თუ ზემოთ სწევს, არ ვბლოკავთ — მხოლოდ ქვემოთ swipe-ზე რეაგირება
+      isDragging = false;
+      sheet.style.transition = "";
+      sheet.style.transform = "";
+      return;
+    }
+    e.preventDefault();
+    sheet.style.transform = `translateY(${dy}px)`;
+    // overlay-ის opacity-იც თანდათან ქრება
+    const progress = Math.min(1, dy / 250);
+    overlay.style.opacity = 1 - progress;
+  }, { passive: false });
+
+  sheet.addEventListener("touchend", () => {
+    if (!isDragging) return;
+    isDragging = false;
+    sheet.style.transition = "";
+    const currentTransform = sheet.style.transform;
+    const match = currentTransform.match(/translateY\(([\d.]+)px\)/);
+    const dy = match ? parseFloat(match[1]) : 0;
+    if (dy > 80) {
+      // საკმარისად ქვემოთ — დახურვა
+      closeSheet();
+    } else {
+      // უკან დაბრუნება
+      sheet.style.transform = "";
+      overlay.style.opacity = "";
+    }
+  });
+})();
 
 /* ---------- Night mode (00:00 – 07:00) ---------- */
 function getTbilisiHour() {
@@ -1319,6 +1389,15 @@ function showToast(msg) {
   toastTimer = setTimeout(() => toastEl.classList.remove("show"), 2200);
 }
 
+/* ---------- Haptic feedback (ტაქტილური ვიბრაცია) ----------
+   მთავარ ღილაკებზე navigator.vibrate-ით ნატიური მობილური
+   აპლიკაციის შეგრძნებას ქმნის. */
+function vibrate(duration = 50) {
+  try {
+    if (navigator.vibrate) navigator.vibrate(duration);
+  } catch (_) { /* ignore — ყველა მოწყობილობა არ უჭერს მხარს */ }
+}
+
 /* ---------- ძებნა ---------- */
 const searchInput = document.getElementById("searchInput");
 const searchResults = document.getElementById("searchResults");
@@ -1342,7 +1421,14 @@ function renderSearchResults(query) {
   const matches = STOPS.filter((s) => s.name.toLowerCase().includes(q)).slice(0, 8);
 
   if (matches.length === 0) {
-    searchResults.innerHTML = `<div class="searchResult searchResult--empty">გაჩერება არ მოიძებნა</div>`;
+    searchResults.innerHTML = `
+      <div class="searchResult searchResult--empty">
+        <div class="emptyState">
+          <div class="emptyState__icon">🔍</div>
+          <div class="emptyState__title">გაჩერება არ მოიძებნა</div>
+          <div class="emptyState__sub">სცადეთ სხვა ქუჩის ან გაჩერების სახელის მითითება</div>
+        </div>
+      </div>`;
   } else {
     searchResults.innerHTML = matches
       .map((s) => {

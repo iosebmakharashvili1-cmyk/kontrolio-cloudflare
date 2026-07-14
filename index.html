@@ -16,24 +16,24 @@
 <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css" />
 <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css" />
 
-<link rel="stylesheet" href="style.css?v=2">
+<link rel="stylesheet" href="style.css?v=3">
 <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
 </head>
 <body>
 
   <header class="topbar">
     <div class="topbar__title">
-      <button id="menuBtn" class="iconbtn menuBtn" aria-label="მენიუ" title="მენიუ"><i data-lucide="menu"></i></button>
-      <span class="topbar__dot"></span>
+      <button id="menuBtn" class="iconbtn menuBtn" aria-label="მენიუს გახსნა" title="მენიუ"><i data-lucide="menu" aria-hidden="true"></i></button>
+      <span class="topbar__dot" aria-hidden="true"></span>
       <h1>სად არის კონტროლიორი?<span class="topbar__cityBadge" id="topbarCityBadge"></span></h1>
     </div>
     <div class="topbar__actions">
-      <div class="onlineBadge" id="onlineBadge" title="ახლა საიტზეა">
-        <span class="onlineBadge__dot"></span>
+      <div class="onlineBadge" id="onlineBadge" title="ახლა საიტზეა" role="status" aria-label="ონლაინ მომხმარებლები">
+        <span class="onlineBadge__dot" aria-hidden="true"></span>
         <span class="onlineBadge__count" id="onlineCount">—</span>
       </div>
-      <button id="themeBtn" class="iconbtn themeBtn" title="თემა" aria-label="თემა"><i data-lucide="sun" id="themeIcon"></i></button>
-      <button id="activityBtn" class="iconbtn activityToggleBtn" title="აქტივობა" aria-label="აქტივობა"><i data-lucide="bell"></i></button>
+      <button id="themeBtn" class="iconbtn themeBtn" title="თემის შეცვლა (ღია/მუქი)" aria-label="თემის შეცვლა"><i data-lucide="sun" id="themeIcon" aria-hidden="true"></i></button>
+      <button id="activityBtn" class="iconbtn activityToggleBtn" title="აქტივობის პანელი" aria-label="აქტივობის პანელის გახსნა"><i data-lucide="bell" aria-hidden="true"></i></button>
     </div>
   </header>
 
@@ -45,30 +45,13 @@
       class="searchInput"
       placeholder="მოძებნე გაჩერება..."
       autocomplete="off"
+      aria-label="გაჩერების ძებნა"
+      role="searchbox"
     />
     <div class="searchResults" id="searchResults"></div>
   </div>
  
   <div id="map"></div>
- 
-  <div class="legend">
-    <div class="legend__item">
-      <span class="legend__dot legend__dot--inspector"></span>
-      <span>კონტროლიორი</span>
-    </div>
-    <div class="legend__item">
-      <span class="legend__dot legend__dot--clear"></span>
-      <span>თავისუფალია</span>
-    </div>
-    <div class="legend__item">
-      <span class="legend__dot legend__dot--stale"></span>
-      <span>შესაძლოა აღარ არის</span>
-    </div>
-    <div class="legend__item">
-      <span class="legend__dot legend__dot--unknown"></span>
-      <span>უცნობი</span>
-    </div>
-  </div>
  
   <!-- Bottom-sheet modal for reporting a stop -->
   <div class="overlay hidden" id="overlay"></div>
@@ -83,21 +66,46 @@
  
     <div class="arrivalsSection">
       <h3>მოსვლის დრო</h3>
-      <div class="arrivalsList">
-        <p class="arrivalsNote">ეს ფუნქცია მალე დაემატება</p>
+      <div class="arrivalsList" id="arrivalsList">
+        <div class="emptyState">
+          <div class="emptyState__icon">🚏</div>
+          <div class="emptyState__title">მონაცემი მალე დაემატება</div>
+          <div class="emptyState__sub">ავტობუსების რეალური დროის მონაცემები მუშავდება</div>
+        </div>
       </div>
     </div>
  
     <div class="sheet__actions">
-      <button class="reportBtn reportBtn--inspector" id="btnInspector">
+      <button class="reportBtn reportBtn--inspector" id="btnInspector" aria-label="კონტროლიორი დგას — მონიშვნის გაგზავნა">
         <span class="reportBtn__dot reportBtn__dot--inspector"></span>კონტროლიორი დგას
       </button>
-      <button class="reportBtn reportBtn--clear" id="btnClear">
+      <button class="reportBtn reportBtn--clear" id="btnClear" aria-label="არავინაა — მონიშვნის გაგზავნა">
         <span class="reportBtn__dot reportBtn__dot--clear"></span>არავინაა
       </button>
     </div>
+
+    <div class="sheet__legendWrap">
+      <div class="sheet__legend legend">
+        <div class="legend__item">
+          <span class="legend__dot legend__dot--inspector"></span>
+          <span>კონტროლიორი</span>
+        </div>
+        <div class="legend__item">
+          <span class="legend__dot legend__dot--clear"></span>
+          <span>თავისუფალია</span>
+        </div>
+        <div class="legend__item">
+          <span class="legend__dot legend__dot--stale"></span>
+          <span>შესაძლოა აღარ არის</span>
+        </div>
+        <div class="legend__item">
+          <span class="legend__dot legend__dot--unknown"></span>
+          <span>უცნობი</span>
+        </div>
+      </div>
+    </div>
  
-    <button class="sheet__close" id="sheetClose">დახურვა</button>
+    <button class="sheet__close" id="sheetClose" aria-label="პანელის დახურვა">დახურვა</button>
   </div>
 
   <!-- "ჩაკეცილი" ზოლი — ჩანს, როცა sheet დაკეცილია, მაგრამ გაჩერება
@@ -116,10 +124,10 @@
   <div class="menuDrawer hidden" id="menuDrawer">
     <div class="menuDrawer__header">
       <div class="menuDrawer__brand">
-        <span class="topbar__dot topbar__dot--small"></span>
+        <span class="topbar__dot topbar__dot--small" aria-hidden="true"></span>
         <span class="menuDrawer__brandName">სად არის კონტროლიორი?</span>
       </div>
-      <button class="iconbtn" id="menuClose" aria-label="დახურვა"><i data-lucide="x"></i></button>
+      <button class="iconbtn" id="menuClose" aria-label="მენიუს დახურვა"><i data-lucide="x" aria-hidden="true"></i></button>
     </div>
 
     <div class="menuDrawer__body">
@@ -127,11 +135,11 @@
       <div class="menuDrawer__citySection">
         <h3 class="menuDrawer__sectionTitle menuDrawer__sectionTitle--city">ქალაქი</h3>
         <div class="citySwitcher" id="citySwitcher" role="group" aria-label="ქალაქის არჩევა">
-          <button type="button" class="citySwitcher__btn" data-city="tbilisi">
-            <i data-lucide="map-pin"></i> თბილისი
+          <button type="button" class="citySwitcher__btn" data-city="tbilisi" aria-label="თბილისის არჩევა" aria-pressed="false">
+            <i data-lucide="map-pin" aria-hidden="true"></i> თბილისი
           </button>
-          <button type="button" class="citySwitcher__btn" data-city="rustavi">
-            <i data-lucide="map-pin"></i> რუსთავი
+          <button type="button" class="citySwitcher__btn" data-city="rustavi" aria-label="რუსთავის არჩევა" aria-pressed="false">
+            <i data-lucide="map-pin" aria-hidden="true"></i> რუსთავი
           </button>
         </div>
       </div>
@@ -182,7 +190,7 @@
             <p class="menuDrawer__text">YS7 - BTU სტუდენტი</p>
             <div class="menuDrawer__links">
               <a href="https://www.linkedin.com/in/ioseb-makharashvili-93627a413/" class="menuDrawer__link"><i data-lucide="linkedin"></i>Linkedin</a>
-              <a href="mailto:makhrrr756@gmail.com" class="menuDrawer__link"><i data-lucide="mail"></i> კონტაქტი</a>
+              <a href="/cdn-cgi/l/email-protection#3f525e54574d4d4d080a097f58525e5653115c5052" class="menuDrawer__link"><i data-lucide="mail"></i> კონტაქტი</a>
             </div>
           </div>
         </div>
@@ -257,8 +265,8 @@
         <i data-lucide="clock"></i>
         <span>ვმუშაობთ 07:00 – 23:30</span>
       </div>
-      <button class="nightOverlay__dismiss" id="nightClose">
-        <i data-lucide="map"></i>
+      <button class="nightOverlay__dismiss" id="nightClose" aria-label="ღამის რეჟიმის მოხსნა — რუკის ნახვა">
+        <i data-lucide="map" aria-hidden="true"></i>
         რუკის ნახვა
       </button>
     </div>
@@ -281,15 +289,16 @@
       placeholder="მაგ. მოგზაური97"
       maxlength="20"
       autocomplete="off"
+      aria-label="მეტსახელი"
     />
     <p class="nicknameError" id="nicknameError"></p>
     <div class="sheet__actions">
-      <button class="reportBtn reportBtn--clear" id="nicknameSave">შენახვა</button>
+      <button class="reportBtn reportBtn--clear" id="nicknameSave" aria-label="მეტსახელის შენახვა">შენახვა</button>
     </div>
-    <button class="sheet__close" id="nicknameSkip">არა, მადლობა</button>
+    <button class="sheet__close" id="nicknameSkip" aria-label="მეტსახელის გამოტოვება">არა, მადლობა</button>
   </div>
 
-  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
   <script>
     /* ქალაქის მიხედვით stops/routes ფაილების არჩევა — localStorage-ში
@@ -303,6 +312,7 @@
       document.write('<script src="' + routesSrc + '"><\/script>');
     })();
   </script>
-  <script src="script.js?v=2"></script>
+  <script src="script.js?v=3"></script>
+<script defer src="https://static.cloudflareinsights.com/beacon.min.js/v4513226cdae34746b4dedf0b4dfa099e1781791509496" integrity="sha512-ZE9pZaUXND66v380QUtch/5sE9tPFh2zg45pR2PB0CVkCtOREv2AJKkSidISWkysEuQ0EH8faUU5du78bx87UQ==" data-cf-beacon='{"version":"2024.11.0","token":"3279d41ec7804124a29acc6e692f9a2b","server_timing":{"name":{"cfCacheStatus":true,"cfEdge":true,"cfExtPri":true,"cfL4":true,"cfOrigin":true,"cfSpeedBrain":true},"location_startswith":null}}' crossorigin="anonymous"></script>
 </body>
 </html>

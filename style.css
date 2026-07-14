@@ -132,24 +132,26 @@ html, body{
   color: var(--bus-blue) !important;
 }
 
-/* ---------- Zoom control ---------- */
+/* ---------- Zoom control (ცერა თითის ზონაში — bottom-right) ---------- */
 .leaflet-control-zoom{
   border:none !important;
   border-radius: 14px !important;
   overflow:hidden;
   box-shadow: var(--shadow);
+  margin-bottom: calc(10px + env(safe-area-inset-bottom)) !important;
+  margin-right: calc(10px + env(safe-area-inset-right)) !important;
 }
 .leaflet-control-zoom a{
   background: var(--surface) !important;
   color: var(--text) !important;
-  width:40px !important; height:40px !important; line-height:40px !important;
-  font-size:18px !important;
+  width:44px !important; height:44px !important; line-height:44px !important;
+  font-size:20px !important;
   border:none !important;
-  transition: background-color 0.15s ease, transform 0.1s ease;
+  transition: transform 0.12s cubic-bezier(0.25, 1, 0.5, 1), background-color 0.15s ease;
 }
 .leaflet-control-zoom-in{ border-bottom: 1px solid var(--grey-soft) !important; }
 .leaflet-control-zoom a:hover{ background: var(--grey-soft) !important; }
-.leaflet-control-zoom a:active{ transform: scale(0.9); }
+.leaflet-control-zoom a:active{ transform: scale(0.85); background: var(--chrome-btn-bg-hover) !important; }
 
 /* ---------- Top bar ---------- */
 .topbar{
@@ -157,12 +159,12 @@ html, body{
   display:flex; 
   align-items:flex-start; 
   justify-content:space-between;
-  padding: calc(14px + env(safe-area-inset-top)) calc(16px + env(safe-area-inset-right)) 85px calc(16px + env(safe-area-inset-left)); /* სივრცე ძებნის ველისთვის + iOS notch */
+  padding: calc(14px + env(safe-area-inset-top)) calc(16px + env(safe-area-inset-right)) 20px calc(16px + env(safe-area-inset-left)); /* compact — search moved to bottom */
   
   /* მყარი ფერის მაგივრად ვიყენებთ რბილ გრადიენტს, რომელიც ნელ-ნელა ქრება */
-  background: linear-gradient(180deg, rgba(15,17,21,0.95) 0%, rgba(15,17,21,0.85) 45%, rgba(15,17,21,0) 100%);
+  background: linear-gradient(180deg, rgba(15,17,21,0.95) 0%, rgba(15,17,21,0.70) 60%, rgba(15,17,21,0) 100%);
   pointer-events:none;
-  box-shadow: none; /* ჩრდილი აღარ გვინდა, ის ხისტ ხაზს აჩენდა */
+  box-shadow: none;
 }
 .topbar > *{ pointer-events:auto; }
 
@@ -203,16 +205,19 @@ html, body{
 }
 
 .iconbtn{
-  width:34px; height:34px; border-radius:50%;
+  width:38px; height:38px; border-radius:50%;
   border:1px solid var(--chrome-btn-border);
   background: var(--chrome-btn-bg);
   color: var(--chrome-text);
   font-weight:700;
   font-size:15px;
   cursor:pointer;
-  transition: background-color 0.15s ease;
+  transition: transform 0.12s cubic-bezier(0.25, 1, 0.5, 1), background-color 0.15s ease;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
 }
 .iconbtn:hover{ background: var(--chrome-btn-bg-hover); }
+.iconbtn:active{ transform: scale(0.88); }
 .iconbtn:focus-visible{ outline: 2px solid var(--bus-blue); outline-offset: 2px; }
 
 /* ჰედერის ღილაკების გაუმჯობესებული სტილი */
@@ -226,33 +231,40 @@ html, body{
   background: rgba(255,255,255,0.18); 
 }
 
-/* ---------- Search ---------- */
+/* ---------- Search (ქვედა მესამედში — thumb zone) ---------- */
 .searchWrap{
-  position:absolute; top: calc(62px + env(safe-area-inset-top)); left: calc(14px + env(safe-area-inset-left)); z-index:600;
+  position:absolute; bottom: calc(110px + env(safe-area-inset-bottom)); left: calc(14px + env(safe-area-inset-left)); z-index:600;
   width: min(360px, calc(100% - 28px - env(safe-area-inset-left) - env(safe-area-inset-right)));
 }
 .searchInput{
   width:100%;
   border:none; border-radius: 14px;
-  padding: 12px 16px;
+  padding: 14px 16px 14px 42px;
   font-family: inherit;
-  font-size: 14px;
+  font-size: 15px;
   color: var(--text);
   background: var(--surface);
   box-shadow: var(--shadow);
+  -webkit-tap-highlight-color: transparent;
 }
 .searchInput:focus-visible{ outline: 2px solid var(--bus-blue); outline-offset: 1px; }
 
 .searchResults{
   display:none;
-  position:absolute; top: calc(100% + 6px); left:0; right:0;
+  position:absolute; bottom: calc(100% + 6px); left:0; right:0;
   background: var(--surface);
   border-radius: 14px;
   box-shadow: var(--shadow);
-  max-height: 280px;
+  max-height: 260px;
   overflow-y: auto;
 }
 .searchResults.show{ display:block; }
+
+.searchResult--empty .emptyState{
+  padding: 18px 12px;
+  gap: 6px;
+}
+.searchResult--empty .emptyState__icon{ font-size: 32px; }
 
 .searchResult{
   padding: 10px 16px;
@@ -275,19 +287,21 @@ html, body{
 }
 .searchResult--empty:hover{ background: none; }
 
-/* ---------- Legend ---------- */
+/* ---------- Legend (ახლა bottom sheet-ის ნაწილია, რუკაზე აღარ ცურავს) ----------
+   ძველი floating legend — display:none (Decluttering).
+   sheet-შიდა .sheet__legend .legend იღებს display:flex-ს. */
 .legend{
-  position:absolute; left: calc(14px + env(safe-area-inset-left)); bottom: calc(24px + env(safe-area-inset-bottom)); z-index:500;
-  background: var(--chrome-bg-solid);
-  color: var(--chrome-text);
-  border-radius: 14px;
-  padding: 10px 14px;
-  display:flex; flex-direction:column; gap:6px;
-  font-size: 12.5px;
-  box-shadow: var(--shadow);
-  transition: opacity 0.2s ease, transform 0.2s ease;
+  display:none;
 }
-.legend__item{ display:flex; align-items:center; gap:8px; }
+/* sheet-ის შიდა ლეგენდა — ჰორიზონტალური, კომპაქტური */
+.sheet__legendWrap .legend,
+.sheet__legend{
+  display:flex; flex-wrap:wrap; gap:8px 12px;
+  padding: 10px 0 0;
+  font-size: 12px;
+}
+.sheet__legendWrap .legend__item,
+.sheet__legend .legend__item{ display:flex; align-items:center; gap:5px; }
 .legend__dot{ width:10px; height:10px; border-radius:50%; flex-shrink:0; }
 .legend__dot--inspector{ background: var(--red); }
 .legend__dot--clear{ background: var(--green); }
@@ -348,18 +362,20 @@ html, body{
   animation: pulseMarker 1.6s infinite;
 }
 
-/* ---------- Locate button ---------- */
+/* ---------- Locate button (ცერა თითის ზონაში, zoom-ის ქვემოთ) ---------- */
 .locateBtn{
-  width:40px; height:40px; border-radius:50%;
+  width:44px; height:44px; border-radius:50%;
   background: var(--surface); color: var(--text);
   border:none; box-shadow: var(--shadow);
-  font-size:18px;
+  font-size:20px;
   display:flex; align-items:center; justify-content:center;
   cursor:pointer;
-  transition: background-color 0.15s ease, transform 0.1s ease;
+  transition: transform 0.12s cubic-bezier(0.25, 1, 0.5, 1), background-color 0.15s ease;
+  margin-bottom: calc(10px + env(safe-area-inset-bottom)) !important;
+  margin-right: calc(10px + env(safe-area-inset-right)) !important;
 }
 .locateBtn:hover{ background: var(--grey-soft); }
-.locateBtn:active{ transform: scale(0.92); }
+.locateBtn:active{ transform: scale(0.85); }
 .locateBtn:focus-visible{ outline: 2px solid var(--bus-blue); outline-offset: 2px; }
 .locateBtn:disabled{ opacity:0.6; cursor:wait; }
 
@@ -376,7 +392,7 @@ html, body{
   100% { box-shadow: 0 0 0 0 rgba(139,92,246,0); }
 }
 
-/* ---------- Overlay + bottom sheet ---------- */
+/* ---------- Overlay + bottom sheet (GPU-აჩქარებული ანიმაციები) ---------- */
 .overlay{
   position:absolute; inset:0; z-index:900;
   background: rgba(10,12,20,0.45);
@@ -384,6 +400,7 @@ html, body{
   opacity: 1;
   visibility: visible;
   transition: opacity 0.28s ease, visibility 0.28s ease;
+  will-change: opacity;
 }
 .overlay.hidden{
   opacity: 0;
@@ -394,35 +411,41 @@ html, body{
   position:absolute; left:0; right:0; bottom:0; z-index:950;
   background: var(--surface);
   border-radius: 22px 22px 0 0;
-  padding: 10px 22px calc(26px + env(safe-area-inset-bottom));
+  padding: 10px 22px calc(30px + env(safe-area-inset-bottom));
   max-width: 480px;
   max-height: 85vh;
   overflow-y: auto;
   margin: 0 auto;
   box-shadow: 0 -10px 30px rgba(0,0,0,0.3);
+  /* GPU-accelerated: მხოლოდ transform + opacity — NEVER height/top/margin! */
   transform: translateY(0);
   visibility: visible;
-  transition: transform 0.3s cubic-bezier(0.25, 1, 0.5, 1), visibility 0.3s;
+  transition: transform 0.32s cubic-bezier(0.22, 1, 0.36, 1), visibility 0.32s;
+  will-change: transform;
+  /* Swipe-to-close: touch-action საშუალებას აძლევს pan-y-ს */
+  touch-action: pan-y;
 }
 .sheet.hidden{
   transform: translateY(105%);
   visibility: hidden;
 }
 
-/* ---------- ჩაკეცილი ზოლი (sheetPeek) ---------- */
+/* ---------- ჩაკეცილი ზოლი (sheetPeek) — GPU-აჩქარებული ---------- */
 .sheetPeek{
-  position:absolute; left:0; right:0; bottom: env(safe-area-inset-bottom); z-index:940;
+  position:absolute; left:0; right:0; bottom: calc(12px + env(safe-area-inset-bottom)); z-index:940;
   max-width: 480px;
-  margin: 0 auto 14px;
+  margin: 0 auto;
   display:flex; align-items:center; gap:10px;
   background: var(--surface);
   border-radius: 16px;
-  padding: 12px 14px;
-  box-shadow: 0 6px 20px rgba(0,0,0,0.3);
+  padding: 14px 16px;
+  box-shadow: 0 6px 24px rgba(0,0,0,0.28);
+  /* GPU: transform + opacity only */
   transform: translateY(0);
   opacity: 1;
   visibility: visible;
-  transition: transform 0.28s cubic-bezier(0.25, 1, 0.5, 1), opacity 0.22s ease, visibility 0.28s;
+  transition: transform 0.28s cubic-bezier(0.22, 1, 0.36, 1), opacity 0.22s ease, visibility 0.28s;
+  will-change: transform;
 }
 .sheetPeek.hidden{
   transform: translateY(140%);
@@ -500,17 +523,18 @@ html, body{
 }
 .routeChip{
   display:inline-flex; align-items:center; justify-content:center;
-  min-width: 28px;
-  padding: 4px 9px;
-  border-radius: 7px;
+  min-width: 30px;
+  padding: 6px 10px;
+  border-radius: 8px;
   font-size: 12.5px; font-weight:700;
   color: #fff;
   cursor: pointer;
-  transition: transform 0.1s ease, opacity 0.15s ease;
+  transition: transform 0.12s cubic-bezier(0.25, 1, 0.5, 1), opacity 0.12s ease;
   user-select: none;
+  -webkit-tap-highlight-color: transparent;
 }
 .routeChip:hover{ opacity: 0.85; }
-.routeChip:active{ transform: scale(0.94); }
+.routeChip:active{ transform: scale(0.9); opacity: 0.75; }
 .routeChip:focus-visible{ outline: 2px solid var(--text); outline-offset: 2px; }
 .routeChip--bus{ background: var(--route-bus-color); font-family: var(--font-display); letter-spacing: 0.2px; }
 .routeChip--minibus{ background: var(--bus-blue); font-family: var(--font-display); letter-spacing: 0.2px; }
@@ -595,17 +619,21 @@ html, body{
 .reportBtn{
   position: relative;
   border:none; border-radius: 14px;
-  padding: 14px 16px 14px 22px;
+  padding: 16px 16px 16px 22px;
   font-size: 15px; font-weight:700;
   font-family: inherit;
   cursor:pointer;
   text-align:left;
   display:flex; align-items:center;
-  transition: transform 0.08s ease;
+  /* მიკრო-ინტერაქციები: GPU-accelerated scale + opacity */
+  transition: transform 0.12s cubic-bezier(0.25, 1, 0.5, 1), opacity 0.12s ease, box-shadow 0.12s ease;
   overflow: hidden;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
 }
-.reportBtn:active{ transform: scale(0.98); }
-.reportBtn:disabled{ opacity: 0.55; cursor: not-allowed; }
+/* :active — "ჩაწევის" ეფექტი (scale down) */
+.reportBtn:active{ transform: scale(0.955); opacity: 0.9; }
+.reportBtn:disabled{ opacity: 0.45; cursor: not-allowed; transform: none; }
 .reportBtn:focus-visible{ outline: 2px solid var(--bus-blue); outline-offset: 2px; }
 
 .reportBtn--inspector{
@@ -634,13 +662,18 @@ html, body{
   border:none; background: var(--grey-soft);
   color: var(--text);
   border-radius: 14px;
-  padding: 12px;
+  padding: 14px;
   font-family: inherit;
   font-weight: 600;
   font-size: 14px;
   cursor:pointer;
   flex-shrink:0;
+  transition: transform 0.12s cubic-bezier(0.25, 1, 0.5, 1), background-color 0.15s ease;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
 }
+.sheet__close:active{ transform: scale(0.955); }
+.sheet__close:focus-visible{ outline: 2px solid var(--bus-blue); outline-offset: 2px; }
 
 /* ---------- Night overlay ---------- */
 .nightOverlay{
@@ -779,14 +812,13 @@ html, body{
 /* ---------- Search icon ---------- */
 .searchIcon{
   position: absolute;
-  left: 14px;
-  top: 14px;
-  width: 15px; height: 15px;
+  left: 16px;
+  top: 16px;
+  width: 16px; height: 16px;
   color: var(--grey);
   pointer-events: none;
   z-index: 1;
 }
-.searchInput{ padding-left: 40px; }
 
 /* ---------- Status dots ---------- */
 .statusDot{
@@ -1259,6 +1291,11 @@ html, body{
   .activityPanel__header{ cursor:default; }
   #map{ right: 340px; }
   .topbar{ right: 340px; }
+  /* Desktop-ზე search ისევ top-ში */
+  .searchWrap{ top: 74px; bottom: auto; left: 24px; width: min(400px, calc(100% - 48px - 340px)); }
+  .searchResults{ bottom: auto; top: calc(100% + 6px); }
+  .sheet{ bottom: 24px; }
+  .sheetPeek{ bottom: 24px; }
 }
 
 /* Mobile */
@@ -1288,6 +1325,41 @@ html, body{
     transform: translateY(0);
     transition: height 0.28s ease, opacity 0.22s ease, transform 0.28s ease, visibility 0s linear 0s;
   }
+}
+
+/* ============================================================
+   ცარიელი მდგომარეობები (Empty States) — ილუსტრაციები + ინსტრუქციები
+   ============================================================ */
+.emptyState{
+  display:flex; flex-direction:column; align-items:center;
+  text-align:center;
+  padding: 28px 20px;
+  gap: 12px;
+}
+.emptyState__icon{
+  font-size: 44px;
+  line-height: 1;
+  margin-bottom: 4px;
+  opacity: 0.7;
+}
+.emptyState__title{
+  font-size: 15px; font-weight:700;
+  color: var(--text);
+  margin:0;
+}
+.emptyState__sub{
+  font-size: 12.5px;
+  color: var(--grey);
+  line-height: 1.5;
+  max-width: 260px;
+  margin:0;
+}
+
+/* sheet-ის legend — ჰორიზონტალური, კომპაქტური, bottom-ში */
+.sheet__legendWrap{
+  margin-top: 16px;
+  padding-top: 12px;
+  border-top: 1px solid var(--grey-soft);
 }
 
 /* ---------- Toast ---------- */
@@ -1390,14 +1462,14 @@ html, body{
    ვიწრო საძებნი ველი და პატარა legend დიდ ეკრანზე დაკარგული გამოიყურებოდა.
    აქ მხოლოდ chrome ელემენტების ზომა/განლაგება იცვლება, არა ლოგიკა. */
 @media (min-width: 900px){
-  .topbar{ padding: 20px 24px 90px 24px; }
+  .topbar{ padding: 20px 24px 20px 24px; }
   .topbar__title h1{ font-size: 21px; }
 
-  .searchWrap{ top: 74px; left: 24px; width: min(400px, calc(100% - 48px)); }
+  /* Desktop-ზე search ისევ top-ში */
+  .searchWrap{ top: 74px; bottom: auto; left: 24px; width: min(400px, calc(100% - 48px)); }
   .searchInput{ padding: 13px 18px 13px 42px; font-size: 14.5px; }
   .searchIcon{ left: 18px; top: 15px; }
-
-  .legend{ left: 24px; bottom: 28px; padding: 12px 16px; font-size: 13px; }
+  .searchResults{ bottom: auto; top: calc(100% + 6px); }
 
   .locateBtn{ width: 44px; height: 44px; font-size: 20px; }
 
@@ -1420,12 +1492,11 @@ html, body{
   .sheetPeek.hidden{ transform: translateX(110%); opacity:0; }
 }
 
-/* დამატებით — ძალიან ფართო ეკრანებზე (>1400px) ჩატი/რუკის კონტრასტისთვის
-   საძებნი და ჰედერი ოდნავ კიდევ იზრდება, რომ ცარიელი სივრცის
-   განცდა არ დარჩეს. */
+/* დამატებით — ძალიან ფართო ეკრანებზე (>1400px) */
 @media (min-width: 1400px){
   .topbar__title h1{ font-size: 23px; }
-  .searchWrap{ width: min(440px, calc(100% - 48px)); }
+  .searchWrap{ top: 74px; bottom: auto; width: min(440px, calc(100% - 48px)); }
+  .searchResults{ bottom: auto; top: calc(100% + 6px); }
 }
 
 /* მენიუს დრავერი დესკტოპზე — 300px ვიწროა ფართო ეკრანზე, ტექსტი
