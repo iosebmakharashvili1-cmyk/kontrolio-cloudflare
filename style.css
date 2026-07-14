@@ -1053,6 +1053,7 @@ html, body{
   transition: background-color 0.15s;
 }
 .menuDrawer__link [data-lucide]{ width:13px; height:13px; }
+.menuDrawer__inlineIcon{ width:13px; height:13px; flex-shrink:0; vertical-align:-2px; }
 .menuDrawer__link:hover{ background: var(--chrome-btn-bg-hover); }
 
 /* ---------- ქალაქის switcher (menu drawer-ის თავში) ---------- */
