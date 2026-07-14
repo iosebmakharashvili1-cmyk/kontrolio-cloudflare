@@ -237,24 +237,26 @@ html, body{
   display:flex; align-items:center; gap:0;
 }
 
-/* Toggle button — floating icon */
+/* Toggle button — floating icon (NOT using .iconbtn to avoid topbar override) */
 .searchToggleBtn{
-  width:44px; height:44px;
+  width:46px; height:46px;
   border-radius:50%;
-  border: 1.5px solid var(--chrome-btn-border);
+  border: none;
   background: var(--surface);
   color: var(--text);
   font-size: 18px;
   display:flex; align-items:center; justify-content:center;
   cursor:pointer;
-  box-shadow: var(--shadow);
+  box-shadow: 0 4px 16px rgba(0,0,0,0.18);
   flex-shrink:0;
   z-index:2;
-  transition: transform 0.12s cubic-bezier(0.25, 1, 0.5, 1), opacity 0.18s ease, background-color 0.15s ease;
+  transition: transform 0.12s cubic-bezier(0.25, 1, 0.5, 1), opacity 0.18s ease;
   user-select: none;
   -webkit-tap-highlight-color: transparent;
+  -webkit-appearance: none;
+  appearance: none;
+  margin:0; padding:0;
 }
-.searchToggleBtn:hover{ background: var(--grey-soft); }
 .searchToggleBtn:active{ transform: scale(0.88); }
 .searchToggleBtn[aria-expanded="true"]{ opacity: 0; pointer-events: none; }
 
@@ -265,13 +267,11 @@ html, body{
   width: 0;
   overflow: hidden;
   opacity: 0;
-  transition: width 0.25s cubic-bezier(0.22, 1, 0.36, 1), opacity 0.18s ease, margin 0.25s ease;
-  margin-left: 0;
+  transition: width 0.28s cubic-bezier(0.22, 1, 0.36, 1), opacity 0.18s ease;
 }
 .searchWrap.expanded .searchInputWrap{
-  width: min(290px, calc(100vw - 100px - env(safe-area-inset-left) - env(safe-area-inset-right)));
+  width: min(300px, calc(100vw - 88px - env(safe-area-inset-left) - env(safe-area-inset-right)));
   opacity: 1;
-  margin-left: 8px;
 }
 
 .searchInput{
@@ -282,11 +282,26 @@ html, body{
   font-size: 15px;
   color: var(--text);
   background: var(--surface);
-  box-shadow: var(--shadow);
+  box-shadow: 0 4px 16px rgba(0,0,0,0.18);
   -webkit-tap-highlight-color: transparent;
   flex-shrink:0;
+  -webkit-appearance: none;
+  appearance: none;
+  margin:0;
 }
 .searchInput:focus-visible{ outline: 2px solid var(--bus-blue); outline-offset: 1px; }
+
+/* Search icon inside the expanded input */
+.searchInputWrap .searchIcon{
+  position: absolute;
+  left: 15px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 16px; height: 16px;
+  color: var(--grey);
+  pointer-events: none;
+  z-index: 1;
+}
 
 .searchResults{
   display:none;
@@ -294,7 +309,7 @@ html, body{
   background: var(--surface);
   border-radius: 14px;
   box-shadow: var(--shadow);
-  max-height: 260px;
+  max-height: min(280px, 50vh);
   overflow-y: auto;
 }
 .searchResults.show{ display:block; }
@@ -1507,7 +1522,8 @@ html, body{
   /* Desktop-ზე search ისევ top-ში */
   .searchWrap{ top: 74px; bottom: auto; left: 24px; width: min(400px, calc(100% - 48px)); }
   .searchInput{ padding: 13px 18px 13px 42px; font-size: 14.5px; }
-  .searchIcon{ left: 18px; top: 15px; }
+  /* Desktop: search icon absolute position */
+  .searchInputWrap .searchIcon{ left: 18px; top: 50%; transform: translateY(-50%); }
   .searchResults{ bottom: auto; top: calc(100% + 6px); }
   /* Desktop: always expanded */
   .searchToggleBtn{ display:none; }

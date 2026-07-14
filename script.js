@@ -1508,14 +1508,16 @@ searchResults.addEventListener("click", (e) => {
 });
 
 document.addEventListener("click", (e) => {
-  if (!e.target.closest(".searchWrap")) searchResults.classList.remove("show");
-});
-
-searchInput.addEventListener("keydown", (e) => {
-  if (e.key === "Escape") {
-    searchResults.classList.remove("show");
-    searchInput.blur();
+  // Collapse search on outside click if empty
+  if (searchToggleBtn && searchWrap.classList.contains("expanded")) {
+    if (!searchWrap.contains(e.target) && !searchInput.value.trim()) {
+      searchWrap.classList.remove("expanded");
+      searchToggleBtn.setAttribute("aria-expanded", "false");
+      searchResults.classList.remove("show");
+    }
   }
+  // Close search results on outside click (existing behavior)
+  if (!e.target.closest(".searchWrap")) searchResults.classList.remove("show");
 });
 
 /* ---------- პერიოდული სინქრონიზაცია სერვერთან ---------- */
