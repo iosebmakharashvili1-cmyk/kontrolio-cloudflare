@@ -30,13 +30,15 @@
     transition: max-width 0.2s ease;
   }
   @media (min-width: 900px){
-    .rcPage{ max-width: 1100px; }
+    .rcPage{ max-width: 1280px; }
     .rcPage.wide-list .rcListGrid{
       display:grid;
       grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
       gap: 14px;
     }
     .rcPage.wide-list .rcCard{ margin-bottom:0; }
+    .rcDrawWrap.active{ padding: 18px 24px 40px; }
+    .rcDetailWrap.active{ padding: 18px 24px 40px; }
   }
 
   .rcPage__header{
@@ -177,10 +179,10 @@
 
   /* Desktop: side-by-side */
   @media (min-width: 900px){
-    .rcDrawWrap.active{ flex-direction:row; align-items:flex-start; }
-    .rcDrawWrap__mapCol{ flex:1.3; position:sticky; top:69px; }
-    .rcDrawWrap__formCol{ flex:1; min-width:360px; max-width:420px; }
-    #rcMap{ height: calc(100vh - 69px - 52px); min-height:420px; }
+    .rcDrawWrap.active{ flex-direction:row; align-items:flex-start; gap:24px; }
+    .rcDrawWrap__mapCol{ flex:2; position:sticky; top:69px; }
+    .rcDrawWrap__formCol{ flex:0 0 380px; width:380px; }
+    #rcMap{ height: calc(100vh - 69px - 52px); min-height:420px; border-radius:14px; overflow:hidden; }
   }
 
   /* Mobile: 2-step wizard — Step 1 = full map, Step 2 = form only */
@@ -400,10 +402,10 @@
     width:100%; height: 52vh; min-height:320px;
   }
   @media (min-width: 900px){
-    .rcDetailWrap.active{ flex-direction:row; align-items:flex-start; }
-    .rcDetailWrap__mapCol{ flex:1.3; position:sticky; top:69px; }
-    .rcDetailWrap__infoCol{ flex:1; min-width:360px; max-width:420px; }
-    #rcDetailFullMap{ height: calc(100vh - 69px); min-height:420px; }
+    .rcDetailWrap.active{ flex-direction:row; align-items:flex-start; gap:24px; }
+    .rcDetailWrap__mapCol{ flex:2; position:sticky; top:69px; }
+    .rcDetailWrap__infoCol{ flex:0 0 380px; width:380px; }
+    #rcDetailFullMap{ height: calc(100vh - 69px); min-height:420px; border-radius:14px; overflow:hidden; }
   }
   .rcDetailInfo{ padding: 16px 18px 40px; overflow-y:auto; }
   .rcDetailInfo__badgeRow{ display:flex; align-items:center; gap:10px; margin-bottom:6px; }
