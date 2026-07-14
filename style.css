@@ -162,7 +162,7 @@ html, body{
   display:flex; 
   align-items:flex-start; 
   justify-content:space-between;
-  padding: 14px 16px 85px 16px; /* სივრცე ძებნის ველისთვის */
+  padding: calc(14px + env(safe-area-inset-top)) calc(16px + env(safe-area-inset-right)) 85px calc(16px + env(safe-area-inset-left)); /* სივრცე ძებნის ველისთვის + iOS notch */
   
   /* მყარი ფერის მაგივრად ვიყენებთ რბილ გრადიენტს, რომელიც ნელ-ნელა ქრება */
   background: linear-gradient(180deg, rgba(15,17,21,0.95) 0%, rgba(15,17,21,0.85) 45%, rgba(15,17,21,0) 100%);
@@ -218,6 +218,7 @@ html, body{
   transition: background-color 0.15s ease;
 }
 .iconbtn:hover{ background: var(--chrome-btn-bg-hover); }
+.iconbtn:focus-visible{ outline: 2px solid var(--bus-blue); outline-offset: 2px; }
 
 /* ჰედერის ღილაკების გაუმჯობესებული სტილი */
 .topbar .iconbtn{
@@ -232,8 +233,8 @@ html, body{
 
 /* ---------- Search ---------- */
 .searchWrap{
-  position:absolute; top:62px; left:14px; z-index:600;
-  width: min(360px, calc(100% - 28px));
+  position:absolute; top: calc(62px + env(safe-area-inset-top)); left: calc(14px + env(safe-area-inset-left)); z-index:600;
+  width: min(360px, calc(100% - 28px - env(safe-area-inset-left) - env(safe-area-inset-right)));
 }
 .searchInput{
   width:100%;
@@ -245,7 +246,7 @@ html, body{
   background: var(--surface);
   box-shadow: var(--shadow);
 }
-.searchInput:focus{ outline: 2px solid var(--bus-blue); }
+.searchInput:focus-visible{ outline: 2px solid var(--bus-blue); outline-offset: 1px; }
 
 .searchResults{
   display:none;
@@ -281,7 +282,7 @@ html, body{
 
 /* ---------- Legend ---------- */
 .legend{
-  position:absolute; left:14px; bottom:24px; z-index:500;
+  position:absolute; left: calc(14px + env(safe-area-inset-left)); bottom: calc(24px + env(safe-area-inset-bottom)); z-index:500;
   background: var(--chrome-bg-solid);
   color: var(--chrome-text);
   border-radius: 14px;
@@ -289,6 +290,7 @@ html, body{
   display:flex; flex-direction:column; gap:6px;
   font-size: 12.5px;
   box-shadow: var(--shadow);
+  transition: opacity 0.2s ease, transform 0.2s ease;
 }
 .legend__item{ display:flex; align-items:center; gap:8px; }
 .legend__dot{ width:10px; height:10px; border-radius:50%; flex-shrink:0; }
@@ -363,6 +365,7 @@ html, body{
 }
 .locateBtn:hover{ background: var(--grey-soft); }
 .locateBtn:active{ transform: scale(0.92); }
+.locateBtn:focus-visible{ outline: 2px solid var(--bus-blue); outline-offset: 2px; }
 .locateBtn:disabled{ opacity:0.6; cursor:wait; }
 
 .userDot{
@@ -396,7 +399,7 @@ html, body{
   position:absolute; left:0; right:0; bottom:0; z-index:950;
   background: var(--surface);
   border-radius: 22px 22px 0 0;
-  padding: 10px 22px 26px;
+  padding: 10px 22px calc(26px + env(safe-area-inset-bottom));
   max-width: 480px;
   max-height: 85vh;
   overflow-y: auto;
@@ -413,7 +416,7 @@ html, body{
 
 /* ---------- ჩაკეცილი ზოლი (sheetPeek) ---------- */
 .sheetPeek{
-  position:absolute; left:0; right:0; bottom:0; z-index:940;
+  position:absolute; left:0; right:0; bottom: env(safe-area-inset-bottom); z-index:940;
   max-width: 480px;
   margin: 0 auto 14px;
   display:flex; align-items:center; gap:10px;
@@ -513,6 +516,7 @@ html, body{
 }
 .routeChip:hover{ opacity: 0.85; }
 .routeChip:active{ transform: scale(0.94); }
+.routeChip:focus-visible{ outline: 2px solid var(--text); outline-offset: 2px; }
 .routeChip--bus{ background: var(--route-bus-color); font-family: var(--font-display); letter-spacing: 0.2px; }
 .routeChip--minibus{ background: var(--bus-blue); font-family: var(--font-display); letter-spacing: 0.2px; }
 .routeChip--seasonal{ background: #9333ea; font-family: var(--font-display); letter-spacing: 0.2px; }
@@ -607,6 +611,7 @@ html, body{
 }
 .reportBtn:active{ transform: scale(0.98); }
 .reportBtn:disabled{ opacity: 0.55; cursor: not-allowed; }
+.reportBtn:focus-visible{ outline: 2px solid var(--bus-blue); outline-offset: 2px; }
 
 .reportBtn--inspector{
   background: var(--red-soft);
@@ -760,6 +765,7 @@ html, body{
 }
 .nightOverlay__dismiss:hover{ background:rgba(255,255,255,0.18); }
 .nightOverlay__dismiss:active{ transform:scale(0.97); }
+.nightOverlay__dismiss:focus-visible{ outline: 2px solid #fff; outline-offset: 3px; }
 .nightOverlay__dismiss [data-lucide]{ width:15px; height:15px; }
 
 [data-lucide]{
@@ -1354,6 +1360,81 @@ html, body{
 }
 
 /* ---------- Responsive ---------- */
+
+/* ძალიან ვიწრო ეკრანები (< 360px) — სათაური და საძებნი გადაფარვის
+   თავიდან ასაცილებლად შემცირებული, legend ჰორიზონტალურ ჩიპებად იშლება. */
 @media (max-width: 480px){
   .topbar__title h1{ font-size: 15px; }
+}
+@media (max-width: 359px){
+  .topbar__title h1{ font-size: 13px; }
+  .topbar__cityBadge{ display:none; }
+  .legend{
+    flex-direction: row;
+    flex-wrap: wrap;
+    gap: 8px 10px;
+    padding: 8px 10px;
+    max-width: calc(100% - 28px);
+  }
+  .legend__item{ font-size: 11px; }
+}
+
+/* დაბალი სიმაღლის ეკრანები (მაგ. მოკლე მობილურები ლანდსქეიპში) —
+   sheet-ის მაქს სიმაღლე შემცირებულია, რომ ღილაკები ყოველთვის ჩანდეს. */
+@media (max-height: 560px){
+  .sheet{ max-height: 92vh; }
+  .nightOverlay__content{ padding: 24px 32px; }
+  .nightOverlay__moon{ width:56px; height:56px; margin-bottom:14px; }
+  .nightOverlay__title{ font-size:22px; margin-bottom:10px; }
+  .nightOverlay__message{ margin-bottom:14px; }
+  .nightOverlay__time{ margin-bottom:16px; }
+}
+
+/* ---------- Desktop / ფართო ეკრანების მორგება (მთავარი, რუკის გვერდი) ----------
+   მანამდე ეს გვერდი დესკტოპზეც მობილურის იდენტურ განლაგებას იყენებდა —
+   ვიწრო საძებნი ველი და პატარა legend დიდ ეკრანზე დაკარგული გამოიყურებოდა.
+   აქ მხოლოდ chrome ელემენტების ზომა/განლაგება იცვლება, არა ლოგიკა. */
+@media (min-width: 900px){
+  .topbar{ padding: 20px 24px 90px 24px; }
+  .topbar__title h1{ font-size: 21px; }
+
+  .searchWrap{ top: 74px; left: 24px; width: min(400px, calc(100% - 48px)); }
+  .searchInput{ padding: 13px 18px 13px 42px; font-size: 14.5px; }
+  .searchIcon{ left: 18px; top: 15px; }
+
+  .legend{ left: 24px; bottom: 28px; padding: 12px 16px; font-size: 13px; }
+
+  .locateBtn{ width: 44px; height: 44px; font-size: 20px; }
+
+  /* Bottom sheet: მობილურზე ეკრანის ქვედა ნაწილიდან ამოსული ვიწრო
+     ზოლი კარგია touch-ისთვის, მაგრამ დესკტოპზე მაუსით მართვისას
+     გვერდით მცურავი პანელი უფრო ბუნებრივია და მეტ სივრცეს იძლევა. */
+  .sheet{
+    left: auto; right: 24px; bottom: 24px; top: 24px;
+    max-width: 380px; max-height: none;
+    border-radius: 22px;
+    box-shadow: var(--shadow);
+    transform: translateX(0);
+  }
+  .sheet.hidden{ transform: translateX(110%); }
+
+  .sheetPeek{
+    left: auto; right: 24px; bottom: 24px; margin: 0;
+    max-width: 340px;
+  }
+  .sheetPeek.hidden{ transform: translateX(110%); opacity:0; }
+}
+
+/* დამატებით — ძალიან ფართო ეკრანებზე (>1400px) ჩატი/რუკის კონტრასტისთვის
+   საძებნი და ჰედერი ოდნავ კიდევ იზრდება, რომ ცარიელი სივრცის
+   განცდა არ დარჩეს. */
+@media (min-width: 1400px){
+  .topbar__title h1{ font-size: 23px; }
+  .searchWrap{ width: min(440px, calc(100% - 48px)); }
+}
+
+/* მენიუს დრავერი დესკტოპზე — 300px ვიწროა ფართო ეკრანზე, ტექსტი
+   შეკუმშულად გამოიყურება; ოდნავ ვაფართოებთ. */
+@media (min-width: 900px){
+  .menuDrawer{ width: 340px; }
 }
