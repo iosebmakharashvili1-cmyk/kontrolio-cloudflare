@@ -1412,10 +1412,22 @@ const searchInput = document.getElementById("searchInput");
 const searchResults = document.getElementById("searchResults");
 
 if (searchToggleBtn) {
-  searchToggleBtn.addEventListener("click", () => {
-    searchWrap.classList.add("expanded");
-    searchToggleBtn.setAttribute("aria-expanded", "true");
-    searchInput.focus();
+  searchToggleBtn.addEventListener("click", (e) => {
+    e.stopPropagation();
+    if (searchWrap.classList.contains("expanded")) {
+      // Collapse
+      searchWrap.classList.remove("expanded");
+      searchToggleBtn.setAttribute("aria-expanded", "false");
+      searchResults.classList.remove("show");
+      searchInput.value = "";
+      debouncedRenderSearchResults("");
+    } else {
+      // Expand
+      searchWrap.classList.add("expanded");
+      searchToggleBtn.setAttribute("aria-expanded", "true");
+      // Position the inputWrap below the button (already handled by CSS position:absolute; top:4px; left:0)
+      setTimeout(() => searchInput.focus(), 30);
+    }
   });
   searchInput.addEventListener("blur", () => {
     setTimeout(() => {
