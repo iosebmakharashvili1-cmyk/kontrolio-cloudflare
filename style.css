@@ -1,4 +1,20 @@
-/* ---------- Tokens ---------- */
+/* ---------- Brand headline font (LGV Big Noodle) ----------
+   ფაილები აქ ჯერ არ არის — თვითონ ჩაანაცვლე repo-ს root-ში
+   /fonts/ საქაღალდეში, ან შეცვალე ქვემოთ url()-ების მისამართი,
+   თუ სხვაგან განათავსებ. typeface.ge-დან ჩამოტვირთული ZIP-ში
+   ჩვეულებრივ .otf/.ttf ფაილია — თუ woff2 არ გაქვს, წაშალე ის
+   src-სტრიქონი და დატოვე მხოლოდ ttf/otf ხაზი (მუშაობს, უბრალოდ
+   ფაილის წონა უფრო დიდია). */
+@font-face{
+  font-family: 'LGV Big Noodle';
+  src: url('fonts/LGVBigNoodle.woff2') format('woff2'),
+       url('fonts/LGVBigNoodle.ttf') format('truetype');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+
 :root{
   /* "Transit / ინსპექტორის" თემა: ასფალტისფერი ნეიტრალები +
      უსაფრთხოების ყვითელი (amber) აქცენტი. წითელი/მწვანე შეგნებულად
@@ -40,6 +56,11 @@
      რიცხვები) — საგზაო-ნიშნის ხასიათის მჭიდრო display ფონტი.
      ქართულ ტექსტზე არასდროს გამოვიყენოთ, Georgian glyph-ები არ აქვს. */
   --font-display: 'Oswald', 'Noto Sans Georgian', system-ui, sans-serif;
+  /* ბრენდის/სათაურების ხმა — მსხვილი, uppercase-სტილის display
+     ფონტი. მხოლოდ სათაურებზე/ბრენდინგზე, არა body-ტექსტზე
+     (uppercase-only ხასიათის გამო გრძელ წინადადებებში
+     წაკითხვადობას აუარესებს). */
+  --font-headline: 'LGV Big Noodle', var(--font-display), 'Noto Sans Georgian', sans-serif;
 }
 
 /* დიაგონალური "hazard stripe" — signature დეტალი, ეკონომიურად
@@ -159,10 +180,12 @@ html, body{
 }
 .topbar__title h1{
   color: #e8e6e1; 
-  font-size: 17px;
-  font-weight: 700;
+  font-family: var(--font-headline);
+  font-size: 19px;
+  font-weight: 400;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
   margin:0;
-  letter-spacing: 0.2px;
   text-shadow: 0 2px 4px rgba(0,0,0,0.5); /* ტექსტს მცირე ჩრდილი დავადეთ უკეთესი კითხვადობისთვის */
 }
 .topbar__dot{
@@ -694,9 +717,11 @@ html, body{
 
 .nightOverlay__title{
   margin:0 0 16px;
-  font-size:28px; font-weight:800;
+  font-family: var(--font-headline);
+  font-size:30px; font-weight:400;
+  text-transform: uppercase;
   color:#fff;
-  letter-spacing:-0.3px;
+  letter-spacing:0.3px;
 }
 
 .nightOverlay__message{
@@ -834,7 +859,10 @@ html, body{
   display:flex; align-items:center; gap:10px;
 }
 .menuDrawer__brandName{
-  font-size: 15px; font-weight:700;
+  font-family: var(--font-headline);
+  font-size: 15px; font-weight:400;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
   color: var(--text);
 }
 
