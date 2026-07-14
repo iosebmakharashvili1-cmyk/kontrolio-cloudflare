@@ -231,11 +231,49 @@ html, body{
   background: rgba(255,255,255,0.18); 
 }
 
-/* ---------- Search (ქვედა მესამედში — thumb zone) ---------- */
+/* ---------- Search (expandable icon → bar on mobile) ---------- */
 .searchWrap{
   position:absolute; bottom: calc(110px + env(safe-area-inset-bottom)); left: calc(14px + env(safe-area-inset-left)); z-index:600;
-  width: min(360px, calc(100% - 28px - env(safe-area-inset-left) - env(safe-area-inset-right)));
+  display:flex; align-items:center; gap:0;
 }
+
+/* Toggle button — floating icon */
+.searchToggleBtn{
+  width:44px; height:44px;
+  border-radius:50%;
+  border: 1.5px solid var(--chrome-btn-border);
+  background: var(--surface);
+  color: var(--text);
+  font-size: 18px;
+  display:flex; align-items:center; justify-content:center;
+  cursor:pointer;
+  box-shadow: var(--shadow);
+  flex-shrink:0;
+  z-index:2;
+  transition: transform 0.12s cubic-bezier(0.25, 1, 0.5, 1), opacity 0.18s ease, background-color 0.15s ease;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
+.searchToggleBtn:hover{ background: var(--grey-soft); }
+.searchToggleBtn:active{ transform: scale(0.88); }
+.searchToggleBtn[aria-expanded="true"]{ opacity: 0; pointer-events: none; }
+
+/* Search input — hidden by default, slides in when expanded */
+.searchInputWrap{
+  display:flex; align-items:center;
+  position: relative;
+  width: 0;
+  overflow: hidden;
+  opacity: 0;
+  transition: width 0.25s cubic-bezier(0.22, 1, 0.36, 1), opacity 0.18s ease, margin 0.25s ease;
+  margin-left: 0;
+}
+.searchWrap.expanded .searchInputWrap{
+  width: min(290px, calc(100vw - 100px - env(safe-area-inset-left) - env(safe-area-inset-right)));
+  opacity: 1;
+  margin-left: 8px;
+}
+
 .searchInput{
   width:100%;
   border:none; border-radius: 14px;
@@ -246,6 +284,7 @@ html, body{
   background: var(--surface);
   box-shadow: var(--shadow);
   -webkit-tap-highlight-color: transparent;
+  flex-shrink:0;
 }
 .searchInput:focus-visible{ outline: 2px solid var(--bus-blue); outline-offset: 1px; }
 
@@ -1112,7 +1151,8 @@ html, body{
 }
 .contribToday:empty{ display:none; }
 
-/* ---------- ლიდერბორდი ---------- */
+/* ---------- ლიდერბორდი (menu drawer-ში — კომპაქტური) ----------
+   NB: leaderboard.html-ს აქვს საკუთარი, უფრო დეტალური .leaderboardItem */
 .leaderboardHint{
   font-size: 12.5px;
   color: var(--grey);
@@ -1123,12 +1163,8 @@ html, body{
   display:flex; flex-direction:column; gap:6px;
   margin-bottom: 10px;
 }
-.leaderboardItem{
-  display:flex; align-items:center; gap:10px;
-  padding: 8px 12px;
-  border-radius: 10px;
-  background: var(--grey-soft);
-}
+/* menu-drawer .leaderboardItem — compact, overridden by leaderboard.html inline */
+/* These styles are DOMAIN for the menu drawer only. leaderboard.html defines its own. */
 .leaderboardItem__rank{
   min-width: 28px;
   font-family: var(--font-display);
@@ -1291,9 +1327,12 @@ html, body{
   .activityPanel__header{ cursor:default; }
   #map{ right: 340px; }
   .topbar{ right: 340px; }
-  /* Desktop-ზე search ისევ top-ში */
+  /* Desktop-ზე search ისევ top-ში, always visible */
   .searchWrap{ top: 74px; bottom: auto; left: 24px; width: min(400px, calc(100% - 48px - 340px)); }
   .searchResults{ bottom: auto; top: calc(100% + 6px); }
+  /* Desktop: always expanded */
+  .searchToggleBtn{ display:none; }
+  .searchInputWrap{ width: auto; opacity: 1; overflow: visible; margin-left:0; }
   .sheet{ bottom: 24px; }
   .sheetPeek{ bottom: 24px; }
 }
@@ -1470,6 +1509,9 @@ html, body{
   .searchInput{ padding: 13px 18px 13px 42px; font-size: 14.5px; }
   .searchIcon{ left: 18px; top: 15px; }
   .searchResults{ bottom: auto; top: calc(100% + 6px); }
+  /* Desktop: always expanded */
+  .searchToggleBtn{ display:none; }
+  .searchInputWrap{ width: auto; opacity: 1; overflow: visible; margin-left:0; }
 
   .locateBtn{ width: 44px; height: 44px; font-size: 20px; }
 
@@ -1497,6 +1539,7 @@ html, body{
   .topbar__title h1{ font-size: 23px; }
   .searchWrap{ top: 74px; bottom: auto; width: min(440px, calc(100% - 48px)); }
   .searchResults{ bottom: auto; top: calc(100% + 6px); }
+  .searchInputWrap{ width: auto; opacity: 1; overflow: visible; margin-left:0; }
 }
 
 /* მენიუს დრავერი დესკტოპზე — 300px ვიწროა ფართო ეკრანზე, ტექსტი

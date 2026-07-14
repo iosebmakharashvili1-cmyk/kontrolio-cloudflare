@@ -16,7 +16,7 @@
 <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css" />
 <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css" />
 
-<link rel="stylesheet" href="style.css?v=3">
+<link rel="stylesheet" href="style.css?v=4">
 <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
 </head>
 <body>
@@ -37,17 +37,22 @@
     </div>
   </header>
 
-  <div class="searchWrap">
-    <i data-lucide="search" class="searchIcon"></i>
-    <input
-      type="text"
-      id="searchInput"
-      class="searchInput"
-      placeholder="მოძებნე გაჩერება..."
-      autocomplete="off"
-      aria-label="გაჩერების ძებნა"
-      role="searchbox"
-    />
+  <div class="searchWrap" id="searchWrap">
+    <button id="searchToggleBtn" class="iconbtn searchToggleBtn" title="ძებნა" aria-label="გაჩერების ძებნა" aria-expanded="false">
+      <i data-lucide="search" id="searchToggleIcon"></i>
+    </button>
+    <div class="searchInputWrap" id="searchInputWrap">
+      <i data-lucide="search" class="searchIcon"></i>
+      <input
+        type="text"
+        id="searchInput"
+        class="searchInput"
+        placeholder="მოძებნე გაჩერება..."
+        autocomplete="off"
+        aria-label="გაჩერების ძებნა"
+        role="searchbox"
+      />
+    </div>
     <div class="searchResults" id="searchResults"></div>
   </div>
  
@@ -190,7 +195,7 @@
             <p class="menuDrawer__text">YS7 - BTU სტუდენტი</p>
             <div class="menuDrawer__links">
               <a href="https://www.linkedin.com/in/ioseb-makharashvili-93627a413/" class="menuDrawer__link"><i data-lucide="linkedin"></i>Linkedin</a>
-              <a href="/cdn-cgi/l/email-protection#3f525e54574d4d4d080a097f58525e5653115c5052" class="menuDrawer__link"><i data-lucide="mail"></i> კონტაქტი</a>
+              <a href="/cdn-cgi/l/email-protection#670a060c0f15151550525127000a060e0b4904080a" class="menuDrawer__link"><i data-lucide="mail"></i> კონტაქტი</a>
             </div>
           </div>
         </div>
@@ -300,6 +305,37 @@
 
   <script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
+  
+  <!-- RUM: Real User Monitoring — Core Web Vitals tracking -->
+  <script type="module">
+    /* Lightweight RUM: tracks LCP, CLS, INP, TTFB and sends to /api/rum */
+    try {
+      const rum = { url: location.pathname, ts: Date.now(), dpr: devicePixelRatio || 1 };
+      const observer = new PerformanceObserver((list) => {
+        for (const entry of list.getEntries()) {
+          if (entry.entryType === 'largest-contentful-paint') rum.lcp = entry.startTime;
+          if (entry.entryType === 'layout-shift' && !entry.hadRecentInput) {
+            rum.cls = (rum.cls || 0) + entry.value;
+          }
+          if (entry.entryType === 'first-input') {
+            rum.fid = entry.processingStart - entry.startTime;
+            rum.fidTarget = entry.target?.tagName || '';
+          }
+        }
+      });
+      observer.observe({ type: 'largest-contentful-paint', buffered: true });
+      observer.observe({ type: 'layout-shift', buffered: true });
+      observer.observe({ type: 'first-input', buffered: true });
+      const ttfb = performance.getEntriesByType('navigation')[0];
+      if (ttfb) rum.ttfb = ttfb.responseStart - ttfb.requestStart;
+      addEventListener('load', () => {
+        setTimeout(() => {
+          rum.loadTime = performance.now();
+          navigator.sendBeacon('/api/rum', JSON.stringify(rum));
+        }, 3000);
+      }, { once: true });
+    } catch (e) { /* silent — RUM should never break the app */ }
+  </script>
   <script>
     /* ქალაქის მიხედვით stops/routes ფაილების არჩევა — localStorage-ში
        შენახული არჩევანით. document.write აქ უსაფრთხოა, ვინაიდან
@@ -312,7 +348,7 @@
       document.write('<script src="' + routesSrc + '"><\/script>');
     })();
   </script>
-  <script src="script.js?v=3"></script>
+  <script src="script.js?v=4"></script>
 <script defer src="https://static.cloudflareinsights.com/beacon.min.js/v4513226cdae34746b4dedf0b4dfa099e1781791509496" integrity="sha512-ZE9pZaUXND66v380QUtch/5sE9tPFh2zg45pR2PB0CVkCtOREv2AJKkSidISWkysEuQ0EH8faUU5du78bx87UQ==" data-cf-beacon='{"version":"2024.11.0","token":"3279d41ec7804124a29acc6e692f9a2b","server_timing":{"name":{"cfCacheStatus":true,"cfEdge":true,"cfExtPri":true,"cfL4":true,"cfOrigin":true,"cfSpeedBrain":true},"location_startswith":null}}' crossorigin="anonymous"></script>
 </body>
 </html>

@@ -1117,12 +1117,12 @@ setInterval(loadAndRenderActivity, 10 * 1000);
 const CONTRIB_KEY = "kontrolio-contrib-count";
 
 const CONTRIB_TIERS = [
-  { min: 0,   emoji: "🌱", label: "ახალბედა" },
-  { min: 5,   emoji: "🔍", label: "დამკვირვებელი" },
-  { min: 15,  emoji: "🧭", label: "მეგზური" },
-  { min: 30,  emoji: "⭐", label: "გამოცდილი" },
-  { min: 60,  emoji: "🏅", label: "ექსპერტი" },
-  { min: 100, emoji: "👑", label: "ლეგენდა" },
+  { min: 0,   icon: "sprout",     label: "ახალბედა" },
+  { min: 5,   icon: "search",      label: "დამკვირვებელი" },
+  { min: 15,  icon: "compass",     label: "მეგზური" },
+  { min: 30,  icon: "star",        label: "გამოცდილი" },
+  { min: 60,  icon: "award",       label: "ექსპერტი" },
+  { min: 100, icon: "crown",       label: "ლეგენდა" },
 ];
 
 function getContribCount() {
@@ -1147,20 +1147,26 @@ function incrementContribution() {
 }
 
 function renderContribSection() {
-  const emojiEl = document.getElementById("contribEmoji");
+  const iconEl = document.getElementById("contribIcon");
+  const emojiEl = document.getElementById("contribEmoji"); // fallback
   const tierEl = document.getElementById("contribTier");
   const countEl = document.getElementById("contribCount");
   const barEl = document.getElementById("contribProgressBar");
   const nextEl = document.getElementById("contribNext");
   const todayEl = document.getElementById("contribToday");
-  if (!emojiEl) return;
+  if (!iconEl && !emojiEl) return;
 
   const count = getContribCount();
   const idx = tierIndexFor(count);
   const tier = CONTRIB_TIERS[idx];
   const next = CONTRIB_TIERS[idx + 1];
 
-  emojiEl.textContent = tier.emoji;
+  if (iconEl) {
+    iconEl.setAttribute("data-lucide", tier.icon);
+    if (window.lucide) lucide.createIcons();
+  } else if (emojiEl) {
+    emojiEl.textContent = tier.emoji || "🌱";
+  }
   tierEl.textContent = tier.label;
   countEl.textContent = count === 0
     ? "ჯერ არ გაგიგზავნია შეტყობინება"
@@ -1170,10 +1176,10 @@ function renderContribSection() {
     const span = next.min - tier.min;
     const progressed = count - tier.min;
     barEl.style.width = `${Math.min(100, Math.round((progressed / span) * 100))}%`;
-    nextEl.textContent = `${next.min - count} შეტყობინება დარჩა შემდეგ დონემდე: ${next.emoji} ${next.label}`;
+    nextEl.textContent = `${next.min - count} შეტყობინება დარჩა შემდეგ დონემდე: ${next.label}`;
   } else {
     barEl.style.width = "100%";
-    nextEl.textContent = "მიაღწიე ყველაზე მაღალ დონეს — მადლობა წვლილისთვის! 👑";
+    nextEl.textContent = "მიაღწიე ყველაზე მაღალ დონეს — მადლობა წვლილისთვის!";
   }
 
   if (todayEl) {
@@ -1395,12 +1401,41 @@ function showToast(msg) {
 function vibrate(duration = 50) {
   try {
     if (navigator.vibrate) navigator.vibrate(duration);
-  } catch (_) { /* ignore — ყველა მოწყობილობა არ უჭერს მხარს */ }
+  } catch (_) { /* ignore */ }
 }
 
-/* ---------- ძებნა ---------- */
+/* ---------- Search (expandable on mobile) ---------- */
+const searchWrap = document.getElementById("searchWrap");
+const searchToggleBtn = document.getElementById("searchToggleBtn");
+const searchInputWrap = document.getElementById("searchInputWrap");
 const searchInput = document.getElementById("searchInput");
 const searchResults = document.getElementById("searchResults");
+
+if (searchToggleBtn) {
+  searchToggleBtn.addEventListener("click", () => {
+    searchWrap.classList.add("expanded");
+    searchToggleBtn.setAttribute("aria-expanded", "true");
+    searchInput.focus();
+  });
+  searchInput.addEventListener("blur", () => {
+    setTimeout(() => {
+      if (!searchInput.value.trim() && !document.activeElement?.closest("#searchResults")) {
+        searchWrap.classList.remove("expanded");
+        searchToggleBtn.setAttribute("aria-expanded", "false");
+        searchResults.classList.remove("show");
+      }
+    }, 150);
+  });
+  searchInput.addEventListener("keydown", (e) => {
+    if (e.key === "Escape") {
+      searchInput.blur();
+      searchWrap.classList.remove("expanded");
+      searchToggleBtn.setAttribute("aria-expanded", "false");
+      searchResults.classList.remove("show");
+      searchInput.value = "";
+    }
+  });
+}
 
 function debounce(fn, delay) {
   let timer = null;
