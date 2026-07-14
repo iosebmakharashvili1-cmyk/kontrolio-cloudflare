@@ -16,7 +16,7 @@
 <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css" />
 <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css" />
 
-<link rel="stylesheet" href="style.css?v=7">
+<link rel="stylesheet" href="style.css?v=8">
 <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
 </head>
 <body>
@@ -24,6 +24,9 @@
   <header class="topbar">
     <div class="topbar__title">
       <button id="menuBtn" class="iconbtn menuBtn" aria-label="მენიუს გახსნა" title="მენიუ"><i data-lucide="menu" aria-hidden="true"></i></button>
+      <button id="searchToggleBtn" class="iconbtn searchToggleBtn" title="ძებნა" aria-label="გაჩერების ძებნა" aria-expanded="false">
+        <i data-lucide="search" id="searchToggleIcon"></i>
+      </button>
       <span class="topbar__dot" aria-hidden="true"></span>
       <h1>სად არის კონტროლიორი?<span class="topbar__cityBadge" id="topbarCityBadge"></span></h1>
     </div>
@@ -37,24 +40,19 @@
     </div>
   </header>
 
-  <div class="searchWrap" id="searchWrap">
-    <button id="searchToggleBtn" class="searchToggleBtn" title="ძებნა" aria-label="გაჩერების ძებნა" aria-expanded="false">
-      <i data-lucide="search" id="searchToggleIcon"></i>
-    </button>
-    <div class="searchInputWrap" id="searchInputWrap">
-      <i data-lucide="search" class="searchIcon"></i>
-      <input
-        type="text"
-        id="searchInput"
-        class="searchInput"
-        placeholder="მოძებნე გაჩერება..."
-        autocomplete="off"
-        aria-label="გაჩერების ძებნა"
-        role="searchbox"
-      />
-    </div>
-    <div class="searchResults" id="searchResults"></div>
+  <div class="searchInputWrap" id="searchInputWrap">
+    <i data-lucide="search" class="searchIcon"></i>
+    <input
+      type="text"
+      id="searchInput"
+      class="searchInput"
+      placeholder="მოძებნე გაჩერება..."
+      autocomplete="off"
+      aria-label="გაჩერების ძებნა"
+      role="searchbox"
+    />
   </div>
+  <div class="searchResults" id="searchResults"></div>
  
   <div id="map"></div>
  
@@ -195,7 +193,7 @@
             <p class="menuDrawer__text">YS7 - BTU სტუდენტი</p>
             <div class="menuDrawer__links">
               <a href="https://www.linkedin.com/in/ioseb-makharashvili-93627a413/" class="menuDrawer__link"><i data-lucide="linkedin"></i>Linkedin</a>
-              <a href="/cdn-cgi/l/email-protection#c1aca0aaa9b3b3b3f6f4f781a6aca0a8adefa2aeac" class="menuDrawer__link"><i data-lucide="mail"></i> კონტაქტი</a>
+              <a href="/cdn-cgi/l/email-protection#325f53595a40404005070472555f535b5e1c515d5f" class="menuDrawer__link"><i data-lucide="mail"></i> კონტაქტი</a>
             </div>
           </div>
         </div>
@@ -348,7 +346,7 @@
       document.write('<script src="' + routesSrc + '"><\/script>');
     })();
   </script>
-  <script src="script.js?v=6"></script>
+  <script src="script.js?v=7"></script>
 <script defer src="https://static.cloudflareinsights.com/beacon.min.js/v4513226cdae34746b4dedf0b4dfa099e1781791509496" integrity="sha512-ZE9pZaUXND66v380QUtch/5sE9tPFh2zg45pR2PB0CVkCtOREv2AJKkSidISWkysEuQ0EH8faUU5du78bx87UQ==" data-cf-beacon='{"version":"2024.11.0","token":"3279d41ec7804124a29acc6e692f9a2b","server_timing":{"name":{"cfCacheStatus":true,"cfEdge":true,"cfExtPri":true,"cfL4":true,"cfOrigin":true,"cfSpeedBrain":true},"location_startswith":null}}' crossorigin="anonymous"></script>
 </body>
 </html>

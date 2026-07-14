@@ -1404,35 +1404,33 @@ function vibrate(duration = 50) {
   } catch (_) { /* ignore */ }
 }
 
-/* ---------- Search (expandable on mobile) ---------- */
-const searchWrap = document.getElementById("searchWrap");
-const searchToggleBtn = document.getElementById("searchToggleBtn");
+/* ---------- Search (button in topbar, bar drops below) ---------- */
 const searchInputWrap = document.getElementById("searchInputWrap");
+const searchToggleBtn = document.getElementById("searchToggleBtn");
 const searchInput = document.getElementById("searchInput");
 const searchResults = document.getElementById("searchResults");
 
 if (searchToggleBtn) {
   searchToggleBtn.addEventListener("click", (e) => {
     e.stopPropagation();
-    if (searchWrap.classList.contains("expanded")) {
+    if (searchInputWrap.classList.contains("expanded")) {
       // Collapse
-      searchWrap.classList.remove("expanded");
+      searchInputWrap.classList.remove("expanded");
       searchToggleBtn.setAttribute("aria-expanded", "false");
       searchResults.classList.remove("show");
       searchInput.value = "";
       debouncedRenderSearchResults("");
     } else {
       // Expand
-      searchWrap.classList.add("expanded");
+      searchInputWrap.classList.add("expanded");
       searchToggleBtn.setAttribute("aria-expanded", "true");
-      // Position the inputWrap below the button (already handled by CSS position:absolute; top:4px; left:0)
       setTimeout(() => searchInput.focus(), 30);
     }
   });
   searchInput.addEventListener("blur", () => {
     setTimeout(() => {
       if (!searchInput.value.trim() && !document.activeElement?.closest("#searchResults")) {
-        searchWrap.classList.remove("expanded");
+        searchInputWrap.classList.remove("expanded");
         searchToggleBtn.setAttribute("aria-expanded", "false");
         searchResults.classList.remove("show");
       }
@@ -1440,11 +1438,12 @@ if (searchToggleBtn) {
   });
   searchInput.addEventListener("keydown", (e) => {
     if (e.key === "Escape") {
+      searchInput.value = "";
+      debouncedRenderSearchResults("");
       searchInput.blur();
-      searchWrap.classList.remove("expanded");
+      searchInputWrap.classList.remove("expanded");
       searchToggleBtn.setAttribute("aria-expanded", "false");
       searchResults.classList.remove("show");
-      searchInput.value = "";
     }
   });
 }
@@ -1520,16 +1519,18 @@ searchResults.addEventListener("click", (e) => {
 });
 
 document.addEventListener("click", (e) => {
-  // Collapse search on outside click if empty
-  if (searchToggleBtn && searchWrap.classList.contains("expanded")) {
-    if (!searchWrap.contains(e.target) && !searchInput.value.trim()) {
-      searchWrap.classList.remove("expanded");
+  // Collapse search input on outside click if empty
+  if (searchToggleBtn && searchInputWrap && searchInputWrap.classList.contains("expanded")) {
+    if (!e.target.closest("#searchInputWrap") && !e.target.closest("#searchToggleBtn") && !searchInput.value.trim()) {
+      searchInputWrap.classList.remove("expanded");
       searchToggleBtn.setAttribute("aria-expanded", "false");
       searchResults.classList.remove("show");
     }
   }
-  // Close search results on outside click (existing behavior)
-  if (!e.target.closest(".searchWrap")) searchResults.classList.remove("show");
+  // Close search results on outside click
+  if (!e.target.closest("#searchInputWrap") && !e.target.closest("#searchToggleBtn")) {
+    searchResults.classList.remove("show");
+  }
 });
 
 /* ---------- პერიოდული სინქრონიზაცია სერვერთან ---------- */
