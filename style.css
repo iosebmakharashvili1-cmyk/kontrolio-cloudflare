@@ -1,14 +1,9 @@
 /* ---------- Brand headline font (LGV Big Noodle) ----------
-   ფაილები აქ ჯერ არ არის — თვითონ ჩაანაცვლე repo-ს root-ში
-   /fonts/ საქაღალდეში, ან შეცვალე ქვემოთ url()-ების მისამართი,
-   თუ სხვაგან განათავსებ. typeface.ge-დან ჩამოტვირთული ZIP-ში
-   ჩვეულებრივ .otf/.ttf ფაილია — თუ woff2 არ გაქვს, წაშალე ის
-   src-სტრიქონი და დატოვე მხოლოდ ttf/otf ხაზი (მუშაობს, უბრალოდ
-   ფაილის წონა უფრო დიდია). */
+   ფაილი repo-ს root-ში /fonts/ საქაღალდეშია — მხოლოდ .ttf არსებობს,
+   woff2 არ გვაქვს, ამიტომ src მხოლოდ ერთ ფორმატს იყენებს. */
 @font-face{
   font-family: 'LGV Big Noodle';
-  src: url('fonts/LGVBigNoodle.woff2') format('woff2'),
-       url('fonts/LGVBigNoodle.ttf') format('truetype');
+  src: url('fonts/LGVBigNoodle.ttf') format('truetype');
   font-weight: 400;
   font-style: normal;
   font-display: swap;
