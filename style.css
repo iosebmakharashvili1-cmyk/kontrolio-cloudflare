@@ -1,7 +1,14 @@
 /* ---------- Tokens ---------- */
 :root{
-  --bus-blue: #1f6fd6;
-  --red: #e4483c;
+  /* "Transit / ინსპექტორის" თემა: ასფალტისფერი ნეიტრალები +
+     უსაფრთხოების ყვითელი (amber) აქცენტი. წითელი/მწვანე შეგნებულად
+     უცვლელადაა დარჩენილი — ეს უკვე დამკვიდრებული სემანტიკაა
+     (წითელი = კონტროლიორი, მწვანე = თავისუფალია), მისი შეცვლა
+     მომხმარებელს დააბნევდა. */
+  --bus-blue: #3f6683;      /* ფოლადისფერი ლურჯი — ნეიტრალური chrome/ბმულის ფერი (ყოფილი #1f6fd6) */
+  --amber: #ffb100;         /* ახალი — მთავარი გაფრთხილების/highlight აქცენტი */
+  --amber-soft: #fff1cf;
+  --red: #e0392b;
   --red-soft: #ffd6d2;
   --green: #2ec4b6;
   --green-soft: #d4f3ef;
@@ -17,8 +24,8 @@
      ქალაქის მიხედვით ცალ-ცალკე შეიცვალოს ერთმანეთზე გავლენის გარეშე. */
   --route-bus-color: #2ec4b6;
 
-  --page-bg: #dfe5e0;
-  --surface: #f4f3ee;
+  --page-bg: #e7e4dc;       /* გამომშრალი ბეტონის ტონი (ყოფილი მინტისებრი #dfe5e0) */
+  --surface: #f7f5f0;
   --text: #14192b;
   --chrome-bg-solid: rgba(255,255,255,0.92);
   --chrome-grad-start: rgba(255,255,255,0.92);
@@ -29,6 +36,21 @@
   --chrome-btn-border: rgba(20,25,43,0.16);
 
   font-family: 'Noto Sans Georgian', system-ui, sans-serif;
+  /* ციფრებისთვის (მარშრუტის ნომრები, badge-ები, დიდი სტატისტიკური
+     რიცხვები) — საგზაო-ნიშნის ხასიათის მჭიდრო display ფონტი.
+     ქართულ ტექსტზე არასდროს გამოვიყენოთ, Georgian glyph-ები არ აქვს. */
+  --font-display: 'Oswald', 'Noto Sans Georgian', system-ui, sans-serif;
+}
+
+/* დიაგონალური "hazard stripe" — signature დეტალი, ეკონომიურად
+   გამოსაყენებელი მხოლოდ 1-2 საკვანძო ადგილას (მაგ. ინსპექტორის
+   სტატუსის ბანერი/ღილაკი), რომ არ გადავაჭარბოთ. */
+.hazardStripe{
+  background: repeating-linear-gradient(
+    135deg,
+    var(--amber) 0px, var(--amber) 10px,
+    #1c1e22 10px, #1c1e22 20px
+  );
 }
 
 /* რუსთავის ავტობუსის მარშრუტის ფერი — TTC აპის სქრინშოთიდან აღებული
@@ -39,8 +61,8 @@
 }
 
 [data-theme="dark"]{
-  --page-bg: #0f1115;
-  --surface: #1a1d24;
+  --page-bg: #16181c;       /* ასფალტი (ყოფილი თითქმის-შავი #0f1115) */
+  --surface: #1f2226;
   --text: #e8e6e1;
   --chrome-bg-solid: rgba(26,29,36,0.92);
   --chrome-grad-start: rgba(26,29,36,0.92);
@@ -52,6 +74,7 @@
   --shadow: 0 12px 30px rgba(0,0,0,0.45);
   --grey-soft: #2a2d35;
   --ring: #1a1d24;
+  --amber-soft: #3a2c0f;
 }
 
 *{ box-sizing: border-box; }
@@ -249,7 +272,7 @@ html, body{
 .legend__dot--inspector{ background: var(--red); }
 .legend__dot--clear{ background: var(--green); }
 .legend__dot--unknown{ background: var(--bus-blue); }
-.legend__dot--stale{ background: #d97706; }
+.legend__dot--stale{ background: var(--amber); }
 
 /* ---------- Custom markers ---------- */
 .stopMarker{
@@ -264,7 +287,7 @@ html, body{
 
 .stopMarker--unknown{ background: var(--bus-blue); }
 .stopMarker--clear{ background: var(--green); }
-.stopMarker--stale{ background: #d97706; }
+.stopMarker--stale{ background: var(--amber); }
 .stopMarker--inspector{
   background: var(--red);
   animation: pulseMarker 1.6s infinite;
@@ -447,7 +470,7 @@ html, body{
 .statusBanner--clear{ background: var(--green-soft); color: #14685f; }
 .statusBanner--inspector{ background: var(--red-soft); color: #8a1f17; }
 .statusBanner--stale{ background: #fef3c7; color: #92400e; }
-.statusDot--stale{ background: #d97706; }
+.statusDot--stale{ background: var(--amber); }
 
 /* ---------- Route chips ---------- */
 .routeChips{
@@ -467,9 +490,9 @@ html, body{
 }
 .routeChip:hover{ opacity: 0.85; }
 .routeChip:active{ transform: scale(0.94); }
-.routeChip--bus{ background: var(--route-bus-color); }
-.routeChip--minibus{ background: var(--bus-blue); }
-.routeChip--seasonal{ background: #9333ea; }
+.routeChip--bus{ background: var(--route-bus-color); font-family: var(--font-display); letter-spacing: 0.2px; }
+.routeChip--minibus{ background: var(--bus-blue); font-family: var(--font-display); letter-spacing: 0.2px; }
+.routeChip--seasonal{ background: #9333ea; font-family: var(--font-display); letter-spacing: 0.2px; }
 .routeChip--empty{
   background: var(--grey-soft);
   color: var(--grey);
@@ -548,14 +571,16 @@ html, body{
 }
 
 .reportBtn{
+  position: relative;
   border:none; border-radius: 14px;
-  padding: 14px 16px;
+  padding: 14px 16px 14px 22px;
   font-size: 15px; font-weight:700;
   font-family: inherit;
   cursor:pointer;
   text-align:left;
   display:flex; align-items:center;
   transition: transform 0.08s ease;
+  overflow: hidden;
 }
 .reportBtn:active{ transform: scale(0.98); }
 .reportBtn:disabled{ opacity: 0.55; cursor: not-allowed; }
@@ -563,6 +588,18 @@ html, body{
 .reportBtn--inspector{
   background: var(--red-soft);
   color: #8a1f17;
+}
+/* hazard-stripe — signature დეტალი მთავარ, ყველაზე მაღალი-სტეიქის
+   ქმედებაზე (კონტროლიორის შეტყობინება). ეკონომიურად, მხოლოდ
+   მარცხენა კიდეზე. */
+.reportBtn--inspector::before{
+  content: "";
+  position: absolute; left:0; top:0; bottom:0; width:6px;
+  background: repeating-linear-gradient(
+    135deg,
+    var(--amber) 0px, var(--amber) 5px,
+    #1c1e22 5px, #1c1e22 10px
+  );
 }
 .reportBtn--clear{
   background: var(--green-soft);
@@ -1033,8 +1070,9 @@ html, body{
 }
 .leaderboardItem__rank{
   min-width: 28px;
-  font-weight:700;
-  font-size: 14px;
+  font-family: var(--font-display);
+  font-weight:600;
+  font-size: 16px;
   text-align:center;
   color: var(--text);
 }
@@ -1047,8 +1085,10 @@ html, body{
   white-space:nowrap;
 }
 .leaderboardItem__score{
-  font-weight:700;
-  font-size: 13.5px;
+  font-family: var(--font-display);
+  font-weight:600;
+  font-size: 15px;
+  letter-spacing: 0.2px;
   color: var(--bus-blue);
 }
 .leaderboardEmpty{
@@ -1281,6 +1321,8 @@ html, body{
 .onlineBadge__count {
   min-width: 14px;
   text-align: center;
+  font-family: var(--font-display);
+  font-weight: 600;
 }
 
 /* ---------- Responsive ---------- */

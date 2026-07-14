@@ -428,7 +428,7 @@ map.addControl(new LocateControl());
 /* ---------- კლასტერები ---------- */
 const CLUSTER_COLORS = {
   inspector: "var(--red)",
-  stale: "#d97706",
+  stale: "var(--amber)",
   clear: "var(--green)",
   unknown: "var(--bus-blue)",
 };
@@ -496,7 +496,7 @@ const routeLinesLayer = L.layerGroup().addTo(map);
 
 const ROUTE_LINE_COLORS = {
   bus: CURRENT_CITY === "rustavi" ? "#11518a" : "#2ec4b6",  // რუსთავი — TTC აპის ლურჯი; თბილისი — routeChip--bus მწვანე
-  minibus: "#1f6fd6",   // ლურჯი — routeChip--minibus
+  minibus: "#3f6683",   // ფოლადისფერი ლურჯი — routeChip--minibus (--bus-blue-სთან სინქრონში)
   seasonal: "#9333ea",  // იასამნისფერი — routeChip--seasonal
 };
 
