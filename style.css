@@ -1,20 +1,68 @@
-/* ---------- Brand headline font (LGV Big Noodle) ----------
-   ფაილი repo-ს root-ში /fonts/ საქაღალდეშია — მხოლოდ .ttf არსებობს,
-   woff2 არ გვაქვს, ამიტომ src მხოლოდ ერთ ფორმატს იყენებს. */
+/* ---------- Mersad — საიტის ერთადერთი ფონტი ----------
+   ყველა weight ცალკე ფაილშია (.otf), ერთი font-family სახელით
+   'Mersad' დარეგისტრირებული სხვადასხვა font-weight მნიშვნელობებზე.
+   ბრაუზერი თავად ირჩევს სწორ ფაილს რეალურად გამოყენებული
+   font-weight-ის მიხედვით (მაგ. font-weight:700 → Mersad-Bold.otf). */
 @font-face{
-  font-family: 'LGV Big Noodle';
-  src: url('fonts/LGVBigNoodle.ttf') format('truetype');
+  font-family: 'Mersad';
+  src: url('fonts/Mersad-Thin.otf') format('opentype');
+  font-weight: 100;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face{
+  font-family: 'Mersad';
+  src: url('fonts/Mersad-ExtraLight.otf') format('opentype');
+  font-weight: 200;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face{
+  font-family: 'Mersad';
+  src: url('fonts/Mersad-Light.otf') format('opentype');
+  font-weight: 300;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face{
+  font-family: 'Mersad';
+  src: url('fonts/Mersad-Regular.otf') format('opentype');
   font-weight: 400;
   font-style: normal;
   font-display: swap;
 }
-
-/* ახალი ფონტი — Gugeshashvili 8 Mthavruli Bold. ქართული grotesk-style
-   bold ფონტია, გამოსადეგია headline-ისთვისაც და body ტექსტისთვისაც. */
 @font-face{
-  font-family: 'Gugeshashvili Mthavruli Bold';
-  src: url('fonts/GugeshashviliMthavruliBold.ttf') format('truetype');
+  font-family: 'Mersad';
+  src: url('fonts/Mersad-Medium.otf') format('opentype');
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face{
+  font-family: 'Mersad';
+  src: url('fonts/Mersad-SemiBold.otf') format('opentype');
+  font-weight: 600;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face{
+  font-family: 'Mersad';
+  src: url('fonts/Mersad-Bold.otf') format('opentype');
   font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face{
+  font-family: 'Mersad';
+  src: url('fonts/Mersad-ExtraBold.otf') format('opentype');
+  font-weight: 800;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face{
+  font-family: 'Mersad';
+  src: url('fonts/Mersad-Black.otf') format('opentype');
+  font-weight: 900;
   font-style: normal;
   font-display: swap;
 }
@@ -56,24 +104,11 @@
   --chrome-btn-bg-hover: rgba(20,25,43,0.12);
   --chrome-btn-border: rgba(20,25,43,0.16);
 
-  /* --- ვარიანტი A (ამჟამად აქტიურია): ახალი ფონტი ყველგან, headline-იც
-     და body ტექსტიც. --- */
-  font-family: 'Gugeshashvili Mthavruli Bold', 'Noto Sans Georgian', system-ui, sans-serif;
-  /* ციფრებისთვის (მარშრუტის ნომრები, badge-ები, დიდი სტატისტიკური
-     რიცხვები) — საგზაო-ნიშნის ხასიათის მჭიდრო display ფონტი.
-     ქართულ ტექსტზე არასდროს გამოვიყენოთ, Georgian glyph-ები არ აქვს. */
-  --font-display: 'Gugeshashvili Mthavruli Bold', 'Oswald', 'Noto Sans Georgian', system-ui, sans-serif;
-  --font-headline: 'Gugeshashvili Mthavruli Bold', var(--font-display), 'Noto Sans Georgian', sans-serif;
-
-  /* --- ვარიანტი B (headline-only, თუ გინდა შედარება):
-     დააკომენტარე ზემოთა ორი ხაზი (font-family და --font-headline) და
-     მოხსენი კომენტარი აქედან:
-
-  font-family: 'Noto Sans Georgian', system-ui, sans-serif;
-  --font-headline: 'Gugeshashvili Mthavruli Bold', 'LGV Big Noodle', var(--font-display), 'Noto Sans Georgian', sans-serif;
-
-  --- ამ ვარიანტში body ტექსტი Noto Sans Georgian-ზე რჩება (უკეთესი
-  წაკითხვადობა პატარა ზომებზე), ახალი ფონტი მხოლოდ სათაურებზე მუშაობს. */
+  /* საიტის ერთადერთი ფონტი — Mersad, ყველა weight-ით. ყველგან
+     გამოიყენება: headline, body, ღილაკები, badge-ები, popup-ები. */
+  font-family: 'Mersad', 'Noto Sans Georgian', system-ui, sans-serif;
+  --font-display: 'Mersad', 'Noto Sans Georgian', system-ui, sans-serif;
+  --font-headline: 'Mersad', 'Noto Sans Georgian', system-ui, sans-serif;
 }
 
 /* დიაგონალური "hazard stripe" — signature დეტალი, ეკონომიურად
@@ -129,7 +164,7 @@ html, body{
 
 .leaflet-container{
   background: var(--page-bg);
-  font-family: 'Gugeshashvili Mthavruli Bold', 'Noto Sans Georgian', system-ui, sans-serif;
+  font-family: 'Mersad', 'Noto Sans Georgian', system-ui, sans-serif;
 }
 
 /* უფრო რბილი და გლუვი ზუმის ანიმაცია */
