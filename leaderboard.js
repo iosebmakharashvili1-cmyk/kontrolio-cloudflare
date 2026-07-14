@@ -114,12 +114,12 @@ async function saveNickname(nickname) {
 const CONTRIB_KEY = "kontrolio-contrib-count";
 
 const CONTRIB_TIERS = [
-  { min: 0,   emoji: "🌱", label: "ახალბედა" },
-  { min: 5,   emoji: "🔍", label: "დამკვირვებელი" },
-  { min: 15,  emoji: "🧭", label: "მეგზური" },
-  { min: 30,  emoji: "⭐", label: "გამოცდილი" },
-  { min: 60,  emoji: "🏅", label: "ექსპერტი" },
-  { min: 100, emoji: "👑", label: "ლეგენდა" },
+  { min: 0,   icon: "sprout",     label: "ახალბედა" },
+  { min: 5,   icon: "search",      label: "დამკვირვებელი" },
+  { min: 15,  icon: "compass",     label: "მეგზური" },
+  { min: 30,  icon: "star",        label: "გამოცდილი" },
+  { min: 60,  icon: "award",       label: "ექსპერტი" },
+  { min: 100, icon: "crown",       label: "ლეგენდა" },
 ];
 
 function getContribCount() {
@@ -156,20 +156,21 @@ function computeHelpedToday() {
 }
 
 function renderContribSection() {
-  const emojiEl = document.getElementById("contribEmoji");
+  const iconEl = document.getElementById("contribIcon");
   const tierEl = document.getElementById("contribTier");
   const countEl = document.getElementById("contribCount");
   const barEl = document.getElementById("contribProgressBar");
   const nextEl = document.getElementById("contribNext");
   const todayEl = document.getElementById("contribToday");
-  if (!emojiEl) return;
+  if (!iconEl) return;
 
   const count = getContribCount();
   const idx = tierIndexFor(count);
   const tier = CONTRIB_TIERS[idx];
   const next = CONTRIB_TIERS[idx + 1];
 
-  emojiEl.textContent = tier.emoji;
+  // Set lucide icon
+  iconEl.setAttribute("data-lucide", tier.icon);
   tierEl.textContent = tier.label;
   countEl.textContent = count === 0
     ? "ჯერ არ გაგიგზავნია შეტყობინება"
@@ -179,10 +180,12 @@ function renderContribSection() {
     const span = next.min - tier.min;
     const progressed = count - tier.min;
     barEl.style.width = `${Math.min(100, Math.round((progressed / span) * 100))}%`;
-    nextEl.textContent = `${next.min - count} შეტყობინება დარჩა შემდეგ დონემდე: ${next.emoji} ${next.label}`;
+    nextEl.textContent = `${next.min - count} შეტყობინება დარჩა შემდეგ დონემდე — `;
+    // Append next icon label (plain text for now, lucide will be rendered separately via the label text)
+    nextEl.textContent += `${next.label}`;
   } else {
     barEl.style.width = "100%";
-    nextEl.textContent = "მიაღწიე ყველაზე მაღალ დონეს — მადლობა წვლილისთვის! 👑";
+    nextEl.textContent = "მიაღწიე ყველაზე მაღალ დონეს — მადლობა წვლილისთვის!";
   }
 
   if (todayEl) {
@@ -190,11 +193,13 @@ function renderContribSection() {
     if (reportCount === 0) {
       todayEl.textContent = "";
     } else if (helped > 0) {
-      todayEl.textContent = `🙌 დღეს დაეხმარე მინიმუმ ${helped} ადამიანს (${reportCount} შეტყობინებით)`;
+      todayEl.textContent = `დღეს დაეხმარე მინიმუმ ${helped} ადამიანს (${reportCount} შეტყობინებით)`;
     } else {
-      todayEl.textContent = `📍 დღეს გაგზავნე ${reportCount} შეტყობინება — მალე გამოჩნდება რამდენს დაეხმარები`;
+      todayEl.textContent = `დღეს გაგზავნე ${reportCount} შეტყობინება — მალე გამოჩნდება რამდენს დაეხმარები`;
     }
   }
+
+  if (window.lucide) lucide.createIcons();
 }
 
 /* ---------- საზოგადოების დღევანდელი აქტივობა ---------- */
@@ -212,20 +217,21 @@ function renderCommunitySection() {
 }
 
 /* ============================================================
-   ლიდერბორდი
+   ლიდერბორდი — podium TOP 3 + normal list + sticky "my position"
    ============================================================ */
 let lastLeaderboardMe = null;
 
-function medalFor(rank) {
-  if (rank === 1) return "🥇";
-  if (rank === 2) return "🥈";
-  if (rank === 3) return "🥉";
+function podiumIcon(rank) {
+  if (rank === 1) return "trophy";
+  if (rank === 2) return "medal";
+  if (rank === 3) return "award";
   return null;
 }
 
 async function renderLeaderboardSection() {
   const listEl = document.getElementById("leaderboardList");
   const meEl = document.getElementById("leaderboardMe");
+  const stickyEl = document.getElementById("leaderboardSticky");
   if (!listEl) return;
 
   const data = await fetchLeaderboard();
@@ -238,31 +244,61 @@ async function renderLeaderboardSection() {
   lastLeaderboardMe = me || null;
 
   if (!top || top.length === 0) {
-    listEl.innerHTML = `<p class="leaderboardEmpty">ჯერ არავის მოუპოვებია ქულა — იყავი პირველი! 🏆</p>`;
+    listEl.innerHTML = `
+      <div class="emptyState" style="padding:24px 16px;">
+        <div class="emptyState__icon" style="font-size:36px;"><i data-lucide="trophy" style="width:36px;height:36px;color:var(--grey);" aria-hidden="true"></i></div>
+        <div class="emptyState__title">ჯერ ქულა არ მოპოვებულა</div>
+        <div class="emptyState__sub">იყავი პირველი, ვინც კონტროლიორს შეამჩნევს — მიიღე ქულა!</div>
+      </div>`;
   } else {
-    listEl.innerHTML = top
+    // TOP 3 podium cards
+    const podium = top.slice(0, 3);
+    const rest = top.slice(3);
+
+    let html = podium
       .map((e) => {
-        const medal = medalFor(e.rank);
-        const rankLabel = medal || `#${e.rank}`;
+        const icon = podiumIcon(e.rank);
         return `
-          <div class="leaderboardItem">
-            <span class="leaderboardItem__rank">${rankLabel}</span>
-            <span class="leaderboardItem__name">${escapeHtml(e.nickname)}</span>
-            <span class="leaderboardItem__score">${e.score}</span>
-          </div>`;
+        <div class="leaderboardItem--podium" data-rank="${e.rank}">
+          <div class="podiumRank"><i data-lucide="${icon}" aria-hidden="true"></i></div>
+          <div class="podiumInfo">
+            <div class="podiumName">${escapeHtml(e.nickname)}</div>
+          </div>
+          <div class="podiumScore">${e.score}</div>
+        </div>`;
       })
       .join("");
+
+    // Normal items (rank 4+)
+    html += rest
+      .map((e) => `
+        <div class="leaderboardItem">
+          <span class="leaderboardItem__rank">#${e.rank}</span>
+          <span class="leaderboardItem__name">${escapeHtml(e.nickname)}</span>
+          <span class="leaderboardItem__score">${e.score}</span>
+        </div>`)
+      .join("");
+
+    listEl.innerHTML = html;
   }
 
-  if (meEl) {
+  // Sticky "My position"
+  if (meEl && stickyEl) {
     if (!me || me.score === 0) {
-      meEl.textContent = "შენ ჯერ ქულა არ გაქვს — პირველმა შეამჩნიე კონტროლიორი, მიიღე ქულა 🏆";
+      meEl.innerHTML = `<span style="color:var(--grey);"><i data-lucide="user" style="width:14px;height:14px;vertical-align:middle;margin-right:5px;"></i> ჯერ ქულა არ გაქვს — იყავი პირველი!</span>`;
+      meEl.classList.remove("hasScore");
     } else {
-      const posText = me.rank ? `ტოპ #${me.rank}` : "ტოპ 20-ს გარეთ";
-      const nameText = me.nickname ? me.nickname : "(მეტსახელი არჩეული არაა)";
-      meEl.textContent = `შენ: ${nameText} — ${me.score} ქულა (${posText})`;
+      const posText = me.rank ? `#${me.rank}` : "20+";
+      const nameText = me.nickname ? me.nickname : "(უსახელო)";
+      meEl.innerHTML = `
+        <span class="leaderboardSticky__rankBadge">${posText}</span>
+        <span>${escapeHtml(nameText)}</span>
+        <span class="leaderboardSticky__score">${me.score} ქულა</span>`;
+      meEl.classList.add("hasScore");
     }
   }
+
+  if (window.lucide) lucide.createIcons();
 }
 
 /* ---------- Nickname prompt ---------- */

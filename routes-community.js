@@ -1,837 +1,95 @@
 /* ============================================================
    routes-community.js — საზოგადოების მარშრუტების გვერდი
-   ------------------------------------------------------------
-   ორი რეჟიმი:
-   1. სია (default) — დამტკიცებული custom routes, click → გაფართოებული preview
-   2. დახატვა (Add ღილაკით) — Leaflet-ზე click-to-draw, stop-picker
-      modal-ით point-ებზე გაჩერების მისაბმელად (არსებული ან ახალი),
-      ფორმა, submit → POST /api/custom-routes (moderation queue-ში)
-
-   + Admin delete (X-Admin-Password header-ით)
-   + Dark theme sync მთავარი გვერდის localStorage-პრეფერენციასთან
    ============================================================ */
+const API_BASE="/api";
+function getSid(){let s=localStorage.getItem("_kontrolio_sid");if(!s){s=Math.random().toString(36).slice(2)+Math.random().toString(36).slice(2);localStorage.setItem("_kontrolio_sid",s)}return s}
+function escapeHtml(s){return String(s).replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;").replaceAll('"',"&quot;").replaceAll("'","&#039;")}
+const THEME_KEY="kontrolio-theme",THEME_MANUAL_KEY="kontrolio-theme-manual";
+function getTbilisiHour(){return parseInt(new Intl.DateTimeFormat("en-US",{timeZone:"Asia/Tbilisi",hour:"2-digit",hour12:false}).formatToParts(new Date()).find(p=>p.type==="hour").value)%24}
+document.documentElement.setAttribute("data-theme",localStorage.getItem(THEME_MANUAL_KEY)==="true"?localStorage.getItem(THEME_KEY)||"light":(getTbilisiHour()<7?"dark":"light"));
 
-const API_BASE = "/api";
+const toastEl=document.getElementById("toast");let toastTimer=null;
+function showToast(m){toastEl.textContent=m;toastEl.classList.add("show");clearTimeout(toastTimer);toastTimer=setTimeout(()=>toastEl.classList.remove("show"),2400)}
 
-function getSid() {
-  let sid = localStorage.getItem("_kontrolio_sid");
-  if (!sid) {
-    sid = Math.random().toString(36).slice(2) + Math.random().toString(36).slice(2);
-    localStorage.setItem("_kontrolio_sid", sid);
-  }
-  return sid;
-}
+const VEHICLE_MODELS={bus:[{id:"man18c",label:"MAN Lion's City 18C (CNG, გარმონი)"},{id:"man12",label:"MAN Lion's City 12მ (CNG)"},{id:"bmc12",label:"BMC Procity 12მ (CNG)"},{id:"man10",label:"MAN 10მ (ლურჯი)"},{id:"isuzu8",label:"Isuzu Novociti Life 8მ"}],minibus:[{id:"fordtransit",label:"Ford Transit (ლურჯი)"}]};
+const VEHICLE_LABEL_LOOKUP={};Object.entries(VEHICLE_MODELS).forEach(([t,ms])=>{ms.forEach(m=>VEHICLE_LABEL_LOOKUP[m.id]=m.label)});
 
-function escapeHtml(str) {
-  return String(str)
-    .replaceAll("&", "&amp;")
-    .replaceAll("<", "&lt;")
-    .replaceAll(">", "&gt;")
-    .replaceAll('"', "&quot;")
-    .replaceAll("'", "&#039;");
-}
+/* Mode */
+const rcPage=document.getElementById("rcPage"),listBody=document.getElementById("rcListBody"),drawWrap=document.getElementById("rcDrawWrap"),addBtn=document.getElementById("rcAddBtn"),backBtn=document.getElementById("rcBackBtn"),headerTitle=document.getElementById("rcHeaderTitle"),submitBar=document.getElementById("rcSubmitBar");
+let mode="list",map=null,isDrawStep2=false;
+const isMobile=()=>window.innerWidth<900;
 
-/* ---------- თემა (light/dark) — იგივე ლოგიკა, რაც მთავარ გვერდზე ---------- */
-const THEME_KEY = "kontrolio-theme";
-const THEME_MANUAL_KEY = "kontrolio-theme-manual";
+function enterDrawMode(){mode="draw";isDrawStep2=false;listBody.style.display="none";rcPage.classList.remove("wide-list");drawWrap.classList.add("active");drawWrap.classList.remove("step2");submitBar.classList.add("active");addBtn.style.display="none";headerTitle.textContent="ახალი მარშრუტი";backBtn.removeAttribute("href");backBtn.addEventListener("click",exitDrawModeConfirm);updateStepUi();if(!map)initDrawMap();else setTimeout(()=>map.invalidateSize(),50)}
+function exitDrawModeConfirm(e){e.preventDefault();if(drawPoints.length>0&&!confirm("დახატული ხაზი დაიკარგება — გსურს გამოსვლა?"))return;exitDrawMode()}
+function exitDrawMode(){mode="list";listBody.style.display="";rcPage.classList.add("wide-list");drawWrap.classList.remove("active");submitBar.classList.remove("active");addBtn.style.display="";headerTitle.textContent="საზოგადოების მარშრუტები";backBtn.setAttribute("href","index.html");backBtn.removeEventListener("click",exitDrawModeConfirm);resetDrawState()}
+addBtn.addEventListener("click",enterDrawMode);
+backBtn.addEventListener("click",e=>{if(mode==="draw")exitDrawModeConfirm(e);else if(mode==="detail"){e.preventDefault();exitDetailMode()}});
 
-function getTbilisiHour() {
-  const parts = new Intl.DateTimeFormat("en-US", {
-    timeZone: "Asia/Tbilisi", hour: "2-digit", hour12: false,
-  }).formatToParts(new Date());
-  return parseInt(parts.find((p) => p.type === "hour").value) % 24;
-}
-function isNightTime() {
-  const h = getTbilisiHour();
-  return h >= 0 && h < 7;
-}
-function getSystemTheme() {
-  return isNightTime() ? "dark" : "light";
-}
-function getSavedTheme() {
-  if (localStorage.getItem(THEME_MANUAL_KEY) === "true") {
-    return localStorage.getItem(THEME_KEY) || "light";
-  }
-  return getSystemTheme();
-}
-function setTheme(theme) {
-  document.documentElement.setAttribute("data-theme", theme);
-}
-setTheme(getSavedTheme());
+/* Mobile 2-step */
+const stepNextBtn=document.getElementById("rcStepNextBtn"),stepBackBtn=document.getElementById("rcStepBackBtn"),stepBackBar=document.getElementById("rcStepBackBar");
+function updateStepUi(){if(!isMobile()){stepNextBtn.classList.add("hidden");stepBackBar.classList.add("hidden");return}if(isDrawStep2){stepNextBtn.classList.add("hidden");stepBackBar.classList.remove("hidden")}else{stepBackBar.classList.add("hidden");stepNextBtn.classList.toggle("hidden",drawPoints.length<2)}}
+stepNextBtn.addEventListener("click",()=>{if(drawPoints.length<2)return;isDrawStep2=true;drawWrap.classList.add("step2");updateStepUi()});
+stepBackBtn.addEventListener("click",()=>{isDrawStep2=false;drawWrap.classList.remove("step2");updateStepUi();if(map)setTimeout(()=>map.invalidateSize(),60)});
+window.addEventListener("resize",updateStepUi);
 
-/* ---------- Toast ---------- */
-const toastEl = document.getElementById("toast");
-let toastTimer = null;
-function showToast(msg) {
-  toastEl.textContent = msg;
-  toastEl.classList.add("show");
-  clearTimeout(toastTimer);
-  toastTimer = setTimeout(() => toastEl.classList.remove("show"), 2400);
-}
+/* Draw */
+let drawPoints=[],drawPolyline=null,pointMarkers=[],pointHitAreas=[],stopLinks=[],addStopMode=false;
+function initDrawMap(){map=L.map("rcMap",{zoomControl:true}).setView([41.7151,44.8271],12.5);L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",{maxZoom:19}).addTo(map);map.on("click",e=>{const idx=addDrawPoint(e.latlng.lat,e.latlng.lng);if(addStopMode)openStopPopup(idx)})}
+function redrawPolyline(){if(drawPolyline)map.removeLayer(drawPolyline);if(drawPoints.length>=2){const o={color:"#1f6fd6",weight:5,opacity:0.85};drawPolyline=(routeShape==="loop"&&drawPoints.length>=3)?L.polygon(drawPoints,{...o,fill:false}).addTo(map):L.polyline(drawPoints,o).addTo(map)}}
+function addDrawPoint(lat,lng){const idx=drawPoints.length;drawPoints.push([lat,lng]);const m=L.circleMarker([lat,lng],{radius:7,color:"#fff",weight:2,fillColor:"#1f6fd6",fillOpacity:1,interactive:false}).addTo(map);const h=L.circleMarker([lat,lng],{radius:18,stroke:false,fillOpacity:0,interactive:true,bubblingMouseEvents:false}).addTo(map);h.on("click",e=>{L.DomEvent.stopPropagation(e);openStopPopup(idx)});pointMarkers.push(m);pointHitAreas.push(h);redrawPolyline();updateDrawHint();updateStepUi();renderStopLinkList();return idx}
+function undoLastPoint(){if(drawPoints.length===0)return;drawPoints.pop();const m=pointMarkers.pop();if(m)map.removeLayer(m);const h=pointHitAreas.pop();if(h)map.removeLayer(h);stopLinks=stopLinks.filter(s=>s.pointIndex<drawPoints.length);redrawPolyline();updateDrawHint();updateStepUi();renderStopLinkList()}
+function clearDrawing(){if(drawPoints.length>0&&!confirm("ნამდვილად გსურს მთელი ხაზის წაშლა?"))return;resetDrawState()}
+function resetDrawState(){isDrawStep2=false;drawWrap.classList.remove("step2");drawPoints=[];stopLinks=[];pointMarkers.forEach(m=>map&&map.removeLayer(m));pointHitAreas.forEach(h=>map&&map.removeLayer(h));pointMarkers=[];pointHitAreas=[];if(drawPolyline&&map)map.removeLayer(drawPolyline);drawPolyline=null;addStopMode=false;updateAddStopModeBtn();updateDrawHint();updateStepUi();renderStopLinkList();clearFormFields()}
+function updateDrawHint(){const h=document.getElementById("rcDrawHint");h.textContent=addStopMode?(drawPoints.length===0?"დააჭირე რუკას — წერტილიც დაემატება და გაჩერების არჩევასაც შემოგთავაზებ":drawPoints.length+" წერტილი — გააგრძელე"):(drawPoints.length===0?"დააჭირე რუკას, რომ დაიწყო ხაზის დახატვა":drawPoints.length===1?"დააჭირე ისევ, რომ გააგრძელო ხაზი":drawPoints.length+' წერტილი — აირჩიე "გაჩერების დამატება" ან დააჭირე წერტილს')}
+document.getElementById("rcUndoBtn").addEventListener("click",undoLastPoint);
+document.getElementById("rcClearBtn").addEventListener("click",clearDrawing);
+const addStopModeBtn=document.getElementById("rcAddStopModeBtn");
+function updateAddStopModeBtn(){addStopModeBtn.classList.toggle("active",addStopMode)}
+addStopModeBtn.addEventListener("click",()=>{addStopMode=!addStopMode;updateAddStopModeBtn();updateDrawHint()});
 
-/* ---------- ტრანსპორტის მოდელები (იგივე სია, რაც backend-ში) ---------- */
-const VEHICLE_MODELS = {
-  bus: [
-    { id: "man18c", label: "MAN Lion's City 18C (CNG, გარმონი)" },
-    { id: "man12", label: "MAN Lion's City 12მ (CNG)" },
-    { id: "bmc12", label: "BMC Procity 12მ (CNG)" },
-    { id: "man10", label: "MAN 10მ (ლურჯი)" },
-    { id: "isuzu8", label: "Isuzu Novociti Life 8მ" },
-  ],
-  minibus: [{ id: "fordtransit", label: "Ford Transit (ლურჯი)" }],
-};
-const VEHICLE_LABEL_LOOKUP = {};
-Object.entries(VEHICLE_MODELS).forEach(([type, models]) => {
-  models.forEach((m) => (VEHICLE_LABEL_LOOKUP[m.id] = m.label));
-});
+/* Stop Picker via Leaflet Popup */
+function openStopPopup(pointIndex){if(!map)return;map.closePopup();const pt=drawPoints[pointIndex];const existing=stopLinks.find(s=>s.pointIndex===pointIndex);const currentLabel=existing?(existing._label||existing.customLabel||""):"";const searchHtml='<div style="margin-bottom:6px;"><input type="text" id="popupSearchInput" placeholder="მოძებნე გაჩერება..." style="width:100%;padding:8px 10px;border-radius:8px;border:1.5px solid var(--grey-soft);font-size:13px;font-family:inherit;" autocomplete="off"/><div id="popupResults" style="max-height:140px;overflow-y:auto;margin-top:4px;"></div></div><div style="margin:8px 0;text-align:center;color:var(--grey);font-size:11px;font-weight:600;">— ან —</div>';const content='<div style="min-width:220px;max-width:280px;"><div style="font-size:13px;font-weight:700;margin-bottom:8px;color:var(--text);"><span style="background:var(--bus-blue);color:#fff;padding:2px 7px;border-radius:4px;margin-right:6px;font-family:var(--font-display);">#'+(pointIndex+1)+'</span>გაჩერების მიბმა</div>'+searchHtml+'<input type="text" id="popupNewInput" placeholder="ახალი გაჩერების სახელი..." maxlength="60" style="width:100%;padding:8px 10px;border-radius:8px;border:1.5px solid var(--grey-soft);font-size:13px;font-family:inherit;" value="'+escapeHtml(currentLabel)+'"/><div style="display:flex;gap:6px;margin-top:8px;"><button id="popupConfirmBtn" style="flex:1;padding:8px;border-radius:8px;border:none;background:var(--bus-blue);color:#fff;font-weight:700;font-size:12.5px;cursor:pointer;font-family:inherit;">დადასტურება</button><button id="popupRemoveBtn" style="padding:8px 10px;border-radius:8px;border:1px solid var(--red);background:transparent;color:var(--red);font-weight:600;font-size:12px;cursor:pointer;font-family:inherit;">მოხსნა</button></div></div>';const popup=L.popup({className:"rcPopup",closeButton:true,autoClose:false}).setLatLng(pt).setContent(content).openOn(map);setTimeout(()=>{const si=document.getElementById("popupSearchInput"),re=document.getElementById("popupResults"),ni=document.getElementById("popupNewInput"),cb=document.getElementById("popupConfirmBtn"),rb=document.getElementById("popupRemoveBtn");if(si&&re){si.addEventListener("input",()=>{const q=si.value.trim().toLowerCase();if(!q){re.innerHTML="";return}const matches=(typeof STOPS!=="undefined"?STOPS:[]).filter(s=>s.name.toLowerCase().includes(q)).slice(0,8);re.innerHTML=matches.length===0?'<p style="color:var(--grey);font-size:11px;text-align:center;padding:6px;">ვერაფერი მოიძებნა</p>':matches.map(s=>'<div class="spResult" data-id="'+escapeHtml(s.id)+'" style="padding:6px 8px;border-radius:6px;background:var(--grey-soft);font-size:12px;cursor:pointer;margin-bottom:3px;">'+escapeHtml(s.name)+'</div>').join("");re.querySelectorAll(".spResult").forEach(el=>{el.addEventListener("click",()=>{ni.value=el.textContent;ni.dataset.stopId=el.dataset.id;re.innerHTML=""})})})}if(cb){cb.addEventListener("click",()=>{const label=ni.value.trim(),stopId=ni.dataset.stopId||null;if(!label&&!stopId){showToast("შეიყვანე გაჩერების სახელი");return}stopLinks=stopLinks.filter(s=>s.pointIndex!==pointIndex);stopLinks.push({pointIndex,stopId,customLabel:stopId?null:label,_label:label||"?"});if(pointMarkers[pointIndex])pointMarkers[pointIndex].setStyle({fillColor:"#2ec4b6"});renderStopLinkList();map.closePopup()})}if(rb){rb.addEventListener("click",()=>{stopLinks=stopLinks.filter(s=>s.pointIndex!==pointIndex);if(pointMarkers[pointIndex])pointMarkers[pointIndex].setStyle({fillColor:"#1f6fd6"});renderStopLinkList();map.closePopup()})}if(si&&!currentLabel)si.focus()},50)}
+function renderStopLinkList(){const c=document.getElementById("rcStopLinkList");if(stopLinks.length===0){c.innerHTML="";return}const sorted=[...stopLinks].sort((a,b)=>a.pointIndex-b.pointIndex);c.innerHTML=sorted.map(s=>'<div class="rcStopLinkItem"><span class="rcStopLinkItem__idx">'+(s.pointIndex+1)+'</span><span class="rcStopLinkItem__label">'+escapeHtml(s._label||s.customLabel||"?")+'</span><button type="button" class="rcStopLinkItem__remove" data-point="'+s.pointIndex+'"><i data-lucide="x"></i></button></div>').join("");c.querySelectorAll(".rcStopLinkItem__remove").forEach(b=>{b.addEventListener("click",()=>{const idx=parseInt(b.dataset.point,10);stopLinks=stopLinks.filter(s=>s.pointIndex!==idx);renderStopLinkList();if(pointMarkers[idx])pointMarkers[idx].setStyle({fillColor:"#1f6fd6"})})});if(window.lucide)lucide.createIcons()}
 
-/* ============================================================
-   რეჟიმის გადართვა: სია ⇄ დახატვა
-   ============================================================ */
-const rcPage = document.getElementById("rcPage");
-const listBody = document.getElementById("rcListBody");
-const drawWrap = document.getElementById("rcDrawWrap");
-const addBtn = document.getElementById("rcAddBtn");
-const backBtn = document.getElementById("rcBackBtn");
-const headerTitle = document.getElementById("rcHeaderTitle");
-const submitBar = document.getElementById("rcSubmitBar");
-
-let mode = "list"; // "list" | "draw" | "detail"
-let map = null;
-
-function enterDrawMode() {
-  mode = "draw";
-  listBody.style.display = "none";
-  rcPage.classList.remove("wide-list");
-  drawWrap.classList.add("active");
-  submitBar.classList.add("active");
-  addBtn.style.display = "none";
-  headerTitle.textContent = "ახალი მარშრუტი";
-  backBtn.removeAttribute("href");
-  backBtn.addEventListener("click", exitDrawModeConfirm);
-
-  if (!map) initDrawMap();
-  else setTimeout(() => map.invalidateSize(), 50);
-}
-
-function exitDrawModeConfirm(e) {
-  e.preventDefault();
-  if (drawPoints.length > 0) {
-    if (!confirm("დახატული ხაზი დაიკარგება — გსურს გამოსვლა?")) return;
-  }
-  exitDrawMode();
-}
-
-function exitDrawMode() {
-  mode = "list";
-  listBody.style.display = "";
-  rcPage.classList.add("wide-list");
-  drawWrap.classList.remove("active");
-  submitBar.classList.remove("active");
-  addBtn.style.display = "";
-  headerTitle.textContent = "საზოგადოების მარშრუტები";
-  backBtn.setAttribute("href", "index.html");
-  backBtn.removeEventListener("click", exitDrawModeConfirm);
-  resetDrawState();
-}
-
-addBtn.addEventListener("click", enterDrawMode);
-backBtn.addEventListener("click", (e) => {
-  if (mode === "draw") exitDrawModeConfirm(e);
-  else if (mode === "detail") {
-    e.preventDefault();
-    exitDetailMode();
-  }
-});
-
-/* ============================================================
-   Draw map — click-to-add-point ხაზის დახატვა
-   ------------------------------------------------------------
-   ორი რეჟიმი toolbar-ში:
-   - "ხაზის დახატვა" (default) — click უბრალოდ ამატებს point-ს ხაზზე
-   - "გაჩერების დამატება" (toggle ღილაკით) — click ერთდროულად
-     ამატებს point-ს და მაშინვე ხსნის stop-picker-ს, ერთ ნაბიჯად
-     (ნაცვლად "point დასვი, მერე ცალკე დააჭირე point-ს" ორნაბიჯიანი
-     flow-სი). ეს არის ნაგულისხმევი გზა გაჩერების მისაბმელად.
-
-   ხაზზე უკვე დასმულ point-ს კვლავაც შეგიძლია დააჭირო stop-picker-ის
-   ხელახლა გასახსნელად/შესაცვლელად — ამისთვის point-marker-ის
-   ჰიტ-არეა გაზრდილია (invisible ფართო circle awtenticity ცალკე
-   layer-ად), რომ პატარა touch-target არ იყოს პრობლემა მობილურზე. */
-let drawPoints = [];
-let drawPolyline = null;
-let pointMarkers = []; // ვიზუალური, პატარა წრეები
-let pointHitAreas = []; // უხილავი, დიდი — click/touch-ისთვის
-let stopLinks = []; // [{ pointIndex, stopId|null, customLabel|null, _label }]
-let addStopMode = false; // toggle: შემდეგი click ერთდროულად ამატებს point-ს + ხსნის picker-ს
-
-function initDrawMap() {
-  map = L.map("rcMap", { zoomControl: true }).setView([41.7151, 44.8271], 12.5);
-  L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-    maxZoom: 19,
-    attribution: "&copy; OpenStreetMap contributors",
-  }).addTo(map);
-
-  map.on("click", (e) => {
-    const idx = addDrawPoint(e.latlng.lat, e.latlng.lng);
-    if (addStopMode) {
-      openStopPicker(idx);
-    }
-  });
-}
-
-function redrawPolyline() {
-  if (drawPolyline) map.removeLayer(drawPolyline);
-  if (drawPoints.length >= 2) {
-    const options = { color: "#1f6fd6", weight: 5, opacity: 0.85 };
-    if (routeShape === "loop" && drawPoints.length >= 3) {
-      drawPolyline = L.polygon(drawPoints, { ...options, fill: false }).addTo(map);
-    } else {
-      drawPolyline = L.polyline(drawPoints, options).addTo(map);
-    }
-  }
-}
-
-function addDrawPoint(lat, lng) {
-  const idx = drawPoints.length;
-  drawPoints.push([lat, lng]);
-
-  // ვიზუალური, პატარა წრე — ისე გამოიყურება, როგორც აქამდე
-  const marker = L.circleMarker([lat, lng], {
-    radius: 7, color: "#fff", weight: 2, fillColor: "#1f6fd6", fillOpacity: 1,
-    interactive: false, // click-ს ქვემოთა hit-area იჭერს, ორმაგი listener რომ არ დაგვჭირდეს
-  }).addTo(map);
-
-  // უხილავი, ბევრად უფრო დიდი hit-area — მობილურზე თითით ზუსტი
-  // მიზნის ძებნა აღარ სჭირდება. radius პიქსელებშია (ეკრანის
-  // ზომაზეა დამოკიდებული, არა zoom-ზე), ანუ ნებისმიერ zoom-level-ზე
-  // თანაბრად კომფორტულია.
-  const hitArea = L.circleMarker([lat, lng], {
-    radius: 18,
-    stroke: false,
-    fillOpacity: 0,
-    interactive: true,
-    bubblingMouseEvents: false,
-  }).addTo(map);
-
-  hitArea.on("click", (e) => {
-    L.DomEvent.stopPropagation(e);
-    openStopPicker(idx);
-  });
-
-  pointMarkers.push(marker);
-  pointHitAreas.push(hitArea);
-  redrawPolyline();
-  updateDrawHint();
-  renderStopLinkList();
-  return idx;
-}
-
-function undoLastPoint() {
-  if (drawPoints.length === 0) return;
-  drawPoints.pop();
-  const marker = pointMarkers.pop();
-  const hitArea = pointHitAreas.pop();
-  if (marker) map.removeLayer(marker);
-  if (hitArea) map.removeLayer(hitArea);
-  stopLinks = stopLinks.filter((s) => s.pointIndex < drawPoints.length);
-  redrawPolyline();
-  updateDrawHint();
-  renderStopLinkList();
-}
-
-function clearDrawing() {
-  if (drawPoints.length > 0 && !confirm("ნამდვილად გსურს მთელი ხაზის წაშლა?")) return;
-  resetDrawState();
-}
-
-function resetDrawState() {
-  drawPoints = [];
-  stopLinks = [];
-  pointMarkers.forEach((m) => map && map.removeLayer(m));
-  pointHitAreas.forEach((h) => map && map.removeLayer(h));
-  pointMarkers = [];
-  pointHitAreas = [];
-  if (drawPolyline && map) map.removeLayer(drawPolyline);
-  drawPolyline = null;
-  addStopMode = false;
-  updateAddStopModeBtn();
-  updateDrawHint();
-  renderStopLinkList();
-  clearFormFields();
-}
-
-function updateDrawHint() {
-  const hint = document.getElementById("rcDrawHint");
-  if (addStopMode) {
-    hint.textContent = drawPoints.length === 0
-      ? "დააჭირე რუკას — წერტილიც დაემატება და მაშინვე გაჩერების არჩევასაც შემოგთავაზებ"
-      : `${drawPoints.length} წერტილი — გააგრძელე დაჭერა ახალი გაჩერებების დასამატებლად`;
-    return;
-  }
-  if (drawPoints.length === 0) {
-    hint.textContent = "დააჭირე რუკას, რომ დაიწყო ხაზის დახატვა";
-  } else if (drawPoints.length === 1) {
-    hint.textContent = "დააჭირე ისევ, რომ გააგრძელო ხაზი";
-  } else {
-    hint.textContent = `${drawPoints.length} წერტილი — ისარჩიე "🚏 გაჩერების დამატება" ღილაკი, ან დააჭირე არსებულ წერტილს`;
-  }
-}
-
-document.getElementById("rcUndoBtn").addEventListener("click", undoLastPoint);
-document.getElementById("rcClearBtn").addEventListener("click", clearDrawing);
-
-/* ---------- "გაჩერების დამატება" toggle ---------- */
-const addStopModeBtn = document.getElementById("rcAddStopModeBtn");
-function updateAddStopModeBtn() {
-  addStopModeBtn.classList.toggle("active", addStopMode);
-}
-addStopModeBtn.addEventListener("click", () => {
-  addStopMode = !addStopMode;
-  updateAddStopModeBtn();
-  updateDrawHint();
-});
-
-/* ============================================================
-   Stop picker modal — არსებული გაჩერების ძებნა ან ახლის შექმნა
-   ============================================================ */
-const stopPickerOverlay = document.getElementById("stopPickerOverlay");
-const stopPickerSheet = document.getElementById("stopPickerSheet");
-const spTabExisting = document.getElementById("spTabExisting");
-const spTabNew = document.getElementById("spTabNew");
-const spExistingPane = document.getElementById("spExistingPane");
-const spNewPane = document.getElementById("spNewPane");
-const spSearchInput = document.getElementById("spSearchInput");
-const spResults = document.getElementById("spResults");
-const spNewNameInput = document.getElementById("spNewNameInput");
-const spConfirmBtn = document.getElementById("spConfirmBtn");
-const spRemoveBtn = document.getElementById("spRemoveBtn");
-const spCancelBtn = document.getElementById("spCancelBtn");
-
-let spActivePointIndex = null;
-let spSelectedStop = null; // { stopId, name } | null
-let spTab = "existing";
-
-function openStopPicker(pointIndex) {
-  spActivePointIndex = pointIndex;
-  const existing = stopLinks.find((s) => s.pointIndex === pointIndex);
-
-  spTab = "existing";
-  spTabExisting.classList.add("selected");
-  spTabNew.classList.remove("selected");
-  spExistingPane.style.display = "";
-  spNewPane.style.display = "none";
-  spSearchInput.value = "";
-  spNewNameInput.value = "";
-  spSelectedStop = null;
-  spResults.innerHTML = "";
-
-  if (existing) {
-    if (existing.stopId) {
-      spSelectedStop = { stopId: existing.stopId, name: existing._label };
-      spSearchInput.value = existing._label;
-      renderSearchResults(existing._label);
-    } else {
-      spTab = "new";
-      spTabExisting.classList.remove("selected");
-      spTabNew.classList.add("selected");
-      spExistingPane.style.display = "none";
-      spNewPane.style.display = "";
-      spNewNameInput.value = existing.customLabel || "";
-    }
-  }
-
-  stopPickerOverlay.classList.remove("hidden");
-  stopPickerSheet.classList.remove("hidden");
-  if (spTab === "existing") spSearchInput.focus();
-}
-
-function closeStopPicker() {
-  stopPickerOverlay.classList.add("hidden");
-  stopPickerSheet.classList.add("hidden");
-  spActivePointIndex = null;
-}
-
-spTabExisting.addEventListener("click", () => {
-  spTab = "existing";
-  spTabExisting.classList.add("selected");
-  spTabNew.classList.remove("selected");
-  spExistingPane.style.display = "";
-  spNewPane.style.display = "none";
-});
-spTabNew.addEventListener("click", () => {
-  spTab = "new";
-  spTabNew.classList.add("selected");
-  spTabExisting.classList.remove("selected");
-  spNewPane.style.display = "";
-  spExistingPane.style.display = "none";
-});
-
-function renderSearchResults(query) {
-  const q = query.trim().toLowerCase();
-  if (!q || typeof STOPS === "undefined") {
-    spResults.innerHTML = "";
-    return;
-  }
-  const matches = STOPS.filter((s) => s.name.toLowerCase().includes(q)).slice(0, 15);
-  if (matches.length === 0) {
-    spResults.innerHTML = `<p style="color:var(--grey); font-size:13px; text-align:center; padding:14px 0;">ვერაფერი მოიძებნა</p>`;
-    return;
-  }
-  spResults.innerHTML = matches
-    .map((s) => `<div class="stopPickerResult" data-id="${escapeHtml(s.id)}" data-name="${escapeHtml(s.name)}">${escapeHtml(s.name)}</div>`)
-    .join("");
-  spResults.querySelectorAll(".stopPickerResult").forEach((el) => {
-    el.addEventListener("click", () => {
-      spSelectedStop = { stopId: el.dataset.id, name: el.dataset.name };
-      spSearchInput.value = el.dataset.name;
-      spResults.innerHTML = "";
-    });
-  });
-}
-
-spSearchInput.addEventListener("input", () => {
-  spSelectedStop = null;
-  renderSearchResults(spSearchInput.value);
-});
-
-spConfirmBtn.addEventListener("click", () => {
-  if (spActivePointIndex === null) return;
-
-  let entry = null;
-  if (spTab === "existing" && spSelectedStop) {
-    entry = { pointIndex: spActivePointIndex, stopId: spSelectedStop.stopId, customLabel: null, _label: spSelectedStop.name };
-  } else if (spTab === "new" && spNewNameInput.value.trim()) {
-    const label = spNewNameInput.value.trim().slice(0, 60);
-    entry = { pointIndex: spActivePointIndex, stopId: null, customLabel: label, _label: label };
-  } else {
-    showToast("აირჩიე გაჩერება ან შეიყვანე სახელი");
-    return;
-  }
-
-  stopLinks = stopLinks.filter((s) => s.pointIndex !== spActivePointIndex);
-  stopLinks.push(entry);
-  renderStopLinkList();
-  if (pointMarkers[spActivePointIndex]) {
-    pointMarkers[spActivePointIndex].setStyle({ fillColor: "#2ec4b6" });
-  }
-  closeStopPicker();
-});
-
-spRemoveBtn.addEventListener("click", () => {
-  if (spActivePointIndex === null) return;
-  stopLinks = stopLinks.filter((s) => s.pointIndex !== spActivePointIndex);
-  renderStopLinkList();
-  if (pointMarkers[spActivePointIndex]) {
-    pointMarkers[spActivePointIndex].setStyle({ fillColor: "#1f6fd6" });
-  }
-  closeStopPicker();
-});
-
-spCancelBtn.addEventListener("click", closeStopPicker);
-stopPickerOverlay.addEventListener("click", closeStopPicker);
-
-function renderStopLinkList() {
-  const container = document.getElementById("rcStopLinkList");
-  if (stopLinks.length === 0) {
-    container.innerHTML = "";
-    return;
-  }
-  const sorted = [...stopLinks].sort((a, b) => a.pointIndex - b.pointIndex);
-  container.innerHTML = sorted
-    .map(
-      (s) => `
-      <div class="rcStopLinkItem">
-        <span class="rcStopLinkItem__idx">${s.pointIndex + 1}</span>
-        <span class="rcStopLinkItem__label">${escapeHtml(s._label || s.customLabel || "?")}</span>
-        <button type="button" class="rcStopLinkItem__remove" data-point="${s.pointIndex}"><i data-lucide="x"></i></button>
-      </div>`
-    )
-    .join("");
-  container.querySelectorAll(".rcStopLinkItem__remove").forEach((btn) => {
-    btn.addEventListener("click", () => {
-      const idx = parseInt(btn.dataset.point, 10);
-      stopLinks = stopLinks.filter((s) => s.pointIndex !== idx);
-      renderStopLinkList();
-      if (pointMarkers[idx]) pointMarkers[idx].setStyle({ fillColor: "#1f6fd6" });
-    });
-  });
-  if (window.lucide) lucide.createIcons();
-}
-
-/* ============================================================
-   ფორმა — ტიპი/მოდელი/ნომერი/სახელი/აღწერა
-   ============================================================ */
-let selectedVehicleType = null;
-let routeShape = "oneway"; // "oneway" | "loop"
-
-function populateModelSelect(vehicleType) {
-  const select = document.getElementById("rcVehicleModel");
-  const models = VEHICLE_MODELS[vehicleType] || [];
-  select.innerHTML = models.map((m) => `<option value="${m.id}">${escapeHtml(m.label)}</option>`).join("");
-}
-
-function selectVehicleType(type) {
-  selectedVehicleType = type;
-  document.getElementById("rcVehicleBus").classList.toggle("selected", type === "bus");
-  document.getElementById("rcVehicleMinibus").classList.toggle("selected", type === "minibus");
-  populateModelSelect(type);
-}
-
-document.getElementById("rcVehicleBus").addEventListener("click", () => selectVehicleType("bus"));
-document.getElementById("rcVehicleMinibus").addEventListener("click", () => selectVehicleType("minibus"));
+/* Form */
+let selectedVehicleType="bus",routeShape="oneway";
+function populateModelSelect(t){const s=document.getElementById("rcVehicleModel");s.innerHTML=(VEHICLE_MODELS[t]||[]).map(m=>'<option value="'+m.id+'">'+escapeHtml(m.label)+'</option>').join("")}
+function selectVehicleType(t){selectedVehicleType=t;document.getElementById("rcVehicleBus").classList.toggle("selected",t==="bus");document.getElementById("rcVehicleMinibus").classList.toggle("selected",t==="minibus");populateModelSelect(t)}
+document.getElementById("rcVehicleBus").addEventListener("click",()=>selectVehicleType("bus"));
+document.getElementById("rcVehicleMinibus").addEventListener("click",()=>selectVehicleType("minibus"));
 selectVehicleType("bus");
+function selectRouteShape(s){routeShape=s;document.getElementById("rcShapeOneway").classList.toggle("selected",s==="oneway");document.getElementById("rcShapeLoop").classList.toggle("selected",s==="loop");redrawPolyline()}
+document.getElementById("rcShapeOneway").addEventListener("click",()=>selectRouteShape("oneway"));
+document.getElementById("rcShapeLoop").addEventListener("click",()=>selectRouteShape("loop"));
+const routeNumberInput=document.getElementById("rcRouteNumber");
+routeNumberInput.addEventListener("input",()=>{routeNumberInput.value=routeNumberInput.value.replace(/\D/g,"").slice(0,3)});
+function clearFormFields(){routeNumberInput.value="";document.getElementById("rcRouteName").value="";document.getElementById("rcRouteDesc").value="";document.getElementById("rcRouteNumberError").textContent="";document.getElementById("rcRouteNameError").textContent="";document.getElementById("rcFormError").textContent="";selectVehicleType("bus");selectRouteShape("oneway")}
 
-function selectRouteShape(shape) {
-  routeShape = shape;
-  document.getElementById("rcShapeOneway").classList.toggle("selected", shape === "oneway");
-  document.getElementById("rcShapeLoop").classList.toggle("selected", shape === "loop");
-  redrawPolyline(); // ხაზის ვიზუალიც განახლდეს (polygon vs polyline)
-}
-document.getElementById("rcShapeOneway").addEventListener("click", () => selectRouteShape("oneway"));
-document.getElementById("rcShapeLoop").addEventListener("click", () => selectRouteShape("loop"));
-selectRouteShape("oneway");
+/* Submit */
+const NAME_PATTERN=/^[a-zA-Z\u10D0-\u10FF0-9 .,\-\u2013_/()]{1,80}$/u,ROUTE_NUMBER_PATTERN=/^\d{3}$/;
+async function submitRoute(){const err=document.getElementById("rcFormError");err.textContent="";const rn=routeNumberInput.value.trim(),nm=document.getElementById("rcRouteName").value.trim(),desc=document.getElementById("rcRouteDesc").value.trim(),vm=document.getElementById("rcVehicleModel").value;if(drawPoints.length<2){err.textContent="დახატე მინიმუმ 2 წერტილიანი ხაზი";return}if(routeShape==="loop"&&drawPoints.length<3){err.textContent="წრიულს 3+ წერტილი სჭირდება";return}if(!ROUTE_NUMBER_PATTERN.test(rn)){document.getElementById("rcRouteNumberError").textContent="ზუსტად 3 ციფრი";return}document.getElementById("rcRouteNumberError").textContent="";if(!NAME_PATTERN.test(nm)){document.getElementById("rcRouteNameError").textContent="1-80 სიმბოლო";return}document.getElementById("rcRouteNameError").textContent="";const btn=document.getElementById("rcSubmitBtn");btn.disabled=true;btn.textContent="იგზავნება...";try{const res=await fetch(API_BASE+"/custom-routes",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({vehicleType:selectedVehicleType,vehicleModel:vm,routeNumber:rn,name:nm,description:desc,isLoop:routeShape==="loop",points:drawPoints,stopLinks:stopLinks.map(({pointIndex,stopId,customLabel})=>({pointIndex,stopId,customLabel})),sid:getSid()})});const data=await res.json();if(!res.ok)throw new Error(data.error||"HTTP "+res.status);showToast("გაგზავნილია! ადმინისტრატორი გადახედავს მალე");exitDrawMode();loadRouteList()}catch(e){err.textContent=e.message||"შეცდომა — სცადე ისევ"}finally{btn.disabled=false;btn.textContent="გაგზავნა განსახილველად"}}
+document.getElementById("rcSubmitBtn").addEventListener("click",submitRoute);
 
-const routeNumberInput = document.getElementById("rcRouteNumber");
-routeNumberInput.addEventListener("input", () => {
-  routeNumberInput.value = routeNumberInput.value.replace(/\D/g, "").slice(0, 3);
-});
+/* List + thumbnail */
+let currentRoutes=[];
+function generateThumbnailSvg(route){if(!route.points||route.points.length<2)return"";const pts=route.points;let mnLa=Infinity,mxLa=-Infinity,mnLo=Infinity,mxLo=-Infinity;pts.forEach(([la,lo])=>{if(la<mnLa)mnLa=la;if(la>mxLa)mxLa=la;if(lo<mnLo)mnLo=lo;if(lo>mxLo)mxLo=lo});const pLa=(mxLa-mnLa)*0.15||0.005,pLo=(mxLo-mnLo)*0.15||0.005;mnLa-=pLa;mxLa+=pLa;mnLo-=pLo;mxLo+=pLo;const rLa=mxLa-mnLa||0.001,rLo=mxLo-mnLo||0.001,toX=lo=>((lo-mnLo)/rLo)*100,toY=la=>100-((la-mnLa)/rLa)*100;const ps=pts.map(([la,lo])=>toX(lo).toFixed(1)+","+toY(la).toFixed(1)).join(" "),tag=route.isLoop?"polygon":"polyline";const stops=(route.stopLinks||[]).filter(s=>pts[s.pointIndex]).map(s=>{const[la,lo]=pts[s.pointIndex];return'<circle cx="'+toX(lo).toFixed(1)+'" cy="'+toY(la).toFixed(1)+'" r="2" fill="#2ec4b6" stroke="#fff" stroke-width="0.5"/>'}).join("");return'<svg class="rcCard__thumbSvg" viewBox="0 0 100 100" preserveAspectRatio="none"><'+tag+' points="'+ps+'"/>'+stops+"</svg>"}
+async function loadRouteList(){const el=document.getElementById("rcList");try{const res=await fetch(API_BASE+"/custom-routes",{cache:"no-store"});if(!res.ok)throw new Error("HTTP "+res.status);currentRoutes=await res.json();if(!Array.isArray(currentRoutes)||currentRoutes.length===0){el.innerHTML='<div class="emptyState" style="padding:50px 20px;grid-column:1/-1;"><div class="emptyState__icon"><i data-lucide="route" style="width:36px;height:36px;color:var(--grey);"></i></div><div class="emptyState__title">მარშრუტები არ არის</div><div class="emptyState__sub">იყავი პირველი — დახატე შენი მარშრუტი!</div></div>';if(window.lucide)lucide.createIcons();return}el.innerHTML=currentRoutes.map(r=>{const bc=r.vehicleType==="minibus"?"rcCard__badge--minibus":"rcCard__badge--bus",model=VEHICLE_LABEL_LOOKUP[r.vehicleModel]||r.vehicleModel,sc=Array.isArray(r.stopLinks)?r.stopLinks.length:0,thumb=generateThumbnailSvg(r);return'<div class="rcCard" data-id="'+escapeHtml(r.id)+'">'+(thumb?'<div class="rcCard__thumb">'+thumb+'<span class="rcCard__thumbBadge">'+escapeHtml(r.routeNumber)+'</span>'+(sc>0?'<span class="rcCard__thumbStops"><i data-lucide="map-pin" style="width:9px;height:9px;"></i> '+sc+"</span>":"")+"</div>":"")+'<div class="rcCard__top"><span class="rcCard__badge '+bc+'">'+escapeHtml(r.routeNumber)+'</span><span class="rcCard__name">'+escapeHtml(r.name)+"</span></div><span class=\"rcCard__model\">"+escapeHtml(model)+"</span>"+(r.description?'<p class="rcCard__desc">'+escapeHtml(r.description)+"</p>":"")+"</div>"}).join("");el.querySelectorAll(".rcCard").forEach(card=>{card.addEventListener("click",()=>{const r=currentRoutes.find(r=>r.id===card.dataset.id);if(r)enterDetailMode(r)})})}catch(e){el.innerHTML='<p class="rcListEmpty">ვერ ჩაიტვირთა — სცადე გვერდის განახლება</p>'}if(window.lucide)lucide.createIcons()}
 
-function clearFormFields() {
-  routeNumberInput.value = "";
-  document.getElementById("rcRouteName").value = "";
-  document.getElementById("rcRouteDesc").value = "";
-  document.getElementById("rcRouteNumberError").textContent = "";
-  document.getElementById("rcRouteNameError").textContent = "";
-  document.getElementById("rcFormError").textContent = "";
-  selectVehicleType("bus");
-  selectRouteShape("oneway");
-}
+/* Detail */
+const detailWrap=document.getElementById("rcDetailWrap"),rcDetailDelete=document.getElementById("rcDetailDelete");let detailMap=null,activeDetailRouteId=null,detailResizeObserver=null;
+function enterDetailMode(route){mode="detail";activeDetailRouteId=route.id;listBody.style.display="none";rcPage.classList.remove("wide-list");detailWrap.classList.add("active");addBtn.style.display="none";headerTitle.textContent="№"+route.routeNumber+" — "+route.name;backBtn.removeAttribute("href");renderDetailInfo(route);window.scrollTo(0,0);setTimeout(()=>{if(detailMap){detailMap.remove();detailMap=null}detailMap=L.map("rcDetailFullMap",{zoomControl:true});L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",{maxZoom:19}).addTo(detailMap);const line=route.isLoop?L.polygon(route.points,{color:"#1f6fd6",weight:5,fill:false}).addTo(detailMap):L.polyline(route.points,{color:"#1f6fd6",weight:5}).addTo(detailMap);(route.stopLinks||[]).forEach(link=>{const pt=route.points[link.pointIndex];if(!pt)return;const label=link.stopId?(STOPS.find(st=>st.id===link.stopId)||{}).name||link.customLabel||"?":link.customLabel||"?";L.circleMarker(pt,{radius:7,color:"#fff",weight:2,fillColor:"#2ec4b6",fillOpacity:1}).addTo(detailMap).bindTooltip(escapeHtml(label),{direction:"top"})});detailMap.fitBounds(line.getBounds(),{padding:[30,30]});requestAnimationFrame(()=>{if(detailMap)detailMap.invalidateSize()});const me=document.getElementById("rcDetailFullMap");if(!detailResizeObserver)detailResizeObserver=new ResizeObserver(()=>{if(detailMap)detailMap.invalidateSize()});else detailResizeObserver.disconnect();detailResizeObserver.observe(me)},60);if(window.lucide)lucide.createIcons()}
+function renderDetailInfo(route){const bc=route.vehicleType==="minibus"?"rcCard__badge--minibus":"rcCard__badge--bus";document.getElementById("rcDetailBadge").className="rcCard__badge "+bc;document.getElementById("rcDetailBadge").textContent=route.routeNumber;document.getElementById("rcDetailName").textContent=route.name;const ml=VEHICLE_LABEL_LOOKUP[route.vehicleModel]||route.vehicleModel;document.getElementById("rcDetailMeta2").innerHTML='<span><i data-lucide="'+(route.vehicleType==="minibus"?"truck":"bus")+'" style="width:14px;height:14px;"></i> '+escapeHtml(ml)+'</span><span><i data-lucide="'+(route.isLoop?"repeat":"arrow-left-right")+'" style="width:14px;height:14px;"></i> '+(route.isLoop?"წრიული":"ორმხრივი")+'</span><span><i data-lucide="map-pin"></i> '+(route.stopLinks||[]).length+" გაჩერება</span>";document.getElementById("rcDetailDesc").textContent=route.description||"";const se=document.getElementById("rcDetailStops"),links=(route.stopLinks||[]).slice().sort((a,b)=>a.pointIndex-b.pointIndex);if(links.length>0){se.innerHTML="<h4>გაჩერებები</h4>"+links.map((s,i)=>{const label=s.stopId?(STOPS.find(st=>st.id===s.stopId)||{}).name||s.customLabel||"?":s.customLabel||"?";return'<div class="rcDetailStopItem"><span class="rcDetailStopItem__idx">'+(i+1)+"</span><span>"+escapeHtml(label)+"</span></div>"}).join("")}else se.innerHTML="";rcDetailDelete.classList.toggle("hidden",!isAdminMode());if(window.lucide)lucide.createIcons()}
+function exitDetailMode(){mode="list";listBody.style.display="";rcPage.classList.add("wide-list");detailWrap.classList.remove("active");addBtn.style.display="";headerTitle.textContent="საზოგადოების მარშრუტები";backBtn.setAttribute("href","index.html");activeDetailRouteId=null;if(detailResizeObserver)detailResizeObserver.disconnect();if(detailMap){detailMap.remove();detailMap=null}}
 
-/* ============================================================
-   Submit
-   ============================================================ */
-const NAME_PATTERN = /^[a-zA-Zა-ჰ0-9 .,\-–_/()]{1,80}$/u;
-const ROUTE_NUMBER_PATTERN = /^\d{3}$/;
+/* Admin */
+const ADMIN_PW_KEY="kontrolio-admin-pw";
+function isAdminMode(){return!!localStorage.getItem(ADMIN_PW_KEY)}
+function getOrAskAdminPassword(){let pw=localStorage.getItem(ADMIN_PW_KEY);if(!pw){pw=prompt("Admin პაროლი:");if(!pw)return null;localStorage.setItem(ADMIN_PW_KEY,pw)}return pw}
+rcDetailDelete.addEventListener("click",async()=>{if(!activeDetailRouteId)return;if(!confirm("ნამდვილად გსურს ამ მარშრუტის წაშლა?"))return;const pw=getOrAskAdminPassword();if(!pw)return;try{const res=await fetch(API_BASE+"/custom-routes?id="+encodeURIComponent(activeDetailRouteId),{method:"DELETE",headers:{"X-Admin-Password":pw}});if(res.status===401){localStorage.removeItem(ADMIN_PW_KEY);showToast("პაროლი არასწორია");return}if(!res.ok)throw new Error("HTTP "+res.status);showToast("წაშლილია");exitDetailMode();loadRouteList()}catch(e){showToast("წაშლა ვერ მოხერხდა")}});
+if(new URLSearchParams(location.search).get("admin")==="1"&&!isAdminMode())getOrAskAdminPassword();
 
-async function submitRoute() {
-  const errEl = document.getElementById("rcFormError");
-  errEl.textContent = "";
-
-  const routeNumber = routeNumberInput.value.trim();
-  const name = document.getElementById("rcRouteName").value.trim();
-  const description = document.getElementById("rcRouteDesc").value.trim();
-  const vehicleModel = document.getElementById("rcVehicleModel").value;
-
-  if (drawPoints.length < 2) {
-    errEl.textContent = "დახატე მინიმუმ 2 წერტილიანი ხაზი რუკაზე";
-    return;
-  }
-  if (routeShape === "loop" && drawPoints.length < 3) {
-    errEl.textContent = "წრიულ მარშრუტს მინიმუმ 3 წერტილი სჭირდება";
-    return;
-  }
-  if (!ROUTE_NUMBER_PATTERN.test(routeNumber)) {
-    document.getElementById("rcRouteNumberError").textContent = "ზუსტად 3 ციფრი";
-    return;
-  }
-  document.getElementById("rcRouteNumberError").textContent = "";
-  if (!NAME_PATTERN.test(name)) {
-    document.getElementById("rcRouteNameError").textContent = "1-80 სიმბოლო, ასოები/ციფრები/basic punctuation";
-    return;
-  }
-  document.getElementById("rcRouteNameError").textContent = "";
-
-  const submitBtn = document.getElementById("rcSubmitBtn");
-  submitBtn.disabled = true;
-  submitBtn.textContent = "იგზავნება...";
-
-  try {
-    const res = await fetch(`${API_BASE}/custom-routes`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        vehicleType: selectedVehicleType,
-        vehicleModel,
-        routeNumber,
-        name,
-        description,
-        isLoop: routeShape === "loop",
-        points: drawPoints,
-        stopLinks: stopLinks.map(({ pointIndex, stopId, customLabel }) => ({ pointIndex, stopId, customLabel })),
-        sid: getSid(),
-      }),
-    });
-    const data = await res.json();
-    if (!res.ok) throw new Error(data.error || `HTTP ${res.status}`);
-
-    showToast("გაგზავნილია! ადმინისტრატორი გადახედავს მალე 🙏");
-    exitDrawMode();
-    loadRouteList();
-  } catch (err) {
-    errEl.textContent = err.message || "შეცდომა — სცადე ისევ";
-  } finally {
-    submitBtn.disabled = false;
-    submitBtn.textContent = "გაგზავნა განსახილველად";
-  }
-}
-
-document.getElementById("rcSubmitBtn").addEventListener("click", submitRoute);
-
-/* ============================================================
-   სია — დამტკიცებული routes
-   ============================================================ */
-let currentRoutes = [];
-
-async function loadRouteList() {
-  const listEl = document.getElementById("rcList");
-  try {
-    const res = await fetch(`${API_BASE}/custom-routes`, { cache: "no-store" });
-    if (!res.ok) throw new Error(`HTTP ${res.status}`);
-    currentRoutes = await res.json();
-
-    if (!Array.isArray(currentRoutes) || currentRoutes.length === 0) {
-      listEl.innerHTML = `<p class="rcListEmpty">ჯერ არცერთი მარშრუტი არ არის დამტკიცებული.<br>იყავი პირველი — დახატე შენი! ✏️</p>`;
-      return;
-    }
-
-    listEl.innerHTML = currentRoutes
-      .map((r) => {
-        const badgeClass = r.vehicleType === "minibus" ? "rcCard__badge--minibus" : "rcCard__badge--bus";
-        const modelLabel = VEHICLE_LABEL_LOOKUP[r.vehicleModel] || r.vehicleModel;
-        const stopCount = Array.isArray(r.stopLinks) ? r.stopLinks.length : 0;
-        const shapeIcon = r.isLoop ? "🔄" : "";
-        return `
-        <div class="rcCard" data-id="${escapeHtml(r.id)}">
-          <div class="rcCard__top">
-            <span class="rcCard__badge ${badgeClass}">${escapeHtml(r.routeNumber)}</span>
-            <span class="rcCard__name">${shapeIcon} ${escapeHtml(r.name)}</span>
-          </div>
-          <span class="rcCard__model">${escapeHtml(modelLabel)}</span>
-          ${r.description ? `<p class="rcCard__desc">${escapeHtml(r.description)}</p>` : ""}
-          ${stopCount > 0 ? `<span class="rcCard__stopCount">${stopCount} მიბმული გაჩერება</span>` : ""}
-        </div>`;
-      })
-      .join("");
-
-    listEl.querySelectorAll(".rcCard").forEach((card) => {
-      card.addEventListener("click", () => {
-        const route = currentRoutes.find((r) => r.id === card.dataset.id);
-        if (route) enterDetailMode(route);
-      });
-    });
-  } catch (err) {
-    listEl.innerHTML = `<p class="rcListEmpty">ვერ ჩაიტვირთა — სცადე გვერდის განახლება</p>`;
-  }
-  if (window.lucide) lucide.createIcons();
-}
-
-/* ---------- დეტალების preview — სრულმასშტაბიანი, სრულად ინტერაქტიული ----------
-   ეს ცალკე "mode"-ია (ისევე, როგორც draw-mode), არა პატარა
-   sheet/modal. რუკა სრულ drag/zoom/scroll-ის საშუალებას იძლევა —
-   ისევე თავისუფლად შეგიძლია დააკვირდე, როგორც მთავარ გვერდზე. */
-const detailWrap = document.getElementById("rcDetailWrap");
-const rcDetailDelete = document.getElementById("rcDetailDelete");
-let detailMap = null;
-let activeDetailRouteId = null;
-let activeDetailRoute = null;
-let detailResizeObserver = null; // იხ. კომენტარი enterDetailMode-ში
-
-function enterDetailMode(route) {
-  mode = "detail";
-  activeDetailRouteId = route.id;
-  activeDetailRoute = route;
-
-  listBody.style.display = "none";
-  rcPage.classList.remove("wide-list");
-  detailWrap.classList.add("active");
-  addBtn.style.display = "none";
-  headerTitle.textContent = `№${route.routeNumber} — ${route.name}`;
-  backBtn.removeAttribute("href");
-
-  renderDetailInfo(route);
-  window.scrollTo(0, 0); // თუ სია დაძვრილი იყო, დეტალები ზემოდან უნდა დაიწყოს
-
-  // მცირე დაყოვნება — DOM-ს დრო სჭირდება container-ის ზომის დასადგენად
-  setTimeout(() => {
-    if (detailMap) {
-      detailMap.remove();
-      detailMap = null;
-    }
-    detailMap = L.map("rcDetailFullMap", { zoomControl: true }); // სრული drag/zoom/scroll, default-ად ჩართული
-    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-      maxZoom: 19,
-      attribution: "&copy; OpenStreetMap contributors",
-    }).addTo(detailMap);
-
-    const line = route.isLoop
-      ? L.polygon(route.points, { color: "#1f6fd6", weight: 5, fill: false }).addTo(detailMap)
-      : L.polyline(route.points, { color: "#1f6fd6", weight: 5 }).addTo(detailMap);
-
-    // გაჩერებების მარკერები პირდაპირ რუკაზე — ისევე ცნობადი,
-    // როგორც მთავარ გვერდზეა
-    (route.stopLinks || []).forEach((link) => {
-      const pt = route.points[link.pointIndex];
-      if (!pt) return;
-      const label = link.stopId && typeof STOPS !== "undefined"
-        ? (STOPS.find((st) => st.id === link.stopId)?.name || link.customLabel || "?")
-        : (link.customLabel || "?");
-      L.circleMarker(pt, {
-        radius: 7, color: "#fff", weight: 2, fillColor: "#2ec4b6", fillOpacity: 1,
-      })
-        .addTo(detailMap)
-        .bindTooltip(escapeHtml(label), { direction: "top" });
-    });
-
-    detailMap.fitBounds(line.getBounds(), { padding: [30, 30] });
-
-    // rcDetailWrap display:none-დან active-ზე გადართვისას (განსაკუთრებით
-    // დესკტოპზე, position:sticky სვეტში) Leaflet ხანდახან container-ის
-    // ზომას არასწორად ითვლის შექმნის მომენტში — რუკა ცარიელი/ნაცრისფერი
-    // რჩება, სანამ scroll ან სხვა repaint არ აიძულებს ხელახლა გამოთვლას.
-    // ვასწორებთ ორნაირად: (1) invalidateSize() მომდევნო paint frame-ის
-    // შემდეგ, (2) ResizeObserver container-ზე, რომელიც ნებისმიერ შემდგომ
-    // ზომის ცვლილებაზეც (ფონტის ჩატვირთვა, sticky recalculation და ა.შ.)
-    // ავტომატურად ასწორებს ზომას — scroll-ის გარეშეც.
-    requestAnimationFrame(() => {
-      if (detailMap) detailMap.invalidateSize();
-    });
-
-    const mapEl = document.getElementById("rcDetailFullMap");
-    if (!detailResizeObserver) {
-      detailResizeObserver = new ResizeObserver(() => {
-        if (detailMap) detailMap.invalidateSize();
-      });
-    } else {
-      detailResizeObserver.disconnect();
-    }
-    detailResizeObserver.observe(mapEl);
-  }, 60);
-
-  if (window.lucide) lucide.createIcons();
-}
-
-function renderDetailInfo(route) {
-  const badgeClass = route.vehicleType === "minibus" ? "rcCard__badge--minibus" : "rcCard__badge--bus";
-  const badgeEl = document.getElementById("rcDetailBadge");
-  badgeEl.className = `rcCard__badge ${badgeClass}`;
-  badgeEl.textContent = route.routeNumber;
-
-  document.getElementById("rcDetailName").textContent = route.name;
-
-  const modelLabel = VEHICLE_LABEL_LOOKUP[route.vehicleModel] || route.vehicleModel;
-  const vehicleIcon = route.vehicleType === "minibus" ? "🚐" : "🚌";
-  const shapeLabel = route.isLoop ? "🔄 წრიული" : "↔️ ორმხრივი";
-  document.getElementById("rcDetailMeta2").innerHTML = `
-    <span>${vehicleIcon} ${escapeHtml(modelLabel)}</span>
-    <span>${shapeLabel}</span>
-    <span><i data-lucide="map-pin"></i> ${(route.stopLinks || []).length} გაჩერება</span>
-  `;
-
-  document.getElementById("rcDetailDesc").textContent = route.description || "";
-
-  const stopsEl = document.getElementById("rcDetailStops");
-  const links = (route.stopLinks || []).slice().sort((a, b) => a.pointIndex - b.pointIndex);
-  if (links.length > 0) {
-    stopsEl.innerHTML =
-      `<h4>გაჩერებები</h4>` +
-      links
-        .map((s, i) => {
-          const label = s.stopId && typeof STOPS !== "undefined"
-            ? (STOPS.find((st) => st.id === s.stopId)?.name || s.customLabel || "?")
-            : (s.customLabel || "?");
-          return `
-          <div class="rcDetailStopItem">
-            <span class="rcDetailStopItem__idx">${i + 1}</span>
-            <span>${escapeHtml(label)}</span>
-          </div>`;
-        })
-        .join("");
-  } else {
-    stopsEl.innerHTML = "";
-  }
-
-  rcDetailDelete.classList.toggle("hidden", !isAdminMode());
-}
-
-function exitDetailMode() {
-  mode = "list";
-  listBody.style.display = "";
-  rcPage.classList.add("wide-list");
-  detailWrap.classList.remove("active");
-  addBtn.style.display = "";
-  headerTitle.textContent = "საზოგადოების მარშრუტები";
-  backBtn.setAttribute("href", "index.html");
-  activeDetailRouteId = null;
-  activeDetailRoute = null;
-  if (detailResizeObserver) detailResizeObserver.disconnect();
-  if (detailMap) {
-    detailMap.remove();
-    detailMap = null;
-  }
-}
-
-/* ============================================================
-   Admin delete
-   ------------------------------------------------------------
-   პაროლი ერთხელ ჩაიწერება localStorage-ში (prompt-ით), მერე
-   ყოველი delete-request-ის header-ში გამოიყენება. თუ 401 დაბრუნდა
-   (არასწორია), localStorage-დან იშლება, რომ ხელახლა ითხოვოს.
-   ============================================================ */
-const ADMIN_PW_KEY = "kontrolio-admin-pw";
-
-function isAdminMode() {
-  return !!localStorage.getItem(ADMIN_PW_KEY);
-}
-
-function getOrAskAdminPassword() {
-  let pw = localStorage.getItem(ADMIN_PW_KEY);
-  if (!pw) {
-    pw = prompt("Admin პაროლი:");
-    if (!pw) return null;
-    localStorage.setItem(ADMIN_PW_KEY, pw);
-  }
-  return pw;
-}
-
-rcDetailDelete.addEventListener("click", async () => {
-  if (!activeDetailRouteId) return;
-  if (!confirm("ნამდვილად გსურს ამ მარშრუტის სამუდამო წაშლა?")) return;
-
-  const pw = getOrAskAdminPassword();
-  if (!pw) return;
-
-  try {
-    const res = await fetch(`${API_BASE}/custom-routes?id=${encodeURIComponent(activeDetailRouteId)}`, {
-      method: "DELETE",
-      headers: { "X-Admin-Password": pw },
-    });
-    if (res.status === 401) {
-      localStorage.removeItem(ADMIN_PW_KEY);
-      showToast("პაროლი არასწორია");
-      return;
-    }
-    if (!res.ok) throw new Error(`HTTP ${res.status}`);
-
-    showToast("წაშლილია 🗑️");
-    exitDetailMode();
-    loadRouteList();
-  } catch (err) {
-    showToast("წაშლა ვერ მოხერხდა");
-  }
-});
-
-/* გვერდის ჩატვირთვისას, თუ URL-ში ?admin=1 არის, ვთხოვთ პაროლს
-   (მარტივი "საიდუმლო ბმულის" მექანიზმი — არ ჩანს ჩვეულებრივ
-   მომხმარებელს, თუ URL არ იცის). */
-if (new URLSearchParams(location.search).get("admin") === "1" && !isAdminMode()) {
-  getOrAskAdminPassword();
-}
-
-/* ---------- გაშვება ---------- */
-if (window.lucide) lucide.createIcons();
+/* Init */
+if(window.lucide)lucide.createIcons();
 document.getElementById("rcList").classList.add("rcListGrid");
-if (window.matchMedia("(min-width: 900px)").matches) {
-  rcPage.classList.add("wide-list");
-}
+if(window.matchMedia("(min-width: 900px)").matches)rcPage.classList.add("wide-list");
 loadRouteList();
