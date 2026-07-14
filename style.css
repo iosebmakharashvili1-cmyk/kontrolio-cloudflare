@@ -62,7 +62,7 @@
   /* ციფრებისთვის (მარშრუტის ნომრები, badge-ები, დიდი სტატისტიკური
      რიცხვები) — საგზაო-ნიშნის ხასიათის მჭიდრო display ფონტი.
      ქართულ ტექსტზე არასდროს გამოვიყენოთ, Georgian glyph-ები არ აქვს. */
-  --font-display: 'Oswald', 'Noto Sans Georgian', system-ui, sans-serif;
+  --font-display: 'Gugeshashvili Mthavruli Bold', 'Oswald', 'Noto Sans Georgian', system-ui, sans-serif;
   --font-headline: 'Gugeshashvili Mthavruli Bold', var(--font-display), 'Noto Sans Georgian', sans-serif;
 
   /* --- ვარიანტი B (headline-only, თუ გინდა შედარება):
@@ -129,7 +129,7 @@ html, body{
 
 .leaflet-container{
   background: var(--page-bg);
-  font-family: 'Noto Sans Georgian', system-ui, sans-serif;
+  font-family: 'Gugeshashvili Mthavruli Bold', 'Noto Sans Georgian', system-ui, sans-serif;
 }
 
 /* უფრო რბილი და გლუვი ზუმის ანიმაცია */
@@ -349,15 +349,23 @@ html, body{
 .legend{
   display:none;
 }
-/* sheet-ის შიდა ლეგენდა — ჰორიზონტალური, კომპაქტური */
+/* sheet-ის შიდა ლეგენდა — 2x2 ბადე, ჩიპებად (ფონით) */
 .sheet__legendWrap .legend,
 .sheet__legend{
-  display:flex; flex-wrap:wrap; gap:8px 12px;
-  padding: 10px 0 0;
+  display:grid; grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  padding: 0;
   font-size: 12px;
 }
 .sheet__legendWrap .legend__item,
-.sheet__legend .legend__item{ display:flex; align-items:center; gap:5px; }
+.sheet__legend .legend__item{
+  display:flex; align-items:center; gap:7px;
+  padding: 9px 12px;
+  border-radius: 10px;
+  background: var(--grey-soft);
+  font-weight:600;
+  color: var(--text);
+}
 .legend__dot{ width:10px; height:10px; border-radius:50%; flex-shrink:0; }
 .legend__dot--inspector{ background: var(--red); }
 .legend__dot--clear{ background: var(--green); }
@@ -715,6 +723,7 @@ html, body{
 
 .sheet__close{
   width:100%;
+  margin-top: 16px;
   border:none; background: var(--grey-soft);
   color: var(--text);
   border-radius: 14px;
@@ -1493,13 +1502,9 @@ html, body{
   .topbar__title h1{ font-size: 13px; }
   .topbar__cityBadge{ display:none; }
   .legend{
-    flex-direction: row;
-    flex-wrap: wrap;
-    gap: 8px 10px;
-    padding: 8px 10px;
-    max-width: calc(100% - 28px);
+    gap: 6px;
   }
-  .legend__item{ font-size: 11px; }
+  .legend__item{ font-size: 11px; padding: 8px 10px; }
 }
 
 /* დაბალი სიმაღლის ეკრანები (მაგ. მოკლე მობილურები ლანდსქეიპში) —
