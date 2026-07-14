@@ -293,6 +293,7 @@ html, body{
   box-shadow: var(--shadow);
   max-height: min(320px, 55vh);
   overflow-y: auto;
+  z-index: 10;
 }
 .searchResults.show{ display:block; }
 
