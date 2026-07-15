@@ -2,13 +2,24 @@
    ყველა weight ცალკე ფაილშია (.otf), ერთი font-family სახელით
    'Mersad' დარეგისტრირებული სხვადასხვა font-weight მნიშვნელობებზე.
    ბრაუზერი თავად ირჩევს სწორ ფაილს რეალურად გამოყენებული
-   font-weight-ის მიხედვით (მაგ. font-weight:700 → Mersad-Bold.otf). */
+   font-weight-ის მიხედვით (მაგ. font-weight:700 → Mersad-Bold.otf).
+
+   ascent-override/descent-override/line-gap-override — Mersad-ის
+   შიდა font-metrics ასიმეტრიულია (განსაკუთრებით ციფრებზე), რის
+   გამოც flexbox-ის align-items:center ვიზუალურად "აწეულ"/"დაწეულ"
+   ტექსტს იძლეოდა, მიუხედავად იმისა, რომ container-ის box ნამდვილად
+   ცენტრირებული იყო. ეს სამი მნიშვნელობა აიძულებს ბრაუზერს, font-ის
+   line-box-ს სტანდარტული, სიმეტრიული პროპორციებით გამოთვალოს — ანუ
+   ვიზუალური ცენტრირება ახლა ემთხვევა box-ის ცენტრირებას. */
 @font-face{
   font-family: 'Mersad';
   src: url('fonts/Mersad-Thin.otf') format('opentype');
   font-weight: 100;
   font-style: normal;
   font-display: swap;
+  ascent-override: 90%;
+  descent-override: 22%;
+  line-gap-override: 0%;
 }
 @font-face{
   font-family: 'Mersad';
@@ -16,6 +27,9 @@
   font-weight: 200;
   font-style: normal;
   font-display: swap;
+  ascent-override: 90%;
+  descent-override: 22%;
+  line-gap-override: 0%;
 }
 @font-face{
   font-family: 'Mersad';
@@ -23,6 +37,9 @@
   font-weight: 300;
   font-style: normal;
   font-display: swap;
+  ascent-override: 90%;
+  descent-override: 22%;
+  line-gap-override: 0%;
 }
 @font-face{
   font-family: 'Mersad';
@@ -30,6 +47,9 @@
   font-weight: 400;
   font-style: normal;
   font-display: swap;
+  ascent-override: 90%;
+  descent-override: 22%;
+  line-gap-override: 0%;
 }
 @font-face{
   font-family: 'Mersad';
@@ -37,6 +57,9 @@
   font-weight: 500;
   font-style: normal;
   font-display: swap;
+  ascent-override: 90%;
+  descent-override: 22%;
+  line-gap-override: 0%;
 }
 @font-face{
   font-family: 'Mersad';
@@ -44,6 +67,9 @@
   font-weight: 600;
   font-style: normal;
   font-display: swap;
+  ascent-override: 90%;
+  descent-override: 22%;
+  line-gap-override: 0%;
 }
 @font-face{
   font-family: 'Mersad';
@@ -51,6 +77,9 @@
   font-weight: 700;
   font-style: normal;
   font-display: swap;
+  ascent-override: 90%;
+  descent-override: 22%;
+  line-gap-override: 0%;
 }
 @font-face{
   font-family: 'Mersad';
@@ -58,6 +87,9 @@
   font-weight: 800;
   font-style: normal;
   font-display: swap;
+  ascent-override: 90%;
+  descent-override: 22%;
+  line-gap-override: 0%;
 }
 @font-face{
   font-family: 'Mersad';
@@ -65,6 +97,9 @@
   font-weight: 900;
   font-style: normal;
   font-display: swap;
+  ascent-override: 90%;
+  descent-override: 22%;
+  line-gap-override: 0%;
 }
 
 
