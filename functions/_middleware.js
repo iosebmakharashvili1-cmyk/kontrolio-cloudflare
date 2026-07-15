@@ -15,21 +15,26 @@ const FONT_MIME = {
 };
 
 export async function onRequest(context) {
-  const response = await context.next();
   const url = new URL(context.request.url);
   const ext = url.pathname.split(".").pop().toLowerCase();
+  const isFont = url.pathname.startsWith("/fonts/") && FONT_MIME[ext];
 
-  if (url.pathname.startsWith("/fonts/") && FONT_MIME[ext]) {
-    const newHeaders = new Headers(response.headers);
-    newHeaders.set("Content-Type", FONT_MIME[ext]);
-    newHeaders.set("Access-Control-Allow-Origin", "*");
-    newHeaders.set("Cache-Control", "public, max-age=31536000, immutable");
-    return new Response(response.body, {
-      status: response.status,
-      statusText: response.statusText,
-      headers: newHeaders,
-    });
-  }
+  const response = await context.next();
 
-  return response;
+  if (!isFont) return response;
+
+  const newHeaders = new Headers(response.headers);
+  newHeaders.set("Content-Type", FONT_MIME[ext]);
+  newHeaders.set("Access-Control-Allow-Origin", "*");
+  newHeaders.set("Cache-Control", "public, max-age=31536000, immutable");
+  // დროებითი debug header — თუ ეს ჩანს Network tab-ში
+  // response headers-ში, middleware მუშაობს; თუ არა, საერთოდ არ ეშვება.
+  newHeaders.set("X-Font-MW", "applied");
+
+  const buf = await response.arrayBuffer();
+  return new Response(buf, {
+    status: response.status,
+    statusText: response.statusText,
+    headers: newHeaders,
+  });
 }
