@@ -86,6 +86,87 @@
 
   .rcPage__body{ flex:1; padding: 14px 18px 40px; }
 
+  /* ---------- ძებნა/ფილტრი (list-mode) ---------- */
+  .rcListToolbar{
+    display:flex; gap:8px;
+    margin-bottom: 14px;
+  }
+  .rcSearchInput{
+    flex:1; min-width:0;
+    display:flex; align-items:center; gap:8px;
+    padding: 10px 14px;
+    border-radius: 12px;
+    border: 1.5px solid var(--grey-soft);
+    background: var(--surface);
+  }
+  .rcSearchInput [data-lucide]{ width:16px; height:16px; color:var(--grey); flex-shrink:0; }
+  .rcSearchInput input{
+    flex:1; min-width:0; border:none; outline:none; background:none;
+    color:var(--text); font-family:inherit; font-size:14px;
+  }
+  .rcFilterSelect{
+    padding: 10px 12px;
+    border-radius: 12px;
+    border: 1.5px solid var(--grey-soft);
+    background: var(--surface);
+    color: var(--text);
+    font-family: inherit;
+    font-size: 13px;
+    flex-shrink:0;
+  }
+  .rcListMeta{
+    font-size:12.5px; color:var(--grey); margin: -6px 0 12px;
+  }
+
+  /* ---------- GPS "ჩემი ლოკაცია" ღილაკი (draw-map-ზე) ---------- */
+  .rcGpsBtn{
+    position: absolute; z-index: 900;
+    top: 14px; right: 14px;
+    width: 40px; height: 40px;
+    display:flex; align-items:center; justify-content:center;
+    border-radius: 50%;
+    border: none;
+    background: var(--surface);
+    color: var(--text);
+    box-shadow: var(--shadow);
+    cursor: pointer;
+  }
+  .rcGpsBtn:hover{ background: var(--grey-soft); }
+  .rcGpsBtn:active{ transform: scale(0.92); }
+  .rcGpsBtn.active{ color: var(--bus-blue); }
+  .rcGpsBtn [data-lucide]{ width:18px; height:18px; }
+  @media (min-width: 900px){
+    .rcGpsBtn{ top:18px; right:18px; }
+  }
+
+  /* ---------- Point marker — draggable, hover-ზე delete-ღილაკით ---------- */
+  .rcPointDeleteBtn{
+    background: var(--red);
+    color: #fff;
+    border: 2px solid #fff;
+    border-radius: 50%;
+    width: 20px; height: 20px;
+    display:flex; align-items:center; justify-content:center;
+    cursor: pointer;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+  }
+  .rcPointDeleteBtn svg{ width:12px; height:12px; }
+
+  /* ---------- დუბლიკატის გაფრთხილება ---------- */
+  .rcDupWarning{
+    display:flex; align-items:flex-start; gap:8px;
+    padding: 10px 12px;
+    border-radius: 10px;
+    background: rgba(255,184,0,0.12);
+    border: 1px solid rgba(255,184,0,0.35);
+    color: #a66a00;
+    font-size: 12px; line-height:1.5;
+    margin: 8px 0;
+  }
+  [data-theme="dark"] .rcDupWarning{ color:#ffcf6b; }
+  .rcDupWarning [data-lucide]{ width:15px; height:15px; flex-shrink:0; margin-top:1px; }
+  .rcDupWarning strong{ cursor:pointer; text-decoration:underline; }
+
   /* ---------- სია ---------- */
   .rcListEmpty{
     text-align:center;
@@ -490,6 +571,18 @@
 
     <!-- ------- სია (default view) ------- -->
     <div class="rcPage__body" id="rcListBody">
+      <div class="rcListToolbar">
+        <label class="rcSearchInput">
+          <i data-lucide="search"></i>
+          <input type="text" id="rcSearchInput" placeholder="მოძებნე ნომრით ან სახელით..." autocomplete="off" />
+        </label>
+        <select class="rcFilterSelect" id="rcFilterSelect">
+          <option value="all">ყველა</option>
+          <option value="bus">🚌 ავტობუსი</option>
+          <option value="minibus">🚐 მინიავტობუსი</option>
+        </select>
+      </div>
+      <p class="rcListMeta" id="rcListMeta"></p>
       <div id="rcList" class="rcListGrid">
         <p class="rcListEmpty">იტვირთება...</p>
       </div>
@@ -499,12 +592,19 @@
     <div class="rcDrawWrap" id="rcDrawWrap">
       <div class="rcDrawWrap__mapCol" style="position:relative;">
         <div id="rcMap"></div>
+        <button class="rcGpsBtn" id="rcGpsBtn" type="button" title="ჩემი ლოკაცია" aria-label="ჩემი ლოკაცია">
+          <i data-lucide="locate-fixed"></i>
+        </button>
         <p class="rcDrawHint" id="rcDrawHint">დააჭირე რუკას, რომ დაიწყო ხაზის დახატვა</p>
         <div class="rcDrawToolbar">
           <button type="button" id="rcAddStopModeBtn"><i data-lucide="map-pin-plus"></i> გაჩერების დამატება</button>
           <button type="button" id="rcUndoBtn"><i data-lucide="undo-2"></i> ბოლო წერტილის გაუქმება</button>
           <button type="button" id="rcClearBtn" class="danger"><i data-lucide="trash-2"></i> გასუფთავება</button>
         </div>
+        <p class="rcForm__sub" style="padding:0 18px; margin-top:4px;">
+          <i data-lucide="move" style="width:12px;height:12px;vertical-align:-1px;"></i>
+          გადაიტანე ნებისმიერი წერტილი მისი გადაწყობისთვის, ან დააჭირე გრძლად წასაშლელად.
+        </p>
         <button class="rcStepNextBtn hidden" id="rcStepNextBtn" type="button">
           გაგრძელება <i data-lucide="arrow-right"></i>
         </button>
@@ -534,6 +634,7 @@
           <label class="rcForm__label">მარშრუტის ნომერი (3 ციფრი)</label>
           <input class="rcInput" id="rcRouteNumber" inputmode="numeric" maxlength="3" placeholder="მაგ. 155" />
           <p class="rcFieldError" id="rcRouteNumberError"></p>
+          <div id="rcDupWarning"></div>
 
           <label class="rcForm__label">დასახელება</label>
           <input class="rcInput" id="rcRouteName" maxlength="80" placeholder="დასაწყისი - დასასრული" />
