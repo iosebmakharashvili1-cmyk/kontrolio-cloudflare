@@ -31,14 +31,68 @@
   }
   @media (min-width: 900px){
     .rcPage{ max-width: 1280px; }
-    .rcPage.wide-list .rcListGrid{
-      display:grid;
-      grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
-      gap: 14px;
-    }
-    .rcPage.wide-list .rcCard{ margin-bottom:0; }
     .rcDrawWrap.active{ padding: 18px 24px 40px; }
     .rcDetailWrap.active{ padding: 18px 24px 40px; }
+  }
+
+  /* ---------- სია — პროპორციული grid ყველა ეკრანზე ---------- */
+  .rcListGrid{
+    display:grid;
+    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+    gap: 12px;
+    align-items:stretch;
+  }
+  .rcCard{ margin-bottom:0; height:100%; }
+
+  /* ---------- ძებნა/ფილტრი (სია) ---------- */
+  .rcListToolbar{
+    display:flex; flex-wrap:wrap; gap:8px;
+    margin-bottom:14px;
+  }
+  .rcSearchWrap{ position:relative; flex:1 1 220px; min-width:180px; }
+  .rcSearchWrap [data-lucide]{
+    position:absolute; left:12px; top:50%; transform:translateY(-50%);
+    width:15px; height:15px; color:var(--grey); pointer-events:none;
+  }
+  .rcSearchInput{
+    width:100%; padding:10px 12px 10px 34px;
+    border-radius:12px; border:1.5px solid var(--grey-soft);
+    background:var(--surface); color:var(--text);
+    font-family:inherit; font-size:13.5px;
+  }
+  .rcSearchInput:focus{ outline:2px solid var(--bus-blue); border-color:transparent; }
+  .rcFilterChips{ display:flex; gap:6px; flex-wrap:wrap; }
+  .rcChip{
+    display:flex; align-items:center; gap:5px;
+    padding:9px 13px; border-radius:20px;
+    border:1.5px solid var(--grey-soft); background:var(--surface); color:var(--text);
+    font-family:inherit; font-size:12.5px; font-weight:600; cursor:pointer;
+    white-space:nowrap;
+  }
+  .rcChip [data-lucide]{ width:13px; height:13px; }
+  .rcChip.selected{ border-color:var(--bus-blue); background:rgba(63,102,131,0.12); color:var(--bus-blue); }
+  .rcChip:hover{ background: var(--grey-soft); }
+  .rcChip.selected:hover{ background:rgba(63,102,131,0.18); }
+
+  /* ---------- GPS ---------- */
+  .rcDrawToolbar{ flex-wrap:wrap; }
+  .rcDrawToolbar button{ min-width:0; }
+  .rcDrawToolbar button.rcGpsBtn{ flex:1.2; }
+
+  /* ---------- დახატვის წერტილი — draggable marker icon ---------- */
+  .rcPointIcon{ background:transparent; border:none; }
+  .rcPointDot{
+    width:14px; height:14px; border-radius:50%;
+    background:#1f6fd6; border:2px solid #fff;
+    box-shadow:0 1px 5px rgba(0,0,0,0.45);
+    cursor:grab;
+  }
+  .rcPointDot--linked{ background:#2ec4b6; }
+  .rcPointIcon:active .rcPointDot{ cursor:grabbing; }
+
+  .rcFieldWarning{
+    min-height:14px; font-size:11.5px; color:#b8860b;
+    margin-top:5px; display:flex; align-items:center; gap:5px;
   }
 
   .rcPage__header{
@@ -477,114 +531,6 @@
   .spPopupResultItem:hover{ background: rgba(63,102,131,0.1); }
   .spPopupConfirm{ transition: transform 0.12s ease; }
   .spPopupConfirm:active{ transform: scale(0.95); }
-  /* --- პროპორციული UI დალაგება (Flexbox სტრუქტურა) --- */
-.bottom-sheet {
-    display: flex;
-    flex-direction: column;
-    max-height: 85vh; /* მობილურზე ეკრანის პროპორციულად */
-    padding: 16px;
-    gap: 12px;
-}
-
-/* ძებნის კონტეინერი - პროპორციულად იკავებს ადგილს */
-.search-container {
-    width: 100%;
-    margin-bottom: 12px;
-}
-
-.search-container input {
-    width: 100%;
-    padding: 12px 16px;
-    border: 1.5px solid #e2e8f0;
-    border-radius: 12px;
-    font-size: 15px;
-    outline: none;
-    transition: border-color 0.2s ease, box-shadow 0.2s ease;
-}
-
-.search-container input:focus {
-    border-color: #3b82f6;
-    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
-}
-
-/* --- GPS ღილაკის სტილი --- */
-#gps-btn {
-    position: absolute;
-    bottom: 24px;
-    right: 24px;
-    z-index: 1000;
-    width: 48px;
-    height: 48px;
-    border-radius: 50%;
-    background-color: #ffffff;
-    border: none;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: #4a5568;
-    transition: all 0.2s ease;
-}
-
-#gps-btn:hover {
-    transform: scale(1.05);
-    color: #3b82f6;
-}
-
-/* GPS ძებნის დატვირთვის ეფექტი */
-#gps-btn.loading {
-    animation: rotateGPS 1s linear infinite;
-}
-
-@keyframes rotateGPS {
-    0% { transform: rotate(0deg); }
-    100% { transform: rotate(360deg); }
-}
-
-/* GPS მომხმარებლის წერტილის ანიმაცია */
-.user-location-marker {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-
-.pulse-dot {
-    width: 14px;
-    height: 14px;
-    background-color: #3b82f6;
-    border-radius: 50%;
-    border: 2px solid white;
-    box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.4);
-    animation: pulse 1.8s infinite;
-}
-
-@keyframes pulse {
-    0% { box-shadow: 0 0 0 0px rgba(59, 130, 246, 0.5); }
-    70% { box-shadow: 0 0 0 10px rgba(59, 130, 246, 0); }
-    100% { box-shadow: 0 0 0 0px rgba(59, 130, 246, 0); }
-}
-
-/* --- Popup წაშლის ღილაკის სტილი --- */
-.marker-popup {
-    padding: 4px;
-}
-
-.delete-stop-btn {
-    background-color: #ef4444;
-    color: white;
-    border: none;
-    padding: 6px 12px;
-    border-radius: 6px;
-    font-weight: 500;
-    cursor: pointer;
-    font-size: 13px;
-    transition: background-color 0.2s ease;
-}
-
-.delete-stop-btn:hover {
-    background-color: #dc2626;
-}
 </style>
 </head>
 <body>
@@ -598,6 +544,17 @@
 
     <!-- ------- სია (default view) ------- -->
     <div class="rcPage__body" id="rcListBody">
+      <div class="rcListToolbar">
+        <div class="rcSearchWrap">
+          <i data-lucide="search"></i>
+          <input type="text" id="rcListSearch" class="rcSearchInput" placeholder="ძებნა ნომრით ან დასახელებით..." autocomplete="off">
+        </div>
+        <div class="rcFilterChips" id="rcFilterChips">
+          <button type="button" class="rcChip selected" data-filter="all">ყველა</button>
+          <button type="button" class="rcChip" data-filter="bus"><i data-lucide="bus"></i> ავტობუსი</button>
+          <button type="button" class="rcChip" data-filter="minibus"><i data-lucide="truck"></i> მინი</button>
+        </div>
+      </div>
       <div id="rcList" class="rcListGrid">
         <p class="rcListEmpty">იტვირთება...</p>
       </div>
@@ -610,6 +567,7 @@
         <p class="rcDrawHint" id="rcDrawHint">დააჭირე რუკას, რომ დაიწყო ხაზის დახატვა</p>
         <div class="rcDrawToolbar">
           <button type="button" id="rcAddStopModeBtn"><i data-lucide="map-pin-plus"></i> გაჩერების დამატება</button>
+          <button type="button" id="rcGpsBtn" class="rcGpsBtn"><i data-lucide="locate-fixed"></i> ჩემი მდებარეობა</button>
           <button type="button" id="rcUndoBtn"><i data-lucide="undo-2"></i> ბოლო წერტილის გაუქმება</button>
           <button type="button" id="rcClearBtn" class="danger"><i data-lucide="trash-2"></i> გასუფთავება</button>
         </div>
@@ -642,6 +600,7 @@
           <label class="rcForm__label">მარშრუტის ნომერი (3 ციფრი)</label>
           <input class="rcInput" id="rcRouteNumber" inputmode="numeric" maxlength="3" placeholder="მაგ. 155" />
           <p class="rcFieldError" id="rcRouteNumberError"></p>
+          <p class="rcFieldWarning" id="rcRouteNumberWarning"></p>
 
           <label class="rcForm__label">დასახელება</label>
           <input class="rcInput" id="rcRouteName" maxlength="80" placeholder="დასაწყისი - დასასრული" />
@@ -682,7 +641,7 @@
       </div>
     </div>
   </div>
-  
+
   <div class="rcSubmitBar" id="rcSubmitBar">
     <button type="button" id="rcSubmitBtn">გაგზავნა განსახილველად</button>
     <p class="rcSubmitBar__note">გამოქვეყნებამდე გადამოწმდება ადმინისტრატორის მიერ</p>
