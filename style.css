@@ -1533,12 +1533,12 @@ html, body{
 .onlineBadge {
   display: flex;
   align-items: center;
-  gap: 5px;
+  gap: 8px;
   height: 34px; /* იგივე სიმაღლე, რაც .iconbtn */
   background: rgba(255,255,255,0.10);
   border: 1px solid rgba(255,255,255,0.08);
   border-radius: 999px;
-  padding: 0 10px 0 8px;
+  padding: 0 12px 0 10px;
   font-size: 13px;
   font-weight: 600;
   color: #e8e6e1;
