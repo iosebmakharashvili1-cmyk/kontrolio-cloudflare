@@ -453,11 +453,11 @@ html, body{
   width: 22px; height: 22px;
   display:flex; align-items:center; justify-content:center;
   line-height:1;
-  /* Mersad-ის ციფრები (glyph bounding box-ის გაზომვით) ფონტის
-     ტიპოგრაფიულ ვერტიკალურ ცენტრზე ~12.5%-ით მაღლა სხედან, რაც
-     flex-ცენტრირებულ badge-ში მათ ვიზუალურად ცენტრს აცდენდა.
-     ხელით კომპენსაცია ქვემოთ, ემპირიულად გაზომილი. */
-  padding-top: 2px;
+  /* Mersad-ის ციფრები (fontTools-ით ზუსტად გაზომილი glyph bounding
+     box) ფონტის ტიპოგრაფიულ ცენტრზე ზუსტად 12.5%-ით (em-ის) მაღლა
+     სხედან ყველა weight-ში თანმიმდევრულად. 13px font-size-ზე ეს
+     არის 13 × 0.125 = 1.625px კომპენსაცია ქვემოთ. */
+  padding-top: 1.625px;
 }
 .clusterIcon--clear{
   background: var(--green);
@@ -628,7 +628,7 @@ html, body{
 .routeChip{
   display:inline-flex; align-items:center; justify-content:center;
   min-width: 30px;
-  padding: 6px 10px;
+  padding: 6px 10px 4.4375px;
   border-radius: 8px;
   font-size: 12.5px; font-weight:700;
   color: #fff;
@@ -636,6 +636,9 @@ html, body{
   transition: transform 0.12s cubic-bezier(0.25, 1, 0.5, 1), opacity 0.12s ease;
   user-select: none;
   -webkit-tap-highlight-color: transparent;
+  /* Mersad-ის ციფრები ფონტის ტიპოგრაფიულ ცენტრზე ზუსტად 12.5%-ით
+     (em-ის) მაღლა სხედან (fontTools glyph-bounds გაზომვით) — 12.5px
+     font-size-ზე ეს 1.5625px კომპენსაციაა, ქვედა padding-ში ჩამატებული. */
 }
 .routeChip:hover{ opacity: 0.85; }
 .routeChip:active{ transform: scale(0.9); opacity: 0.75; }
