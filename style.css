@@ -1564,13 +1564,13 @@ html, body{
 }
 
 .onlineBadge__count {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  min-width: 14px;
-  line-height: 1;
+  display: inline-block;
+  min-width: 8px;
+  text-align: center;
   font-family: var(--font-display);
   font-weight: 600;
+  line-height: 1;
+  transform: translateY(-1px);
 }
 
 /* ---------- Responsive ---------- */
