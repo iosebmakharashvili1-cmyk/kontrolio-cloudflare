@@ -19,8 +19,7 @@
 <style>
   html, body{ height:auto; min-height:100%; overflow-y:auto; background: var(--page-bg); }
 
-  /* დესკტოპზე გვერდი უფრო ფართოა და ორსვეტიანია draw-mode-ში;
-     მობილურზე ვიწრო, ერთსვეტიანი (max-width 560px) რჩება. */
+  /* დესკტოპზე გვერდი უფრო ფართოა და ორსვეტიანია draw-mode-ში; მობილურზე ერთსვეტიანი */
   .rcPage{
     max-width: 560px;
     margin: 0 auto;
@@ -33,8 +32,8 @@
     .rcPage{ max-width: 1280px; }
     .rcPage.wide-list .rcListGrid{
       display:grid;
-      grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
-      gap: 14px;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 16px;
     }
     .rcPage.wide-list .rcCard{ margin-bottom:0; }
     .rcDrawWrap.active{ padding: 18px 24px 40px; }
@@ -86,7 +85,43 @@
 
   .rcPage__body{ flex:1; padding: 14px 18px 40px; }
 
+  /* ---------- ძებნა და ფილტრაცია ---------- */
+  .rcSearchBox {
+    position: relative;
+    margin-bottom: 14px;
+    display: flex;
+    align-items: center;
+  }
+  .rcSearchBox [data-lucide]{
+    position: absolute;
+    left: 14px;
+    width: 18px; height: 18px;
+    color: var(--grey);
+    pointer-events: none;
+  }
+  .rcSearchInput {
+    width: 100%;
+    padding: 12px 14px 12px 42px;
+    border-radius: 12px;
+    border: 1.5px solid var(--grey-soft);
+    background: var(--grey-soft);
+    color: var(--text);
+    font-family: inherit;
+    font-size: 14px;
+    outline: none;
+    transition: border-color 0.15s ease, background-color 0.15s ease;
+  }
+  .rcSearchInput:focus {
+    border-color: var(--bus-blue);
+    background: var(--surface);
+  }
+
   /* ---------- სია ---------- */
+  .rcListGrid{
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+    gap: 14px;
+  }
   .rcListEmpty{
     text-align:center;
     color: var(--grey);
@@ -100,7 +135,6 @@
     padding: 14px 16px;
     border-radius: 14px;
     background: var(--grey-soft);
-    margin-bottom: 12px;
     cursor:pointer;
     transition: transform 0.12s ease, box-shadow 0.12s ease;
     position: relative;
@@ -119,7 +153,6 @@
   [data-theme="dark"] .rcCard__thumb{
     background: linear-gradient(135deg, rgba(63,102,131,0.25), rgba(46,196,182,0.18));
   }
-  /* Miniature SVG route line on the thumbnail */
   .rcCard__thumbSvg{
     position: absolute; inset: 0;
     width: 100%; height: 100%;
@@ -128,10 +161,10 @@
   .rcCard__thumbSvg polygon{
     fill: none;
     stroke: var(--bus-blue);
-    stroke-width: 2;
+    stroke-width: 2.5;
     stroke-linecap: round;
     stroke-linejoin: round;
-    opacity: 0.7;
+    opacity: 0.85;
   }
   .rcCard__thumbBadge{
     position: absolute; top: 8px; left: 8px;
@@ -177,7 +210,6 @@
   .rcDrawWrap{ display:none; flex-direction:column; flex:1; }
   .rcDrawWrap.active{ display:flex; }
 
-  /* Desktop: side-by-side */
   @media (min-width: 900px){
     .rcDrawWrap.active{ flex-direction:row; align-items:flex-start; gap:28px; }
     .rcDrawWrap__mapCol{ flex:1.6; position:sticky; top:69px; }
@@ -185,15 +217,13 @@
     #rcMap{ height: calc(100vh - 69px - 52px); min-height:420px; border-radius:14px; overflow:hidden; }
   }
 
-  /* Mobile: 2-step wizard — Step 1 = full map, Step 2 = form only */
   @media (max-width: 899px){
-    .rcDrawWrap__mapCol{ flex:1; display:flex; flex-direction:column; }
+    .rcDrawWrap__mapCol{ flex:1; display:flex; flex-direction:column; position:relative; }
     .rcDrawWrap__formCol{ display:none; }
-    #rcMap{ flex:1; min-height:0; }
+    #rcMap{ flex:1; min-height:360px; height: 50vh; }
     .rcDrawWrap.step2 .rcDrawWrap__mapCol{ display:none; }
     .rcDrawWrap.step2 .rcDrawWrap__formCol{ display:block; flex:1; overflow-y:auto; }
 
-    /* "გაგრძელება" ღილაკი — bottom-right, map-ზე */
     .rcStepNextBtn{
       position: absolute; bottom: 20px; right: 16px; z-index: 1000;
       display: flex; align-items: center; gap: 8px;
@@ -212,7 +242,6 @@
     .rcStepNextBtn:disabled{ opacity: 0.5; cursor: not-allowed; }
     .rcStepNextBtn [data-lucide]{ width: 17px; height: 17px; }
 
-    /* "უკან" ღილაკი — step-2 form-ის header-ში */
     .rcStepBackBar{
       display: flex; align-items: center; gap: 10px;
       padding: 10px 16px;
@@ -233,9 +262,38 @@
     .rcStepBackBar button:hover{ background: var(--grey-soft); }
   }
   .rcStepNextBtn.hidden,
-.rcStepBackBar.hidden{ display:none !important; }
+  .rcStepBackBar.hidden{ display:none !important; }
 
-.rcDrawHint{
+  /* GPS ღილაკი რუკაზე */
+  .rcMapLocateBtn{
+    position: absolute;
+    top: 14px; right: 14px;
+    z-index: 800;
+    width: 42px; height: 42px;
+    border-radius: 12px;
+    border: 1px solid var(--grey-soft);
+    background: var(--surface);
+    color: var(--text);
+    display: flex; align-items: center; justify-content: center;
+    box-shadow: 0 4px 14px rgba(0,0,0,0.18);
+    cursor: pointer;
+    transition: transform 0.12s ease, background-color 0.15s ease;
+  }
+  .rcMapLocateBtn:active{ transform: scale(0.90); }
+  .rcMapLocateBtn [data-lucide]{ width: 19px; height: 19px; }
+
+  /* დრაგირებადი წერტილების (vertex) სტილი */
+  .rc-vertex-handle{
+    width: 14px; height: 14px;
+    background: #ffffff;
+    border: 3px solid var(--bus-blue);
+    border-radius: 50%;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+    cursor: grab;
+  }
+  .rc-vertex-handle:active{ cursor: grabbing; transform: scale(1.2); }
+
+  .rcDrawHint{
     padding: 10px 18px;
     background: rgba(31,111,214,0.08);
     color: var(--bus-blue);
@@ -266,11 +324,6 @@
   .rcDrawToolbar button:hover{ background: var(--grey-soft); }
   .rcDrawToolbar button [data-lucide]{ width:15px; height:15px; }
   .rcDrawToolbar button.danger{ color: var(--red); }
-  .rcDrawToolbar button.active{
-    border-color: var(--bus-blue);
-    background: rgba(31,111,214,0.12);
-    color: var(--bus-blue);
-  }
 
   .rcForm{ padding: 16px 18px 100px; overflow-y:auto; flex:1; }
   @media (min-width: 900px){
@@ -322,28 +375,6 @@
   .rcTextarea{ resize:vertical; min-height:70px; }
   .rcFieldError{ min-height:16px; font-size:11.5px; color: var(--red); margin-top:5px; }
 
-  .rcStopLinkList{ display:flex; flex-direction:column; gap:6px; margin-top:8px; }
-  .rcStopLinkItem{
-    display:flex; align-items:center; gap:8px;
-    padding: 8px 10px;
-    border-radius: 10px;
-    background: var(--grey-soft);
-    font-size: 12.5px;
-  }
-  .rcStopLinkItem__idx{
-    width:22px; height:22px; border-radius:50%;
-    background: var(--bus-blue); color:#fff;
-    display:flex; align-items:center; justify-content:center;
-    font-size:11px; font-weight:700; flex-shrink:0;
-  }
-  .rcStopLinkItem__label{ flex:1; min-width:0; }
-  .rcStopLinkItem__remove{
-    border:none; background:none; color: var(--grey);
-    cursor:pointer; padding:2px; flex-shrink:0;
-  }
-  .rcStopLinkItem__remove:hover{ color: var(--red); }
-  .rcStopLinkItem__remove [data-lucide]{ width:14px; height:14px; }
-
   .rcSubmitBar{
     position:fixed; left:0; right:0; bottom:0; z-index:30;
     max-width:560px; margin:0 auto;
@@ -382,32 +413,7 @@
     margin-top:6px;
   }
 
-  /* ---------- Stop picker modal (gaCherebis archevis prompt) ---------- */
-  .stopPickerBody{ max-height:60vh; overflow-y:auto; }
-  .stopPickerTabs button{
-    flex:1; padding:9px; border-radius:10px;
-    border:1.5px solid var(--grey-soft); background:var(--surface); color:var(--text);
-    font-family:inherit; font-weight:700; font-size:13px; cursor:pointer;
-  }
-  .stopPickerTabs button.selected{ border-color:var(--bus-blue); background:rgba(31,111,214,0.08); color:var(--bus-blue); }
-  .stopPickerSearch{
-    width:100%; padding:11px 13px; border-radius:12px;
-    border:1.5px solid var(--grey-soft); background:var(--surface); color:var(--text);
-    font-family:inherit; font-size:14px; margin-bottom:10px;
-  }
-  .stopPickerResults{ display:flex; flex-direction:column; gap:4px; }
-  .stopPickerResult{
-    padding:9px 12px; border-radius:10px; background:var(--grey-soft);
-    font-size:13.5px; color:var(--text); cursor:pointer;
-  }
-  .stopPickerResult:hover{ background: rgba(31,111,214,0.12); }
-  .stopPickerNewName{
-    width:100%; padding:11px 13px; border-radius:12px;
-    border:1.5px solid var(--grey-soft); background:var(--surface); color:var(--text);
-    font-family:inherit; font-size:14px;
-  }
-
-  /* ---------- Route detail — სრულმასშტაბიანი, ინტერაქტიული ---------- */
+  /* ---------- Route detail ---------- */
   .rcDetailWrap{ display:none; flex-direction:column; flex:1; }
   .rcDetailWrap.active{ display:flex; }
   #rcDetailFullMap{
@@ -424,17 +430,6 @@
   .rcDetailInfo__name{ font-size:19px; font-weight:800; color:var(--text); }
   .rcDetailInfo__desc{ font-size:13.5px; color:var(--text); opacity:0.85; line-height:1.55; margin:10px 0; }
 
-  /* ---------- Stop picker: in-app sheet ---------- */
-  .rcDetailStops h4{ margin:14px 0 6px; font-size:12.5px; color:var(--grey); text-transform:uppercase; letter-spacing:0.4px; }
-  .rcDetailStopItem{
-    display:flex; align-items:center; gap:8px;
-    padding:8px 10px; border-radius:10px; background:var(--grey-soft);
-    font-size:13px; color:var(--text);
-  }
-  .rcDetailStopItem__idx{
-    width:20px; height:20px; border-radius:50%; background:var(--bus-blue); color:#fff;
-    display:flex; align-items:center; justify-content:center; font-size:10.5px; font-weight:700; flex-shrink:0;
-  }
   .rcDetailMeta2{ display:flex; gap:14px; margin:10px 0; font-size:12.5px; color:var(--grey); flex-wrap:wrap; }
   .rcDetailMeta2 span{ display:flex; align-items:center; gap:5px; }
   .rcDetailMeta2 [data-lucide]{ width:14px; height:14px; }
@@ -447,41 +442,11 @@
     display:flex; align-items:center; justify-content:center; gap:6px;
   }
   .rcAdminDeleteBtn:hover{ background: var(--red-soft); }
-  .rcAdminDeleteBtn [data-lucide]{ width:15px; height:15px; }
-
-  /* Leaflet popup styling for stop picker */
-  .rcPopup .leaflet-popup-content-wrapper{
-    border-radius: 14px;
-    background: var(--surface);
-    color: var(--text);
-    box-shadow: 0 8px 24px rgba(0,0,0,0.25);
-    font-family: inherit;
-  }
-  .rcPopup .leaflet-popup-content{ margin: 12px 14px; font-size:13px; }
-  .rcPopup .leaflet-popup-close-button{ top:8px; right:10px; color:var(--text) !important; font-size:16px; }
-
-  /* ---------- Leaflet Popup (stop picker) — theme-aware ---------- */
-  .spLeafletPopup .leaflet-popup-content-wrapper{
-    background: var(--surface);
-    color: var(--text);
-    border-radius: 14px;
-    box-shadow: var(--shadow);
-  }
-  .spLeafletPopup .leaflet-popup-tip{ background: var(--surface); }
-  .spLeafletPopup .leaflet-popup-close-button{ color: var(--text) !important; }
-  .spPopupTab--active{
-    border-color: var(--bus-blue) !important;
-    background: rgba(63,102,131,0.12) !important;
-    color: var(--bus-blue) !important;
-  }
-  .spPopupResultItem:hover{ background: rgba(63,102,131,0.1); }
-  .spPopupConfirm{ transition: transform 0.12s ease; }
-  .spPopupConfirm:active{ transform: scale(0.95); }
 </style>
 </head>
 <body>
 
-  <div class="rcPage" id="rcPage">
+  <div class="rcPage wide-list" id="rcPage">
     <header class="rcPage__header">
       <a class="rcPage__backBtn" id="rcBackBtn" href="index.html" aria-label="უკან"><i data-lucide="arrow-left"></i></a>
       <div class="rcPage__title"><i data-lucide="route"></i> <span id="rcHeaderTitle">საზოგადოების მარშრუტები</span></div>
@@ -490,6 +455,12 @@
 
     <!-- ------- სია (default view) ------- -->
     <div class="rcPage__body" id="rcListBody">
+      <!-- ძებნის ველი -->
+      <div class="rcSearchBox">
+        <i data-lucide="search"></i>
+        <input type="text" id="rcSearchInput" class="rcSearchInput" placeholder="მოძებნე ნომრით ან დასახელებით..." autocomplete="off">
+      </div>
+
       <div id="rcList" class="rcListGrid">
         <p class="rcListEmpty">იტვირთება...</p>
       </div>
@@ -497,14 +468,21 @@
 
     <!-- ------- დახატვა/submit (draw mode) ------- -->
     <div class="rcDrawWrap" id="rcDrawWrap">
-      <div class="rcDrawWrap__mapCol" style="position:relative;">
+      <div class="rcDrawWrap__mapCol">
         <div id="rcMap"></div>
-        <p class="rcDrawHint" id="rcDrawHint">დააჭირე რუკას, რომ დაიწყო ხაზის დახატვა</p>
+        
+        <!-- GPS ღილაკი -->
+        <button type="button" class="rcMapLocateBtn" id="rcMapLocateBtn" title="ჩემი მდებარეობა">
+          <i data-lucide="crosshair"></i>
+        </button>
+
+        <p class="rcDrawHint" id="rcDrawHint">დააჭირე რუკას წერტილის დასასმელად. წერტილის გადასაადგილებლად გამოიყენე Drag, წასაშლელად — დააჭირე მას.</p>
+        
         <div class="rcDrawToolbar">
-          <button type="button" id="rcAddStopModeBtn"><i data-lucide="map-pin-plus"></i> გაჩერების დამატება</button>
-          <button type="button" id="rcUndoBtn"><i data-lucide="undo-2"></i> ბოლო წერტილის გაუქმება</button>
+          <button type="button" id="rcUndoBtn"><i data-lucide="undo-2"></i> ბოლო წერტილი</button>
           <button type="button" id="rcClearBtn" class="danger"><i data-lucide="trash-2"></i> გასუფთავება</button>
         </div>
+        
         <button class="rcStepNextBtn hidden" id="rcStepNextBtn" type="button">
           გაგრძელება <i data-lucide="arrow-right"></i>
         </button>
@@ -517,22 +495,19 @@
         <div class="rcForm">
           <label class="rcForm__label">ტრანსპორტის ტიპი</label>
           <div class="rcVehicleToggle">
-            <button type="button" data-vehicle="bus" id="rcVehicleBus"><i data-lucide="bus"></i> ავტობუსი</button>
+            <button type="button" data-vehicle="bus" id="rcVehicleBus" class="selected"><i data-lucide="bus"></i> ავტობუსი</button>
             <button type="button" data-vehicle="minibus" id="rcVehicleMinibus"><i data-lucide="truck"></i> მინიავტობუსი</button>
           </div>
 
-          <label class="rcForm__label">მოდელი</label>
-          <select class="rcSelect" id="rcVehicleModel"></select>
-
           <label class="rcForm__label">მარშრუტის ტიპი</label>
           <div class="rcVehicleToggle">
-            <button type="button" data-shape="oneway" id="rcShapeOneway"><i data-lucide="arrow-left-right"></i> ორმხრივი</button>
+            <button type="button" data-shape="oneway" id="rcShapeOneway" class="selected"><i data-lucide="arrow-left-right"></i> ორმხრივი</button>
             <button type="button" data-shape="loop" id="rcShapeLoop"><i data-lucide="repeat"></i> წრიული</button>
           </div>
           <p class="rcForm__sub" id="rcShapeHint">ორმხრივი — ხაზი A წერტილიდან B-მდე. წრიული — ბოლო წერტილი ავტომატურად უკავშირდება პირველს.</p>
 
-          <label class="rcForm__label">მარშრუტის ნომერი (3 ციფრი)</label>
-          <input class="rcInput" id="rcRouteNumber" inputmode="numeric" maxlength="3" placeholder="მაგ. 155" />
+          <label class="rcForm__label">მარშრუტის ნომერი</label>
+          <input class="rcInput" id="rcRouteNumber" inputmode="numeric" maxlength="4" placeholder="მაგ. 155" />
           <p class="rcFieldError" id="rcRouteNumberError"></p>
 
           <label class="rcForm__label">დასახელება</label>
@@ -542,20 +517,12 @@
           <label class="rcForm__label">მოკლე აღწერა (არასავალდებულო)</label>
           <textarea class="rcTextarea" id="rcRouteDesc" maxlength="300" placeholder="დამატებითი დეტალები მარშრუტის შესახებ..."></textarea>
 
-          <label class="rcForm__label">გაჩერებების მიბმა ხაზზე</label>
-          <p class="rcForm__sub">დააჭირე ხაზის ნებისმიერ წერტილს — შეგეძლება აირჩიო არსებული გაჩერება, ან შექმნა ახალი ლეიბლი.</p>
-          <div class="rcStopLinkList" id="rcStopLinkList"></div>
-
           <p class="rcFieldError" id="rcFormError" style="margin-top:16px; font-size:13px;"></p>
         </div>
       </div>
     </div>
 
-    <!-- Route detail — სრულმასშტაბიანი, სრულად ინტერაქტიული (drag/zoom/scroll).
-         #rcPage-ის შიგნით უნდა იყოს (და არა მის გარეთ) — წინააღმდეგ
-         შემთხვევაში #rcPage-ის min-height:100vh ცარიელ სივრცეს ტოვებს
-         ზემოთ (სია დამალულია, მაგრამ container მაინც სრულ ეკრანს
-         იკავებს) და დეტალების ბლოკი მხოლოდ ჩამოსქროლვის შემდეგ ჩანს. -->
+    <!-- ------- Route detail ------- -->
     <div class="rcDetailWrap" id="rcDetailWrap">
       <div class="rcDetailWrap__mapCol">
         <div id="rcDetailFullMap"></div>
@@ -568,7 +535,6 @@
           </div>
           <div class="rcDetailMeta2" id="rcDetailMeta2"></div>
           <p class="rcDetailInfo__desc" id="rcDetailDesc"></p>
-          <div class="rcDetailStops" id="rcDetailStops"></div>
           <button class="rcAdminDeleteBtn hidden" id="rcDetailDelete"><i data-lucide="trash-2"></i> მარშრუტის წაშლა (Admin)</button>
         </div>
       </div>
@@ -580,12 +546,10 @@
     <p class="rcSubmitBar__note">გამოქვეყნებამდე გადამოწმდება ადმინისტრატორის მიერ</p>
   </div>
 
-  <!-- Toast (used for notifications, NOT for stop picker) -->
   <div class="toast" id="toast"></div>
 
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <script src="stops.js"></script>
-  <script src="routes-community.js?v=2"></script>
-<script defer src="https://static.cloudflareinsights.com/beacon.min.js/v4513226cdae34746b4dedf0b4dfa099e1781791509496" integrity="sha512-ZE9pZaUXND66v380QUtch/5sE9tPFh2zg45pR2PB0CVkCtOREv2AJKkSidISWkysEuQ0EH8faUU5du78bx87UQ==" data-cf-beacon='{"version":"2024.11.0","token":"3279d41ec7804124a29acc6e692f9a2b","server_timing":{"name":{"cfCacheStatus":true,"cfEdge":true,"cfExtPri":true,"cfL4":true,"cfOrigin":true,"cfSpeedBrain":true},"location_startswith":null}}' crossorigin="anonymous"></script>
+  <script src="routes-community.js?v=3"></script>
 </body>
 </html>
