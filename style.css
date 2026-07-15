@@ -9,6 +9,12 @@
   font-weight: 100;
   font-style: normal;
   font-display: swap;
+  /* typo-მეტრიკებზე დაფუძნებული override — Mersad-ის OS/2 win-ascent/
+     descent (850/400) typo-ზე (750/300) მეტია, რაც flex-ცენტრირებულ
+     ტექსტს ვიზუალურად აცდენდა ცენტრს badge-ებში/წრეებში. */
+  ascent-override: 75%;
+  descent-override: 30%;
+  line-gap-override: 0%;
 }
 @font-face{
   font-family: 'Mersad';
@@ -16,6 +22,9 @@
   font-weight: 200;
   font-style: normal;
   font-display: swap;
+  ascent-override: 75%;
+  descent-override: 30%;
+  line-gap-override: 0%;
 }
 @font-face{
   font-family: 'Mersad';
@@ -23,6 +32,9 @@
   font-weight: 300;
   font-style: normal;
   font-display: swap;
+  ascent-override: 75%;
+  descent-override: 30%;
+  line-gap-override: 0%;
 }
 @font-face{
   font-family: 'Mersad';
@@ -30,6 +42,9 @@
   font-weight: 400;
   font-style: normal;
   font-display: swap;
+  ascent-override: 75%;
+  descent-override: 30%;
+  line-gap-override: 0%;
 }
 @font-face{
   font-family: 'Mersad';
@@ -37,6 +52,9 @@
   font-weight: 500;
   font-style: normal;
   font-display: swap;
+  ascent-override: 75%;
+  descent-override: 30%;
+  line-gap-override: 0%;
 }
 @font-face{
   font-family: 'Mersad';
@@ -44,6 +62,9 @@
   font-weight: 600;
   font-style: normal;
   font-display: swap;
+  ascent-override: 75%;
+  descent-override: 30%;
+  line-gap-override: 0%;
 }
 @font-face{
   font-family: 'Mersad';
@@ -51,6 +72,9 @@
   font-weight: 700;
   font-style: normal;
   font-display: swap;
+  ascent-override: 75%;
+  descent-override: 30%;
+  line-gap-override: 0%;
 }
 @font-face{
   font-family: 'Mersad';
@@ -58,6 +82,9 @@
   font-weight: 800;
   font-style: normal;
   font-display: swap;
+  ascent-override: 75%;
+  descent-override: 30%;
+  line-gap-override: 0%;
 }
 @font-face{
   font-family: 'Mersad';
@@ -65,6 +92,9 @@
   font-weight: 900;
   font-style: normal;
   font-display: swap;
+  ascent-override: 75%;
+  descent-override: 30%;
+  line-gap-override: 0%;
 }
 
 
