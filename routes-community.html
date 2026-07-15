@@ -575,6 +575,28 @@
     </div>
   </div>
 
+  <!-- რუკის კონტეინერი და GPS ღილაკი -->
+<div id="map-container" style="position: relative; width: 100%; height: 100%;">
+    <div id="map"></div>
+    
+    <!-- GPS ცენტრირების ღილაკი -->
+    <button id="gps-btn" onclick="centerOnGPS()" title="ჩემი მდებარეობა">
+        <svg viewBox="0 0 24 24" width="24" height="24">
+            <path fill="currentColor" d="M12,8A4,4 0 0,1 16,12A4,4 0 0,1 12,16A4,4 0 0,1 8,12A4,4 0 0,1 12,8M12,2A10,10 0 0,1 22,12A10,10 0 0,1 12,22A10,10 0 0,1 2,12A10,10 0 0,1 12,2M12,4A8,8 0 0,0 4,12A8,8 0 0,0 12,20A8,8 0 0,0 20,12A8,8 0 0,0 12,4Z" />
+        </svg>
+    </button>
+</div>
+
+<!-- ძებნის / ფილტრის ველი (ჩასვით მენიუს პანელში) -->
+<div class="search-container">
+    <input 
+        type="text" 
+        id="route-search" 
+        placeholder="მოძებნე მარშრუტი ან გაჩერება..." 
+        oninput="filterRoutes()"
+    />
+</div>
+  
   <div class="rcSubmitBar" id="rcSubmitBar">
     <button type="button" id="rcSubmitBtn">გაგზავნა განსახილველად</button>
     <p class="rcSubmitBar__note">გამოქვეყნებამდე გადამოწმდება ადმინისტრატორის მიერ</p>
