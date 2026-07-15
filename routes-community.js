@@ -93,3 +93,138 @@ if(window.lucide)lucide.createIcons();
 document.getElementById("rcList").classList.add("rcListGrid");
 if(window.matchMedia("(min-width: 900px)").matches)rcPage.classList.add("wide-list");
 loadRouteList();
+
+// ინიციალიზაცია
+let routePoints = []; // ინახავს ობიექტებს: { id, marker }
+let routePolyline = null;
+let userMarker = null;
+
+// --- 1. წერტილის დამატება + დუბლიკატის შემოწმება ---
+function addRoutePoint(latlng) {
+    const DUPLICATE_THRESHOLD_METERS = 10; // მინიმალური მანძილი გაჩერებებს შორის
+
+    // დუბლიკატის შემოწმება კოორდინატების მიხედვით
+    const isDuplicate = routePoints.some(point => {
+        const distance = map.distance(point.marker.getLatLng(), latlng);
+        return distance < DUPLICATE_THRESHOLD_METERS;
+    });
+
+    if (isDuplicate) {
+        alert("ეს გაჩერება ძალიან ახლოსაა უკვე არსებულთან ან დუბლირებულია!");
+        return;
+    }
+
+    const pointId = Date.now(); // უნიკალური ID წერტილისთვის
+
+    // მარკერის შექმნა Drag & Drop მხარდაჭერით
+    const marker = L.marker(latlng, {
+        draggable: true,
+        icon: stopIcon // გამოიყენეთ თქვენი გაჩერების Icon
+    }).addTo(map);
+
+    const pointObj = { id: pointId, marker: marker };
+    routePoints.push(pointObj);
+
+    // მოვლენა: წერტილის გადათრევა (Drag End)
+    marker.on('dragend', function (event) {
+        console.log("წერტილი გადაადგილდა:", event.target.getLatLng());
+        updateRouteLine(); // ხაზის განახლება
+    });
+
+    // მარკერზე დაწკაპუნებისას წაშლის Popup-ის ჩვენება
+    const popupContent = document.createElement('div');
+    popupContent.className = 'marker-popup';
+    
+    const deleteBtn = document.createElement('button');
+    deleteBtn.innerText = 'გაჩერების წაშლა';
+    deleteBtn.className = 'delete-stop-btn';
+    deleteBtn.onclick = function () {
+        deleteRoutePoint(pointId);
+    };
+
+    popupContent.appendChild(deleteBtn);
+    marker.bindPopup(popupContent);
+
+    updateRouteLine();
+}
+
+// --- 2. წერტილის წაშლა ---
+function deleteRoutePoint(id) {
+    const pointIndex = routePoints.findIndex(p => p.id === id);
+    if (pointIndex !== -1) {
+        map.removeLayer(routePoints[pointIndex].marker); // რუკიდან წაშლა
+        routePoints.splice(pointIndex, 1); // მასივიდან წაშლა
+        updateRouteLine(); // მარშრუტის ხაზის გადახატვა
+    }
+}
+
+// --- 3. მარშრუტის ხაზის განახლება (Polyline) ---
+function updateRouteLine() {
+    const coords = routePoints.map(p => p.marker.getLatLng());
+
+    if (routePolyline) {
+        routePolyline.setLatLngs(coords);
+    } else {
+        routePolyline = L.polyline(coords, {
+            color: '#3b82f6', // ლურჯი ხაზი
+            weight: 4,
+            opacity: 0.8
+        }).addTo(map);
+    }
+}
+
+// --- 4. GPS ცენტრირება ---
+function centerOnGPS() {
+    if (!navigator.geolocation) {
+        alert("თქვენს ბრაუზერს არ აქვს GPS მხარდაჭერა.");
+        return;
+    }
+
+    // ღილაკზე ანიმაციის დაწყება (ვიზუალური გამოხმაურებისთვის)
+    const gpsBtn = document.getElementById('gps-btn');
+    gpsBtn.classList.add('loading');
+
+    navigator.geolocation.getCurrentPosition(
+        (position) => {
+            const lat = position.coords.latitude;
+            const lng = position.coords.longitude;
+
+            map.setView([lat, lng], 16); // რუკის ცენტრირება და მიახლოება
+
+            // მომხმარებლის ლოკაციის მარკერი
+            if (userMarker) {
+                userMarker.setLatLng([lat, lng]);
+            } else {
+                userMarker = L.marker([lat, lng], {
+                    icon: L.divIcon({
+                        className: 'user-location-marker',
+                        html: '<div class="pulse-dot"></div>'
+                    })
+                }).addTo(map);
+            }
+            gpsBtn.classList.remove('loading');
+        },
+        (error) => {
+            gpsBtn.classList.remove('loading');
+            alert("შეცდომა GPS კოორდინატების მიღებისას: " + error.message);
+        },
+        { enableHighAccuracy: true }
+    );
+}
+
+// --- 5. ძებნა / ფილტრი (მარშრუტების სიისთვის) ---
+function filterRoutes() {
+    const searchInput = document.getElementById('route-search').value.toLowerCase();
+    const routeItems = document.querySelectorAll('.route-item'); // სიის ელემენტები კლასით .route-item
+
+    routeItems.forEach(item => {
+        const routeName = item.querySelector('.route-title').textContent.toLowerCase();
+        const routeNumber = item.querySelector('.route-number')?.textContent.toLowerCase() || '';
+
+        if (routeName.includes(searchInput) || routeNumber.includes(searchInput)) {
+            item.style.display = 'flex'; // თუ ემთხვევა, ვაჩენთ
+        } else {
+            item.style.display = 'none'; // თუ არა, ვმალავთ
+        }
+    });
+}
