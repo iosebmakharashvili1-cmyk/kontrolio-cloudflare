@@ -477,6 +477,114 @@
   .spPopupResultItem:hover{ background: rgba(63,102,131,0.1); }
   .spPopupConfirm{ transition: transform 0.12s ease; }
   .spPopupConfirm:active{ transform: scale(0.95); }
+  /* --- პროპორციული UI დალაგება (Flexbox სტრუქტურა) --- */
+.bottom-sheet {
+    display: flex;
+    flex-direction: column;
+    max-height: 85vh; /* მობილურზე ეკრანის პროპორციულად */
+    padding: 16px;
+    gap: 12px;
+}
+
+/* ძებნის კონტეინერი - პროპორციულად იკავებს ადგილს */
+.search-container {
+    width: 100%;
+    margin-bottom: 12px;
+}
+
+.search-container input {
+    width: 100%;
+    padding: 12px 16px;
+    border: 1.5px solid #e2e8f0;
+    border-radius: 12px;
+    font-size: 15px;
+    outline: none;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.search-container input:focus {
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
+}
+
+/* --- GPS ღილაკის სტილი --- */
+#gps-btn {
+    position: absolute;
+    bottom: 24px;
+    right: 24px;
+    z-index: 1000;
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    background-color: #ffffff;
+    border: none;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #4a5568;
+    transition: all 0.2s ease;
+}
+
+#gps-btn:hover {
+    transform: scale(1.05);
+    color: #3b82f6;
+}
+
+/* GPS ძებნის დატვირთვის ეფექტი */
+#gps-btn.loading {
+    animation: rotateGPS 1s linear infinite;
+}
+
+@keyframes rotateGPS {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* GPS მომხმარებლის წერტილის ანიმაცია */
+.user-location-marker {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.pulse-dot {
+    width: 14px;
+    height: 14px;
+    background-color: #3b82f6;
+    border-radius: 50%;
+    border: 2px solid white;
+    box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.4);
+    animation: pulse 1.8s infinite;
+}
+
+@keyframes pulse {
+    0% { box-shadow: 0 0 0 0px rgba(59, 130, 246, 0.5); }
+    70% { box-shadow: 0 0 0 10px rgba(59, 130, 246, 0); }
+    100% { box-shadow: 0 0 0 0px rgba(59, 130, 246, 0); }
+}
+
+/* --- Popup წაშლის ღილაკის სტილი --- */
+.marker-popup {
+    padding: 4px;
+}
+
+.delete-stop-btn {
+    background-color: #ef4444;
+    color: white;
+    border: none;
+    padding: 6px 12px;
+    border-radius: 6px;
+    font-weight: 500;
+    cursor: pointer;
+    font-size: 13px;
+    transition: background-color 0.2s ease;
+}
+
+.delete-stop-btn:hover {
+    background-color: #dc2626;
+}
 </style>
 </head>
 <body>
