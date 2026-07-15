@@ -618,6 +618,18 @@
       </div>
     </div>
 
+    <!-- ძებნის ველი სიის თავში -->
+<div class="rcSearchBox" style="margin-bottom:15px; position:relative;">
+  <i data-lucide="search" style="position:absolute; left:12px; top:50%; transform:translateY(-50%); width:16px; color:var(--grey);"></i>
+  <input type="text" id="rcSearchInput" placeholder="მოძებნე ნომრით ან სახელით..." 
+         style="width:100%; padding:12px 12px 12px 38px; border-radius:12px; border:1.5px solid var(--grey-soft); background:var(--surface); color:var(--text); font-family:inherit;">
+</div>
+
+<!-- ინსტრუქცია რედაქტირებაზე -->
+<p class="rcDrawHint" id="rcDrawHint" style="background:var(--bus-blue); color:#fff; font-size:11px; padding:5px;">
+    წერტილის გადასატანად გამოიყენეთ Drag. წასაშლელად - Right Click.
+</p>
+    
     <!-- Route detail — სრულმასშტაბიანი, სრულად ინტერაქტიული (drag/zoom/scroll).
          #rcPage-ის შიგნით უნდა იყოს (და არა მის გარეთ) — წინააღმდეგ
          შემთხვევაში #rcPage-ის min-height:100vh ცარიელ სივრცეს ტოვებს
