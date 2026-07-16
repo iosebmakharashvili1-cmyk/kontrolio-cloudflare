@@ -42,9 +42,17 @@
   @media (min-width: 900px){
     .rcPage.draw-mode .rcDrawWrap.active{ padding: 0; }
   }
+  /* draw-mode = ერთი გვერდის viewport-შელი: header ფიქსირებული სიმაღლის,
+     rcDrawWrap ავსებს დანარჩენს flexbox-ით (არა sticky/calc(100vh) ხრიკებით,
+     რომლებიც header-ის რეალურ სიმაღლესთან შეუსაბამობისას რუკას
+     header-ს/გვერდით პანელს აჯახებდა). */
+  .rcPage.draw-mode{
+    height: 100vh;
+    overflow: hidden;
+  }
 
   .rcPage__header{
-    position: sticky; top:0; z-index:20;
+    position: sticky; top:0; z-index:1100;
     display:flex; align-items:center; gap:12px;
     padding: 16px 18px;
     background: var(--surface);
@@ -280,14 +288,15 @@
 
   /* Desktop: side-by-side */
   @media (min-width: 900px){
-    .rcDrawWrap.active{ flex-direction:row; align-items:flex-start; gap:0; }
-    .rcDrawWrap__mapCol{ flex:1.7; position:sticky; top:69px; }
+    .rcDrawWrap.active{ flex-direction:row; align-items:stretch; gap:0; }
+    .rcDrawWrap__mapCol{ flex:1.7; display:flex; flex-direction:column; min-width:0; }
     .rcDrawWrap__formCol{
       flex:0 0 380px; width:380px;
       border-left: 1px solid var(--grey-soft);
       background: var(--grey-soft);
+      overflow-y: auto;
     }
-    #rcMap{ height: calc(100vh - 69px); min-height:420px; }
+    #rcMap{ flex:1; min-height:0; }
   }
 
   /* Mobile: 2-step wizard — Step 1 = full map, Step 2 = form only */
