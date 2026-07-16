@@ -677,6 +677,47 @@ document.getElementById("rcSubmitBtn").addEventListener("click", submitRoute);
 let searchQuery = "";
 let filterType = "all";
 
+/* დეტერმინისტული "შემთხვევითი" რიცხვების გენერატორი route id-დან —
+   ისე რომ იგივე route ყოველთვის იგივე stylized ფონს გამოიმუშავებდეს
+   (არა ახალ-ახალი რენდერისას "ციმციმა" ეფექტს). */
+function seededRng(seedStr) {
+  let h = 0;
+  for (let i = 0; i < seedStr.length; i++) {
+    h = (h * 31 + seedStr.charCodeAt(i)) >>> 0;
+  }
+  return function () {
+    h = (h * 1103515245 + 12345) >>> 0;
+    return (h % 10000) / 10000;
+  };
+}
+
+/* მსუბუქი ვექტორული "რუკის" ტექსტურა — ბადე + ბლოკები + 1-2
+   მთავარი "გზა" — namdvili tile-ebis datvirtvis gareshe */
+function generateMapBackdrop(seedStr) {
+  const rng = seededRng(seedStr || "kontrolio");
+  const blocks = [];
+  const cell = 14;
+  for (let y = -cell; y < 100 + cell; y += cell) {
+    for (let x = -cell; x < 100 + cell; x += cell) {
+      if (rng() > 0.55) continue;
+      const jx = x + rng() * 3;
+      const jy = y + rng() * 3;
+      const w = cell * (0.45 + rng() * 0.35);
+      const h = cell * (0.45 + rng() * 0.35);
+      const r = rng() > 0.7 ? 2 : 0;
+      blocks.push(`<rect class="mapBlock" x="${jx.toFixed(1)}" y="${jy.toFixed(1)}" width="${w.toFixed(1)}" height="${h.toFixed(1)}" rx="${r}"/>`);
+    }
+  }
+  const grid = [];
+  for (let x = 0; x <= 100; x += cell) grid.push(`<line class="mapRoad" x1="${x}" y1="0" x2="${x}" y2="100"/>`);
+  for (let y = 0; y <= 100; y += cell) grid.push(`<line class="mapRoad" x1="0" y1="${y}" x2="100" y2="${y}"/>`);
+  const mainRoads = [
+    `<line class="mapRoadMain" x1="0" y1="${(20 + rng() * 20).toFixed(1)}" x2="100" y2="${(30 + rng() * 30).toFixed(1)}"/>`,
+    `<line class="mapRoadMain" x1="${(30 + rng() * 20).toFixed(1)}" y1="0" x2="${(50 + rng() * 20).toFixed(1)}" y2="100"/>`,
+  ];
+  return `<svg class="rcCard__thumbMap" viewBox="0 0 100 100" preserveAspectRatio="none">${blocks.join("")}${grid.join("")}${mainRoads.join("")}</svg>`;
+}
+
 function generateThumbnailSvg(route) {
   if (!route.points || route.points.length < 2) return "";
   const pts = route.points;
@@ -687,23 +728,43 @@ function generateThumbnailSvg(route) {
     if (lng < minLng) minLng = lng;
     if (lng > maxLng) maxLng = lng;
   });
-  const padLat = (maxLat - minLat) * 0.15 || 0.005;
-  const padLng = (maxLng - minLng) * 0.15 || 0.005;
-  minLat -= padLat; maxLat += padLat; minLng -= padLng; maxLng += padLng;
-  const rangeLat = maxLat - minLat || 0.001;
-  const rangeLng = maxLng - minLng || 0.001;
-  const toX = (lng) => ((lng - minLng) / rangeLng) * 100;
-  const toY = (lat) => 100 - ((lat - minLat) / rangeLat) * 100;
+
+  // thumbnail viewBox — ფართო card-თან შესაბამისობაში (100 x 60).
+  // route-ის ხაზი აღარ იჭიმება არასწორ პროპორციაში: ერთი საერთო
+  // scale გამოითვლება x/y ღერძებისთვის ერთად (გრძედი კორექტირებულია
+  // cos(lat)-ით, რომ რეალურ გეო-პროპორციას მიუახლოვდეს), შემდეგ
+  // route ცენტრირდება viewBox-ის შუაში.
+  const THUMB_W = 100, THUMB_H = 60;
+  const PAD_FRAC = 0.18; // 18% padding route-ის ირგვლივ
+
+  const midLat = (minLat + maxLat) / 2;
+  const lngScale = Math.cos((midLat * Math.PI) / 180) || 1;
+
+  const rawLatSpan = (maxLat - minLat) || 0.0008;
+  const rawLngSpanGeo = ((maxLng - minLng) * lngScale) || 0.0008;
+
+  const availW = THUMB_W * (1 - PAD_FRAC * 2);
+  const availH = THUMB_H * (1 - PAD_FRAC * 2);
+  const scale = Math.min(availW / rawLngSpanGeo, availH / rawLatSpan);
+
+  const midLng = (minLng + maxLng) / 2;
+  const cx = THUMB_W / 2;
+  const cy = THUMB_H / 2;
+
+  const toX = (lng) => cx + (lng - midLng) * lngScale * scale;
+  const toY = (lat) => cy - (lat - midLat) * scale;
+
   const pointsStr = pts.map(([lat, lng]) => `${toX(lng).toFixed(1)},${toY(lat).toFixed(1)}`).join(" ");
   const tag = route.isLoop ? "polygon" : "polyline";
   const stopsMarkup = (route.stopLinks || [])
     .filter((s) => pts[s.pointIndex])
     .map((s) => {
       const [lat, lng] = pts[s.pointIndex];
-      return `<circle cx="${toX(lng).toFixed(1)}" cy="${toY(lat).toFixed(1)}" r="2" fill="#2ec4b6" stroke="#fff" stroke-width="0.5"/>`;
+      return `<circle cx="${toX(lng).toFixed(1)}" cy="${toY(lat).toFixed(1)}" r="2.2" fill="#2ec4b6" stroke="#fff" stroke-width="0.6"/>`;
     })
     .join("");
-  return `<svg class="rcCard__thumbSvg" viewBox="0 0 100 100" preserveAspectRatio="none"><${tag} points="${pointsStr}"/>${stopsMarkup}</svg>`;
+  const backdrop = generateMapBackdrop(route.id || route.routeNumber || "");
+  return `${backdrop}<svg class="rcCard__thumbSvg" viewBox="0 0 ${THUMB_W} ${THUMB_H}" preserveAspectRatio="xMidYMid meet"><${tag} points="${pointsStr}"/>${stopsMarkup}</svg>`;
 }
 
 function getFilteredRoutes() {
