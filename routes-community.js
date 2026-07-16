@@ -480,6 +480,13 @@ function renderStopLinkList() {
    ============================================================ */
 let selectedVehicleType = "bus";
 let routeShape = "oneway";
+let currentRoutes = []; // ადრეულადვე გამოიყენება checkDuplicateRoute-ში
+
+const routeNumberInput = document.getElementById("rcRouteNumber");
+routeNumberInput.addEventListener("input", () => {
+  routeNumberInput.value = routeNumberInput.value.replace(/\D/g, "").slice(0, 3);
+  checkDuplicateRoute();
+});
 
 function populateModelSelect(type) {
   const select = document.getElementById("rcVehicleModel");
@@ -504,12 +511,6 @@ function selectRouteShape(shape) {
 }
 document.getElementById("rcShapeOneway").addEventListener("click", () => selectRouteShape("oneway"));
 document.getElementById("rcShapeLoop").addEventListener("click", () => selectRouteShape("loop"));
-
-const routeNumberInput = document.getElementById("rcRouteNumber");
-routeNumberInput.addEventListener("input", () => {
-  routeNumberInput.value = routeNumberInput.value.replace(/\D/g, "").slice(0, 3);
-  checkDuplicateRoute();
-});
 
 function clearFormFields() {
   routeNumberInput.value = "";
@@ -622,7 +623,6 @@ document.getElementById("rcSubmitBtn").addEventListener("click", submitRoute);
 /* ============================================================
    სია — ძებნა/ფილტრი + thumbnail
    ============================================================ */
-let currentRoutes = [];
 let searchQuery = "";
 let filterType = "all";
 
