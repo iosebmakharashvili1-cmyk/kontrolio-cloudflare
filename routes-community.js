@@ -645,10 +645,6 @@ function generateThumbnailSvg(route) {
   const toY = (lat) => 100 - ((lat - minLat) / rangeLat) * 100;
   const pointsStr = pts.map(([lat, lng]) => `${toX(lng).toFixed(1)},${toY(lat).toFixed(1)}`).join(" ");
   const tag = route.isLoop ? "polygon" : "polyline";
-  const stopsDots = (route.stopLinks || [])
-    .filter((s) => pts[s.pointIndex])
-    .map(([lat, lng]) => "")
-    .join("");
   const stopsMarkup = (route.stopLinks || [])
     .filter((s) => pts[s.pointIndex])
     .map((s) => {
