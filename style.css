@@ -228,6 +228,15 @@ html, body{
   box-shadow: var(--shadow);
   margin-bottom: calc(10px + env(safe-area-inset-bottom)) !important;
   margin-right: calc(10px + env(safe-area-inset-right)) !important;
+  transition: margin-bottom 0.28s cubic-bezier(0.22, 1, 0.36, 1);
+}
+/* sheetPeek ("ჩაკეცილი" ზოლი) ჩნდება ეკრანის ბოლოში და, ვიწრო
+   (ტელეფონის) ეკრანებზე, გადაფარავს zoom-ის +/− ღილაკებს — ვწევთ
+   მათ sheetPeek-ის სიმაღლის ზემოთ, სანამ ის ხილვადია. sheetPeek-ის
+   რეალური სიმაღლე დაახლ. 60-70px-ია (padding + ტექსტი), 84px კი
+   უსაფრთხო ზღვარია სხვადასხვა ეკრანის sizing-ისთვის. */
+body.has-sheet-peek .leaflet-control-zoom{
+  margin-bottom: calc(84px + env(safe-area-inset-bottom)) !important;
 }
 .leaflet-control-zoom a{
   background: var(--surface) !important;
@@ -258,6 +267,10 @@ html, body{
 
 .topbar__title{
   display:flex; align-items:center; gap:10px;
+  min-width: 0; /* flex-item-ს საშუალებას აძლევს, ჩაეტიოს ხელმისაწვდომ სივრცეში
+                   და თავად h1-მა დაიწყოს text-overflow, ვიდრე მარჯვენა
+                   ღილაკებს გადაეფაროს */
+  flex: 1 1 auto;
 }
 .menuBtn{
   font-size: 18px;
@@ -272,6 +285,12 @@ html, body{
   letter-spacing: 0.4px;
   margin:0;
   text-shadow: 0 2px 4px rgba(0,0,0,0.5); /* ტექსტს მცირე ჩრდილი დავადეთ უკეთესი კითხვადობისთვის */
+  /* ვიწრო ეკრანებზე h1 იკუმშება და იჭრება (ellipsis), ნაცვლად იმისა,
+     რომ მარჯვენა მხარეს (online badge, თემის/ზარის ღილაკები) გადააფაროს */
+  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
 }
 .topbar__dot{
   width:10px; height:10px; border-radius:50%;
@@ -290,6 +309,8 @@ html, body{
 
 .topbar__actions{
   display:flex; align-items:center; gap:8px;
+  flex-shrink: 0; /* ღილაკები (online badge, თემა, ზარი) არასდროს იკუმშება —
+                      სივრცის დაკლება მთლიანად h1-ს ეკისრება */
 }
 
 .iconbtn{
@@ -314,6 +335,7 @@ html, body{
   background: rgba(255,255,255,0.1); 
   color: #e8e6e1;
   backdrop-filter: blur(8px); /* რუკის ფონი ოდნავ დაილურება ღილაკის უკან */
+  flex-shrink: 0; /* ღილაკები არასდროს იკუმშება — მხოლოდ h1-ის ტექსტი იჭრება */
 }
 .topbar .iconbtn:hover{ 
   background: rgba(255,255,255,0.18); 
@@ -1546,6 +1568,7 @@ html, body{
   user-select: none;
   backdrop-filter: blur(8px);
   transition: background 0.2s;
+  flex-shrink: 0; /* ღილაკებივით არ იკუმშება — h1-ის ტექსტი იჭრება საჭიროებისას */
 }
 
 .onlineBadge__dot {
