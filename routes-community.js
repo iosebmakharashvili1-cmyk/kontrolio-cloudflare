@@ -78,6 +78,7 @@ function enterDrawMode() {
   isDrawStep2 = false;
   listBody.style.display = "none";
   rcPage.classList.remove("wide-list");
+  rcPage.classList.add("draw-mode");
   drawWrap.classList.add("active");
   drawWrap.classList.remove("step2");
   submitBar.classList.add("active");
@@ -100,6 +101,7 @@ function exitDrawMode() {
   mode = "list";
   listBody.style.display = "";
   rcPage.classList.add("wide-list");
+  rcPage.classList.remove("draw-mode");
   drawWrap.classList.remove("active");
   submitBar.classList.remove("active");
   addBtn.style.display = "";
