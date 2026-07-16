@@ -78,7 +78,6 @@ function enterDrawMode() {
   isDrawStep2 = false;
   listBody.style.display = "none";
   rcPage.classList.remove("wide-list");
-  rcPage.classList.add("draw-mode");
   drawWrap.classList.add("active");
   drawWrap.classList.remove("step2");
   submitBar.classList.add("active");
@@ -101,7 +100,6 @@ function exitDrawMode() {
   mode = "list";
   listBody.style.display = "";
   rcPage.classList.add("wide-list");
-  rcPage.classList.remove("draw-mode");
   drawWrap.classList.remove("active");
   submitBar.classList.remove("active");
   addBtn.style.display = "";
@@ -163,7 +161,8 @@ let stopLinks = [];
 let addStopMode = false;
 
 function initDrawMap() {
-  map = L.map("rcMap", { zoomControl: true }).setView([41.7151, 44.8271], 12.5);
+  map = L.map("rcMap", { zoomControl: false }).setView([41.7151, 44.8271], 12.5);
+  L.control.zoom({ position: "bottomleft" }).addTo(map);
   L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", { maxZoom: 19 }).addTo(map);
   map.on("click", (e) => {
     const idx = addDrawPoint(e.latlng.lat, e.latlng.lng);
