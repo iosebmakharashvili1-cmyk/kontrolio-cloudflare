@@ -385,9 +385,19 @@ function openStopPopup(pointIndex) {
       </div>
     </div>`;
 
-  L.popup({ className: "rcPopup", closeButton: true, autoClose: false }).setLatLng(pt).setContent(content).openOn(map);
+  const popup = L.popup({ className: "rcPopup", closeButton: true, autoClose: false }).setLatLng(pt).setContent(content).openOn(map);
 
   setTimeout(() => {
+    // დამატებითი დაცვა: popup-ის შიგნით ნებისმიერი დაწკაპუნება (მათ შორის
+    // დინამიურად დამატებული საძიებო შედეგები) არასდროს უნდა "გაჟონოს"
+    // ქვემოთ მდებარე რუკაზე — წინააღმდეგ შემთხვევაში map.on("click")
+    // ხელახლა გაეშვება და იმავე წერტილში ახალ point-ს დაამატებს.
+    const popupEl = popup.getElement ? popup.getElement() : null;
+    if (popupEl) {
+      L.DomEvent.disableClickPropagation(popupEl);
+      L.DomEvent.disableScrollPropagation(popupEl);
+    }
+
     const searchInput = document.getElementById("popupSearchInput");
     const resultsEl = document.getElementById("popupResults");
     const newInput = document.getElementById("popupNewInput");
@@ -414,7 +424,8 @@ function openStopPopup(pointIndex) {
                 )
                 .join("");
         resultsEl.querySelectorAll(".spResult").forEach((el) => {
-          el.addEventListener("click", () => {
+          el.addEventListener("click", (ev) => {
+            ev.stopPropagation();
             newInput.value = el.textContent;
             newInput.dataset.stopId = el.dataset.id;
             resultsEl.innerHTML = "";
@@ -424,7 +435,8 @@ function openStopPopup(pointIndex) {
     }
 
     if (confirmBtn) {
-      confirmBtn.addEventListener("click", () => {
+      confirmBtn.addEventListener("click", (ev) => {
+        ev.stopPropagation();
         const label = newInput.value.trim();
         const stopId = newInput.dataset.stopId || null;
         if (!label && !stopId) {
@@ -439,7 +451,8 @@ function openStopPopup(pointIndex) {
       });
     }
     if (removeBtn) {
-      removeBtn.addEventListener("click", () => {
+      removeBtn.addEventListener("click", (ev) => {
+        ev.stopPropagation();
         stopLinks = stopLinks.filter((s) => s.pointIndex !== pointIndex);
         if (pointMarkers[pointIndex]) pointMarkers[pointIndex].setIcon(buildPointIcon(pointIndex));
         renderStopLinkList();
