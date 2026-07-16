@@ -85,7 +85,6 @@ function enterDrawMode() {
   addBtn.style.display = "none";
   headerTitle.textContent = "ახალი მარშრუტი";
   backBtn.removeAttribute("href");
-  backBtn.addEventListener("click", exitDrawModeConfirm);
   updateStepUi();
   if (!map) initDrawMap();
   else setTimeout(() => map.invalidateSize(), 50);
