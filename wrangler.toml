@@ -19,3 +19,14 @@ id = "693f5575e5fa4b7d8b219e8ea3a56916"
 #                             (setWebhook-ის დროს ერთხელ გამოიყენება)
 #   ADMIN_PASSWORD          — თვითონ შენ გამოგონილი პაროლი, custom route-ების
 #                             წასაშლელად (routes-community.html-ზე გამოგეთხოვება)
+#
+#   RUSTAVI_API_KEY         — rustavi-transit.azrycloud.com-ის X-api-key header.
+#                             (mobile app-იდან მოპოვებული; ცალკეა TTC_API_KEY-სგან,
+#                             თუმცა ამჟამად იგივე მნიშვნელობა გამოიყენება)
+#   RUSTAVI_COOKIE          — [არასავალდებულო, ამჟამად ცარიელია] rustavi-ს
+#                             endpoint-მა შესაძლოა Cookie session მოითხოვოს.
+#                             API_KEY-ის გარეშეც ცდილობს მუშაობას (fail-open),
+#                             მაგრამ თუ /api/arrivals ხშირად 401/403-ს
+#                             აბრუნებს Rustavi-ს გაჩერებებზე, ეს მნიშვნელობა
+#                             (mobile app-ის ინსპექტორით მოპოვებული ცოცხალი
+#                             Cookie header) აქ უნდა დაემატოს.
