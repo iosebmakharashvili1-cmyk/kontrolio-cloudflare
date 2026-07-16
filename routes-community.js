@@ -211,6 +211,11 @@ function addDrawPoint(lat, lng) {
 
   marker.on("click", (e) => {
     L.DomEvent.stopPropagation(e.originalEvent);
+    // Alt+click (დესკტოპზე) — წერტილის დაუყოვნებლივი წაშლა
+    if (e.originalEvent && e.originalEvent.altKey) {
+      removeDrawPoint(marker._pointIndex);
+      return;
+    }
     openStopPopup(marker._pointIndex);
   });
 
@@ -220,15 +225,46 @@ function addDrawPoint(lat, lng) {
     redrawPolyline();
   });
 
-  // long-press (მობილურზე) ან Alt+click (დესკტოპზე) — წერტილის წაშლა
+  // long-press (მობილურზე) — წერტილის წაშლა.
+  // შენიშვნა: Leaflet-ის draggable მარკერი "dragstart"-ს ისვრის
+  // თითის/მაუსის უმცირეს (1-2px) მოძრაობაზეც კი, რაც ჩვეულებრივ
+  // თან ახლავს touch/press-ს — ამიტომ ტაიმერი აღარ წყდება
+  // dragstart-ზე პირდაპირ, არამედ მხოლოდ მაშინ, თუ მარკერი
+  // რეალურად საგრძნობლად გადაინაცვლა (რაც ნიშნავს, რომ user-ს
+  // მართლა გადათრევა სურდა და არა წაშლა).
   let pressTimer = null;
-  marker.on("mousedown touchstart", (e) => {
+  let pressStartLatLng = null;
+  let didActuallyDrag = false;
+
+  marker.on("mousedown touchstart", () => {
+    didActuallyDrag = false;
+    pressStartLatLng = marker.getLatLng();
     pressTimer = setTimeout(() => {
-      removeDrawPoint(marker._pointIndex);
+      if (!didActuallyDrag) removeDrawPoint(marker._pointIndex);
     }, 550);
   });
-  marker.on("mouseup touchend dragstart", () => {
-    if (pressTimer) clearTimeout(pressTimer);
+
+  marker.on("drag", () => {
+    if (!pressStartLatLng) return;
+    const cur = marker.getLatLng();
+    // ~ 2 მეტრზე მეტი გადაადგილება ითვლება რეალურ drag-ად
+    const movedEnough =
+      Math.abs(cur.lat - pressStartLatLng.lat) > 0.00002 ||
+      Math.abs(cur.lng - pressStartLatLng.lng) > 0.00002;
+    if (movedEnough) {
+      didActuallyDrag = true;
+      if (pressTimer) {
+        clearTimeout(pressTimer);
+        pressTimer = null;
+      }
+    }
+  });
+
+  marker.on("mouseup touchend dragend", () => {
+    if (pressTimer) {
+      clearTimeout(pressTimer);
+      pressTimer = null;
+    }
   });
 
   marker._pointIndex = idx;
