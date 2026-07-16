@@ -166,7 +166,24 @@ async function fetchActivity() {
   }
 }
 
-/* ---------- მოსვლის დროები (TTC API, server-ის მეშვეობით) ---------- */
+/* ---------- მოსვლის დროები (TTC/Rustavi API, server-ის მეშვეობით) ---------- */
+
+/* სამუშაო საათები ორივე ქალაქისთვის — ცარიელი პასუხის სწორად
+   ახსნისთვის (მაგ. ღამით "ავტობუსები არ დადის", და არა "შეცდომა"). */
+const SERVICE_HOURS = {
+  tbilisi: { startHour: 6, startMinute: 0, endHour: 24, endMinute: 0 }, // ~24/7-თან ახლოს, ღამისსაათებშიც ხშირად დადის
+  rustavi: { startHour: 6, startMinute: 30, endHour: 20, endMinute: 30 }, // Metro Service+ ოფიციალური საათები
+};
+
+function isWithinServiceHours() {
+  const hours = SERVICE_HOURS[CURRENT_CITY] || SERVICE_HOURS.tbilisi;
+  const now = new Date();
+  const minutesNow = now.getHours() * 60 + now.getMinutes();
+  const startMinutes = hours.startHour * 60 + hours.startMinute;
+  const endMinutes = hours.endHour * 60 + hours.endMinute;
+  return minutesNow >= startMinutes && minutesNow < endMinutes;
+}
+
 function extractArrivals(rawResponse) {
   const list = Array.isArray(rawResponse) ? rawResponse : [];
   if (!list.length) return [];
@@ -187,20 +204,24 @@ function extractArrivals(rawResponse) {
     .sort((a, b) => a.etaMs - b.etaMs);
 }
 
+/* fetchArrivals აბრუნებს { arrivals, failed } ობიექტს ცალკეული
+   მასივის ნაცვლად — ეს განასხვავებს "ნამდვილად ცარიელია" (failed:
+   false, arrivals: []) და "upstream-მა ვერაფერი დააბრუნა" (failed:
+   true) შემთხვევებს, რომ UI-მ სხვადასხვა მესიჯი აჩვენოს. */
 async function fetchArrivals(ids) {
   try {
     const res = await fetch(`${API_BASE}/arrivals?ids=${encodeURIComponent(ids.join(","))}`, {
       cache: "no-store",
     });
-    if (!res.ok) return [];
+    if (!res.ok) return { arrivals: [], failed: true };
     const data = await res.json();
     const stopsArr = Array.isArray(data.stops) ? data.stops : [];
     const all = stopsArr.flatMap((raw) => extractArrivals(raw));
     all.sort((a, b) => a.etaMs - b.etaMs);
-    return all.slice(0, 4);
+    return { arrivals: all.slice(0, 4), failed: false };
   } catch (err) {
     console.error("arrivals fetch failed:", err);
-    return [];
+    return { arrivals: [], failed: true };
   }
 }
 
@@ -736,8 +757,31 @@ sheetRouteChips.addEventListener("click", (e) => {
   if (stop) drawRouteLinesForStop(stop, highlightedRoute);
 });
 
-function renderArrivalsList(arrivals, stop) {
+function renderArrivalsList(result, stop) {
+  const { arrivals, failed } = result;
+
+  if (failed) {
+    arrivalsList.innerHTML = `
+      <div class="emptyState">
+        <div class="emptyState__icon">⚠️</div>
+        <div class="emptyState__title">დროებით მიუწვდომელია</div>
+        <div class="emptyState__sub">მოსვლის დროების სერვისთან დაკავშირება ვერ მოხერხდა — სცადეთ მოგვიანებით</div>
+      </div>`;
+    return;
+  }
+
   if (!arrivals || arrivals.length === 0) {
+    if (!isWithinServiceHours()) {
+      const hours = SERVICE_HOURS[CURRENT_CITY] || SERVICE_HOURS.tbilisi;
+      const fmt = (h, m) => `${String(h % 24).padStart(2, "0")}:${String(m).padStart(2, "0")}`;
+      arrivalsList.innerHTML = `
+        <div class="emptyState">
+          <div class="emptyState__icon">🌙</div>
+          <div class="emptyState__title">ავტობუსები ამჟამად არ დადის</div>
+          <div class="emptyState__sub">სამუშაო საათებია ${fmt(hours.startHour, hours.startMinute)}–${fmt(hours.endHour, hours.endMinute)}</div>
+        </div>`;
+      return;
+    }
     arrivalsList.innerHTML = `
       <div class="emptyState">
         <div class="emptyState__icon">🚏</div>
@@ -769,8 +813,8 @@ async function loadArrivalsForStop(stopId, stop) {
       <div class="emptyState__icon">⏳</div>
       <div class="emptyState__title">იტვირთება...</div>
     </div>`;
-  const arrivals = await fetchArrivals(stop.ids && stop.ids.length ? stop.ids : [stop.id]);
-  if (activeStopId === stopId) renderArrivalsList(arrivals, stop);
+  const result = await fetchArrivals(stop.ids && stop.ids.length ? stop.ids : [stop.id]);
+  if (activeStopId === stopId) renderArrivalsList(result, stop);
 }
 
 function renderSheetInfo(stopId) {
