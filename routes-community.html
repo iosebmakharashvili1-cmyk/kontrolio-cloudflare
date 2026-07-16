@@ -293,7 +293,7 @@
   .rcCard__stopCount{ font-size:11.5px; color: var(--bus-blue); font-weight:600; }
 
   /* ---------- Draw/submit mode ---------- */
-  .rcDrawWrap{ display:none; flex-direction:column; flex:1; }
+  .rcDrawWrap{ display:none; flex-direction:column; flex:1; min-height:0; }
   .rcDrawWrap.active{ display:flex; }
 
   /* Desktop: side-by-side */
@@ -305,6 +305,10 @@
       border-left: 1px solid var(--grey-soft);
       background: var(--grey-soft);
       overflow-y: auto;
+      min-height: 0; /* flex-item-ის default min-height:auto (content-ზე მორგებული)
+                         გადალახვისთვის — წინააღმდეგ შემთხვევაში overflow-y:auto
+                         ვერასდროს ჩაირთვება, რადგან სვეტი უბრალოდ იზრდება
+                         კონტენტთან ერთად და ეკრანს გარეთ გადის. */
     }
     #rcMap{ flex:1; min-height:0; }
   }
