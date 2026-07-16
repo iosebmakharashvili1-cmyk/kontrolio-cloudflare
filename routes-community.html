@@ -25,6 +25,7 @@
     max-width: 560px;
     margin: 0 auto;
     min-height: 100vh;
+    min-height: 100dvh;
     background: var(--surface);
     display:flex; flex-direction:column;
     transition: max-width 0.2s ease;
@@ -37,44 +38,16 @@
       gap: 14px;
     }
     .rcPage.wide-list .rcCard{ margin-bottom:0; }
+    .rcDrawWrap.active{ padding: 4px 24px 40px; }
     .rcDetailWrap.active{ padding: 4px 24px 40px; }
-  }
-  @media (min-width: 900px){
-    .rcPage.draw-mode .rcDrawWrap.active{ padding: 0; }
-  }
-  /* draw-mode = ერთი გვერდის viewport-შელი: header ფიქსირებული სიმაღლის,
-     rcDrawWrap ავსებს დანარჩენს flexbox-ით (არა sticky/calc(100vh) ხრიკებით,
-     რომლებიც header-ის რეალურ სიმაღლესთან შეუსაბამობისას რუკას
-     header-ს/გვერდით პანელს აჯახებდა). */
-  .rcPage.draw-mode{
-    height: 100vh;
-    overflow: hidden;
   }
 
   .rcPage__header{
-    position: sticky; top:0; z-index:1100;
+    position: sticky; top:0; z-index:20;
     display:flex; align-items:center; gap:12px;
     padding: 16px 18px;
     background: var(--surface);
     border-bottom: 1px solid var(--grey-soft);
-  }
-  /* ახალი მარშრუტის გვერდზე (draw-mode) — სათაური ცენტრში,
-     უკან-ღილაკი მარცხნივ, სიმეტრიულად (იხ. მიმაგრებული დიზაინი) */
-  .rcPage.draw-mode .rcPage__header{
-    display:grid;
-    grid-template-columns: 40px 1fr 40px;
-    padding: 14px 18px;
-  }
-  .rcPage.draw-mode .rcPage__title{
-    flex:none;
-    justify-content:center;
-    font-size:16px;
-    font-weight:700;
-    text-transform:none;
-  }
-  .rcPage.draw-mode .rcPage__title [data-lucide]{ display:none; }
-  @media (min-width: 900px){
-    .rcPage.draw-mode{ max-width: none; }
   }
   .rcPage__backBtn{
     display:flex; align-items:center; justify-content:center;
@@ -288,24 +261,48 @@
 
   /* Desktop: side-by-side */
   @media (min-width: 900px){
-    .rcDrawWrap.active{ flex-direction:row; align-items:stretch; gap:0; }
-    .rcDrawWrap__mapCol{ flex:1.7; display:flex; flex-direction:column; min-width:0; }
-    .rcDrawWrap__formCol{
-      flex:0 0 380px; width:380px;
-      border-left: 1px solid var(--grey-soft);
-      background: var(--grey-soft);
-      overflow-y: auto;
-    }
-    #rcMap{ flex:1; min-height:0; }
+    .rcDrawWrap.active{ flex-direction:row; align-items:flex-start; gap:28px; }
+    .rcDrawWrap__mapCol{ flex:1.6; position:sticky; top:69px; isolation:isolate; }
+    .rcDrawWrap__formCol{ flex:0 0 400px; width:400px; }
+    #rcMap{ height: calc(100vh - 69px - 52px); min-height:420px; border-radius:14px; overflow:hidden; }
   }
 
   /* Mobile: 2-step wizard — Step 1 = full map, Step 2 = form only */
   @media (max-width: 899px){
-    .rcDrawWrap__mapCol{ flex:1; display:flex; flex-direction:column; }
+    .rcDrawWrap__mapCol{
+      flex:1; display:flex; flex-direction:column;
+      position:relative; isolation:isolate;
+    }
     .rcDrawWrap__formCol{ display:none; }
-    #rcMap{ flex:1; min-height:0; }
+    /* რუკამ მთლიანად უნდა დაფაროს ხელმისაწვდომი სივრცე (edge-to-edge),
+       hint/toolbar/sub-ტექსტი კი მის თავზე float-ავს და აღარ „წიწკნის“
+       მაღლიდან რუკის სიმაღლეს. */
+    #rcMap{ position:absolute; inset:0; }
     .rcDrawWrap.step2 .rcDrawWrap__mapCol{ display:none; }
     .rcDrawWrap.step2 .rcDrawWrap__formCol{ display:block; flex:1; overflow-y:auto; }
+
+    .rcDrawHint{
+      position:absolute; z-index:850;
+      top:12px; left:12px; right:64px;
+      border-radius:12px;
+      box-shadow: var(--shadow);
+    }
+    .rcDrawToolbar{
+      position:absolute; z-index:850;
+      left:12px; bottom:16px; width:auto;
+      border-bottom:none;
+      border-radius:14px;
+      background: var(--surface);
+      box-shadow: var(--shadow);
+      padding:6px;
+      /* icon-only ღილაკები, რომ toolbar-მა სივრცე არ დაუთმოს
+         მარჯვნივ მდებარე „გაგრძელება“ ღილაკს */
+      font-size:0;
+    }
+    .rcDrawToolbar button{ flex:0 0 auto; padding:10px; }
+    /* წერტილების გადათრევის მინიშნება მობილურზე overlay-ს ჭარბობს,
+       იმალება, რომ რუკას ადგილი არ წაართვას */
+    .rcDrawWrap__mapCol > .rcForm__sub{ display:none; }
 
     /* "გაგრძელება" ღილაკი — bottom-right, map-ზე */
     .rcStepNextBtn{
@@ -349,84 +346,41 @@
   .rcStepNextBtn.hidden,
 .rcStepBackBar.hidden{ display:none !important; }
 
-/* "დააჭირე რუკას..." მინიშნება — მცურავი პილი რუკის თავზე,
-     ცენტრში, ისე როგორც სახელმძღვანელო დიზაინშია */
-  .rcDrawHint{
-    position:absolute; z-index:900;
-    top:14px; left:50%; transform:translateX(-50%);
-    max-width: calc(100% - 160px);
-    padding: 9px 18px;
-    border-radius: 20px;
-    background: var(--surface);
+.rcDrawHint{
+    padding: 10px 18px;
+    background: rgba(31,111,214,0.08);
     color: var(--bus-blue);
     font-size: 12.5px;
-    font-weight:700;
+    font-weight:600;
     text-align:center;
-    white-space:nowrap;
-    overflow:hidden; text-overflow:ellipsis;
-    box-shadow: var(--shadow);
+  }
+  .rcDrawToolbar{
+    display:flex; gap:8px;
+    padding: 10px 18px;
+    border-bottom: 1px solid var(--grey-soft);
   }
   @media (min-width: 900px){
-    .rcDrawHint{ top:18px; }
+    .rcDrawToolbar{ border-bottom:none; }
   }
-
-  /* მცურავი მრგვალი ღილაკები რუკის ზედა-მარცხენა კუთხეში
-     (გაჩერების დამატება / ბოლო წერტილის გაუქმება / გასუფთავება) */
-  .rcMapToolbar{
-    position:absolute; z-index:900;
-    top:14px; left:14px;
-    display:flex; flex-direction:column; gap:10px;
-  }
-  @media (min-width: 900px){
-    .rcMapToolbar{ top:18px; left:18px; }
-  }
-  .rcMapToolbar button{
-    width:40px; height:40px;
-    display:flex; align-items:center; justify-content:center;
-    border-radius:50%;
-    border:none;
+  .rcDrawToolbar button{
+    flex:1;
+    display:flex; align-items:center; justify-content:center; gap:6px;
+    padding: 9px 10px;
+    border-radius: 10px;
+    border: 1px solid var(--grey-soft);
     background: var(--surface);
     color: var(--text);
-    box-shadow: var(--shadow);
+    font-family:inherit;
+    font-size: 12.5px; font-weight:600;
     cursor:pointer;
-    flex-shrink:0;
   }
-  .rcMapToolbar button:hover{ background: var(--grey-soft); }
-  .rcMapToolbar button:active{ transform: scale(0.92); }
-  .rcMapToolbar button [data-lucide]{ width:18px; height:18px; }
-  .rcMapToolbar button.danger{ color: var(--red); }
-  .rcMapToolbar button.active{
+  .rcDrawToolbar button:hover{ background: var(--grey-soft); }
+  .rcDrawToolbar button [data-lucide]{ width:15px; height:15px; }
+  .rcDrawToolbar button.danger{ color: var(--red); }
+  .rcDrawToolbar button.active{
+    border-color: var(--bus-blue);
+    background: rgba(31,111,214,0.12);
     color: var(--bus-blue);
-    box-shadow: 0 0 0 2px var(--bus-blue), var(--shadow);
-  }
-
-  /* Leaflet-ის ჩაშენებული zoom-კონტროლი — მუქი, მრგვალკუთხოვანი,
-     დიზაინის მითითებული სურათის მსგავსად */
-  .leaflet-control-zoom{
-    border: none !important;
-    border-radius: 12px !important;
-    overflow: hidden;
-    box-shadow: var(--shadow) !important;
-  }
-  .leaflet-control-zoom a{
-    width: 38px !important; height: 38px !important;
-    line-height: 38px !important;
-    background: var(--surface) !important;
-    color: var(--text) !important;
-    border: none !important;
-  }
-  .leaflet-control-zoom a:hover{ background: var(--grey-soft) !important; }
-  .leaflet-control-zoom-in{ border-bottom: 1px solid var(--grey-soft) !important; }
-  .leaflet-touch .leaflet-bar{ border: none !important; }
-  .leaflet-top.leaflet-left{ top: 14px !important; left: 14px !important; }
-  @media (min-width: 900px){
-    .leaflet-top.leaflet-left{ top: 18px !important; left: 18px !important; }
-  }
-  /* ჩვენი მცურავი ღილაკები (გაჩერება/გაუქმება/გასუფთავება) ჩამოქვეით,
-     zoom-კონტროლის ქვემოთ, რომ არ გადაეფაროს */
-  .rcMapToolbar{ top: 106px !important; }
-  @media (min-width: 900px){
-    .rcMapToolbar{ top: 110px !important; }
   }
 
   .rcForm{ padding: 16px 18px 100px; overflow-y:auto; flex:1; }
@@ -448,27 +402,25 @@
   .rcVehicleToggle button{
     flex:1;
     display:flex; align-items:center; justify-content:center; gap:6px;
-    padding: 12px;
-    border-radius: 14px;
+    padding: 10px;
+    border-radius: 12px;
     border: 1.5px solid var(--grey-soft);
     background: var(--surface);
     color: var(--text);
     font-family:inherit; font-weight:700; font-size:13.5px;
     cursor:pointer;
-    transition: background 0.12s ease, border-color 0.12s ease, color 0.12s ease;
   }
   .rcVehicleToggle button [data-lucide]{ width:16px; height:16px; flex-shrink:0; }
   .rcVehicleToggle button.selected{
     border-color: var(--bus-blue);
-    background: var(--bus-blue);
-    color: #fff;
+    background: rgba(31,111,214,0.08);
+    color: var(--bus-blue);
   }
-  #rcShapeHint{ display:none; }
 
   .rcSelect, .rcInput, .rcTextarea{
     width:100%;
-    padding: 13px 15px;
-    border-radius: 14px;
+    padding: 11px 13px;
+    border-radius: 12px;
     border: 1.5px solid var(--grey-soft);
     background: var(--surface);
     color: var(--text);
@@ -504,7 +456,7 @@
   .rcStopLinkItem__remove [data-lucide]{ width:14px; height:14px; }
 
   .rcSubmitBar{
-    position:fixed; left:0; right:0; bottom:0; z-index:30;
+    position:fixed; left:0; right:0; bottom:0; z-index:1200;
     max-width:560px; margin:0 auto;
     padding: 12px 18px;
     background: var(--surface);
@@ -514,9 +466,9 @@
   .rcSubmitBar.active{ display:block; }
   @media (min-width: 900px){
     .rcSubmitBar{
-      max-width:380px;
+      max-width:400px;
       left:auto;
-      right: 24px;
+      right: max(24px, calc((100vw - 1280px) / 2 + 24px));
       bottom:24px;
       border-radius:14px;
       border:1px solid var(--grey-soft);
@@ -526,8 +478,8 @@
   }
   .rcSubmitBar button{
     width:100%;
-    padding: 14px;
-    border-radius: 16px;
+    padding: 13px;
+    border-radius: 14px;
     border:none;
     background: var(--bus-blue);
     color:#fff;
@@ -674,10 +626,10 @@
           <i data-lucide="locate-fixed"></i>
         </button>
         <p class="rcDrawHint" id="rcDrawHint">დააჭირე რუკას, რომ დაიწყო ხაზის დახატვა</p>
-        <div class="rcMapToolbar">
-          <button type="button" id="rcAddStopModeBtn" title="გაჩერების დამატება" aria-label="გაჩერების დამატება"><i data-lucide="map-pin-plus"></i></button>
-          <button type="button" id="rcUndoBtn" title="ბოლო წერტილის გაუქმება" aria-label="ბოლო წერტილის გაუქმება"><i data-lucide="undo-2"></i></button>
-          <button type="button" id="rcClearBtn" class="danger" title="გასუფთავება" aria-label="გასუფთავება"><i data-lucide="trash-2"></i></button>
+        <div class="rcDrawToolbar">
+          <button type="button" id="rcAddStopModeBtn"><i data-lucide="map-pin-plus"></i> გაჩერების დამატება</button>
+          <button type="button" id="rcUndoBtn"><i data-lucide="undo-2"></i> ბოლო წერტილის გაუქმება</button>
+          <button type="button" id="rcClearBtn" class="danger"><i data-lucide="trash-2"></i> გასუფთავება</button>
         </div>
         <p class="rcForm__sub" style="padding:0 18px; margin-top:4px;">
           <i data-lucide="move" style="width:12px;height:12px;vertical-align:-1px;"></i>
