@@ -1462,6 +1462,34 @@ body.has-sheet-peek .leaflet-control-zoom{
   .searchInputWrap{ top: 74px; left: 24px; width: auto; opacity: 1; overflow: visible; pointer-events: auto; }
   .sheet{ bottom: 24px; }
   .sheetPeek{ bottom: 24px; }
+
+  /* ============================================================
+     Desktop-ზე თავისუფლად გადასათრევი პანელი (drag-and-drop)
+     ------------------------------------------------------------
+     ნაგულისხმევად .sheet ისევ centered/bottom-ზეა (ზემოთ განსაზ-
+     ღვრული წესებით). როცა მომხმარებელი handle-ს გადათრევს, JS
+     ამატებს .sheet--dragged კლასს და აყენებს inline left/top-ს
+     (px-ში) — ეს override-ავს margin:auto/bottom-ის ცენტრირებას.
+     ============================================================ */
+  .sheet__handle{
+    cursor: grab;
+  }
+  .sheet__handle:active{
+    cursor: grabbing;
+  }
+  .sheet.sheet--dragged{
+    left: var(--sheet-drag-x, 50%);
+    top: var(--sheet-drag-y, auto);
+    right: auto;
+    bottom: auto;
+    margin: 0;
+    /* drag-ის დროს ტრანსფორმაციები არ გვჭირდება — პოზიციას
+       პირდაპირ left/top აკონტროლებს */
+  }
+  .sheet.sheet--dragged.dragging{
+    transition: none !important;
+    user-select: none;
+  }
 }
 
 /* Mobile */
@@ -1490,6 +1518,54 @@ body.has-sheet-peek .leaflet-control-zoom{
     opacity: 1;
     transform: translateY(0);
     transition: height 0.28s ease, opacity 0.22s ease, transform 0.28s ease, visibility 0s linear 0s;
+  }
+
+  /* ============================================================
+     კომპაქტური "peek" sheet — ტელეფონზე ნაგულისხმევად ჩვენება
+     ------------------------------------------------------------
+     .sheet ნაგულისხმევად მხოლოდ ყველაზე მნიშვნელოვან ინფოს აჩვენებს
+     (სახელი + სტატუსი + report-ღილაკები) მცირე padding-ით/ფონტით.
+     ზემოთ swipe-ით ან handle-ზე დაწკაპუნებით ემატება .sheet--expanded
+     კლასი, რომელიც სრულ დეტალებს (მარშრუტები, მოსვლის დრო, legend)
+     ააქტიურებს და პანელს max-height-ს უზრდის.
+     ============================================================ */
+  .sheet{
+    padding: 8px 16px calc(14px + env(safe-area-inset-bottom));
+    max-height: 46vh; /* ნაგულისხმევი — კომპაქტური */
+    transition: transform 0.32s cubic-bezier(0.22, 1, 0.36, 1), visibility 0.32s, max-height 0.32s cubic-bezier(0.22, 1, 0.36, 1);
+  }
+  .sheet__handle{ margin: 4px auto 10px; }
+  .sheet h2{ font-size: 16px; margin: 0 0 3px; }
+  .sheet__caption{ font-size: 11.5px; margin-bottom: 10px; }
+  .statusBanner{ padding: 8px 12px; font-size: 13px; margin-bottom: 4px; }
+  .routeChips{ margin-bottom: 10px; }
+  .sheet__actions{ gap: 8px; margin-bottom: 8px; }
+  .reportBtn{ padding: 12px 14px 12px 18px; font-size: 14px; }
+
+  /* კომპაქტურ (ჩაკეცილ) მდგომარეობაში დეტალები დამალულია — swipe-up-მა
+     უნდა გამოაჩინოს. display:none ვიდრე height:0, რადგან შიგთავსს
+     scroll-ისთვის layout-ი საერთოდ არ სჭირდება ამ state-ში. */
+  .sheet:not(.sheet--expanded) .arrivalsSection,
+  .sheet:not(.sheet--expanded) .sheet__legendWrap,
+  .sheet:not(.sheet--expanded) .sheet__close{
+    display: none;
+  }
+
+  /* გაფართოებულ მდგომარეობაში — სრული სიმაღლე და ყველა დეტალი ჩანს */
+  .sheet.sheet--expanded{
+    max-height: 85vh;
+  }
+
+  /* handle-ს პატარა მინიშნება — ისარი, რომ ცხადია, აწევაც შესაძლებელია */
+  .sheet__handle{
+    position: relative;
+    cursor: pointer;
+  }
+  .sheet__handle::after{
+    content: "";
+    position: absolute;
+    top: -14px; left: 50%; transform: translateX(-50%);
+    width: 60px; height: 24px; /* დაჭერის უფრო დიდი მიზნობრივი არე */
   }
 }
 
