@@ -859,8 +859,13 @@ function openSheet(stopId) {
   // Desktop-ზე ბოლოს შენახული (გადათრეული) პოზიცია აღვადგინოთ — sheet
   // ახლა ხილვადია, ასე რომ getBoundingClientRect() სწორ ზომებს დააბრუნებს
   restoreSheetPosition();
-  // ARRIVALS დროებით გამორთულია — TTC-ის ნებართვის მოლოდინში
-  // loadArrivalsForStop(stopId, STOPS_BY_ID[stopId]);
+  // Mobile-ზე sheet ნაგულისხმევად კომპაქტურია და arrivalsSection
+  // დამალულია (display:none) — იქ ჩატვირთვა expandSheet()-ს მივანდოთ,
+  // რომ ტყუილად API არ დაიტვირთოს ყოველ stop-არჩევაზე. Desktop-ზე კი
+  // ყველა დეტალი ერთდროულადაა ხილვადი, ასე რომ დაუყოვნებლივ ვტვირთავთ.
+  if (!isMobileSheetLayout()) {
+    loadArrivalsForStop(stopId, stop);
+  }
 }
 
 /* "ჩაკეცვა" — sheet იმალება, მაგრამ პატარა ზოლი გაჩერების სახელით
