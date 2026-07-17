@@ -17,16 +17,7 @@
    ============================================================ */
 
 import { STOP_NAMES } from "./_stopNames.js";
-
-let RUSTAVI_STOP_NAMES = null;
-try {
-  const mod = await import("./_rustaviStopNames.js");
-  RUSTAVI_STOP_NAMES = mod.STOP_NAMES;
-} catch (_) {
-  // _rustaviStopNames.js ჯერ არ არსებობს — Rustavi ID-ების
-  // ვალიდაცია გამოტოვდება (fail-open), ისევე როგორც STOP_NAMES-ის
-  // შემთხვევაში სხვაგან ამ პროექტში.
-}
+import { STOP_NAMES as RUSTAVI_STOP_NAMES } from "./_rustaviStopNames.js";
 
 const TBILISI_BASE = "https://transit.ttc.com.ge/pis-gateway/api/v2/stops";
 const RUSTAVI_BASE = "https://rustavi-transit.azrycloud.com/pis-gateway/api/v2/stops";
