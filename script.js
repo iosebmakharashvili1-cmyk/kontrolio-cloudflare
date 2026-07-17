@@ -746,9 +746,10 @@ function renderRouteChips(stop) {
     : `<span class="routeChip routeChip--empty">მარშრუტი უცნობია</span>`;
 }
 
-/* Route chip-ზე დაწკაპუნებით — მხოლოდ ის ხაზი გამოინათება, დანარჩენი
-   ბუნდოვნად რჩება. მეორედ იმავეზე დაწკაპუნება ან სხვა chip-ის
-   არჩევა უბრუნებს ყველა ხაზს თანაბარ გამჭვირვალობაზე. */
+/* Route chip-ზე დაწკაპუნებით — მხოლოდ ის ხაზი გამოინათება რუკაზე
+   და მხოლოდ იმ მარშრუტის მოსვლის დროები ჩანს (სია + კომპაქტური
+   პრევიუ). მეორედ იმავე chip-ზე დაწკაპუნება ან სხვა chip-ის არჩევა
+   უბრუნებს ყველა ხაზს/მოსვლას თანაბარ ხილვადობაზე. */
 sheetRouteChips.addEventListener("click", (e) => {
   const chip = e.target.closest(".routeChip[data-route]");
   if (!chip || !selectedStopId) return;
@@ -756,10 +757,25 @@ sheetRouteChips.addEventListener("click", (e) => {
   highlightedRoute = highlightedRoute === num ? null : num;
   const stop = STOPS_BY_ID[selectedStopId];
   if (stop) drawRouteLinesForStop(stop, highlightedRoute);
+
+  // chip-ების ვიზუალური active state — მხოლოდ არჩეული მარშრუტის
+  // chip გამოირჩევა, დანარჩენები დაბინდულია (რუკის ხაზების
+  // ქცევის იმიტაციით)
+  sheetRouteChips.querySelectorAll(".routeChip[data-route]").forEach((c) => {
+    c.classList.toggle("routeChip--active", highlightedRoute !== null && c.dataset.route === highlightedRoute);
+    c.classList.toggle("routeChip--dimmed", highlightedRoute !== null && c.dataset.route !== highlightedRoute);
+  });
+
+  // თუ arrivals უკვე ჩატვირთულია იმ გაჩერებისთვის — ხელახლა ვხატავთ
+  // ფილტრით, API-ს ხელახლა ვერ ვიძახებთ
+  if (lastArrivalsResult && lastArrivalsStop) {
+    renderArrivalsList(lastArrivalsResult, lastArrivalsStop);
+    renderArrivalsCompact(lastArrivalsResult, lastArrivalsStop);
+  }
 });
 
 function renderArrivalsList(result, stop) {
-  const { arrivals, failed } = result;
+  const { arrivals: allArrivals, failed } = result;
 
   if (failed) {
     arrivalsList.innerHTML = `
@@ -771,7 +787,27 @@ function renderArrivalsList(result, stop) {
     return;
   }
 
+  // route chip-ის არჩევით (highlightedRoute) მხოლოდ იმ მარშრუტის
+  // მოსვლის დროები გამოჩნდეს — ისევე, როგორც რუკაზე მხოლოდ ის ხაზი
+  // ინათება. "ყველა" ჩვენებაზე დასაბრუნებლად იმავე chip-ზე ხელახლა
+  // დაწკაპუნებაა საჭირო (იხ. sheetRouteChips-ის click listener).
+  const arrivals = highlightedRoute
+    ? (allArrivals || []).filter((a) => a.route === highlightedRoute)
+    : allArrivals;
+
   if (!arrivals || arrivals.length === 0) {
+    if (highlightedRoute && allArrivals && allArrivals.length > 0) {
+      // საერთოდ არის მოსვლის დროები ამ გაჩერებაზე, უბრალოდ არჩეულ
+      // მარშრუტზე არაფერია ახლოს — ეს განსხვავებული შემთხვევაა "საერთოდ
+      // მონაცემი არ არის"-ისგან
+      arrivalsList.innerHTML = `
+        <div class="emptyState">
+          <div class="emptyState__icon">🚌</div>
+          <div class="emptyState__title">მარშრუტი ${escapeHtml(highlightedRoute)} ახლოს არ არის</div>
+          <div class="emptyState__sub">სცადეთ "ყველა მარშრუტის" ნახვა — დააჭირეთ ხელახლა არჩეულ ნომერს</div>
+        </div>`;
+      return;
+    }
     if (!isWithinServiceHours()) {
       const hours = SERVICE_HOURS[CURRENT_CITY] || SERVICE_HOURS.tbilisi;
       const fmt = (h, m) => `${String(h % 24).padStart(2, "0")}:${String(m).padStart(2, "0")}`;
@@ -815,14 +851,23 @@ function renderArrivalsList(result, stop) {
    იმავე ტექსტს, რაც სრულ სიაშია, ილუსტრაციების გარეშე. */
 function renderArrivalsCompact(result, stop) {
   if (!arrivalsCompact) return;
-  const { arrivals, failed } = result;
+  const { arrivals: allArrivals, failed } = result;
 
   if (failed) {
     arrivalsCompact.innerHTML = `<div class="arrivalsCompact__item">⚠️ დროებით მიუწვდომელია</div>`;
     return;
   }
 
+  // renderArrivalsList-ის იგივე route-ფილტრაცია, კომპაქტურ პრევიუშიც
+  const arrivals = highlightedRoute
+    ? (allArrivals || []).filter((a) => a.route === highlightedRoute)
+    : allArrivals;
+
   if (!arrivals || arrivals.length === 0) {
+    if (highlightedRoute && allArrivals && allArrivals.length > 0) {
+      arrivalsCompact.innerHTML = `<div class="arrivalsCompact__item">🚌 მარშრუტი ${escapeHtml(highlightedRoute)} ახლოს არ არის</div>`;
+      return;
+    }
     if (!isWithinServiceHours()) {
       arrivalsCompact.innerHTML = `<div class="arrivalsCompact__item">🌙 ავტობუსები ამჟამად არ დადის</div>`;
       return;
@@ -852,6 +897,12 @@ function renderArrivalsCompact(result, stop) {
       : "");
 }
 
+// ბოლოს ჩატვირთული arrivals-შედეგი (ინახება route chip-ის
+// ფილტრაციისთვის — chip-ზე დაწკაპუნებისას ხელახლა API-ს ვერ
+// ვიძახებთ, უბრალოდ იმავე მონაცემს ვფილტრავთ და ვახდენთ re-render-ს)
+let lastArrivalsResult = null;
+let lastArrivalsStop = null;
+
 async function loadArrivalsForStop(stopId, stop) {
   arrivalsList.innerHTML = `
     <div class="emptyState">
@@ -863,6 +914,8 @@ async function loadArrivalsForStop(stopId, stop) {
   }
   const result = await fetchArrivals(stop.ids && stop.ids.length ? stop.ids : [stop.id]);
   if (activeStopId !== stopId) return;
+  lastArrivalsResult = result;
+  lastArrivalsStop = stop;
   renderArrivalsList(result, stop);
   renderArrivalsCompact(result, stop);
 }
