@@ -1,4 +1,4 @@
-/* ============================================================
+/*============================================================
    functions/api/arrivals.js — GET /api/arrivals?ids=<id1>,<id2>
    ------------------------------------------------------------
    ორ ქალაქს ემსახურება — Tbilisi (TTC) და Rustavi (AzRy Cloud),
@@ -17,7 +17,20 @@
    ============================================================ */
 
 import { STOP_NAMES } from "./_stopNames.js";
-import { STOP_NAMES as RUSTAVI_STOP_NAMES } from "./_rustaviStopNames.js";
+// STOP_NAMES უკვე შეიცავს ორივე ქალაქის stop-ებს ერთ ობიექტში —
+// რუსთავის ID-ები "rustavi-" პრეფიქსით (იხ. _stopNames.js-ის თავზე
+// კომენტარი). ცალკე _rustaviStopNames.js საჭირო აღარაა.
+//
+// ⚠️ STOP_NAMES-ის ზოგიერთი key გაერთიანებულია "+"-ით (მაგ.
+// "1:4366+1:4367") — ეს ორი ფიზიკური ავტობუსის სვეტი, რომლებიც
+// stops.js-ში ერთ ლოგიკურ გაჩერებადაა წარმოდგენილი (stop.ids
+// მასივით). frontend-ი კი /api/arrivals-ს თითოეულ ID-ს ცალ-ცალკე
+// უგზავნის ("1:4366", "1:4367"), ამიტომ ვალიდაციამ ცალკეული
+// sub-ID-ებიც უნდა ცნოს — არა მხოლოდ ზუსტი გაერთიანებული key.
+const VALID_STOP_IDS = new Set();
+for (const key of Object.keys(STOP_NAMES)) {
+  key.split("+").forEach((sub) => VALID_STOP_IDS.add(sub));
+}
 
 const TBILISI_BASE = "https://transit.ttc.com.ge/pis-gateway/api/v2/stops";
 const RUSTAVI_BASE = "https://rustavi-transit.azrycloud.com/pis-gateway/api/v2/stops";
@@ -83,16 +96,9 @@ export async function onRequestGet({ request, env }) {
 
   let ids = idsParam.split(",").map((s) => s.trim()).filter(Boolean).slice(0, 4);
 
-  // ვალიდაცია — ცნობილი stop-id უნდა იყოს, თბილისის ან რუსთავის
-  // lookup-ში (ორივე ცალკეა, პრეფიქსით ვარჩევთ, რომელი გამოვიყენოთ)
-  ids = ids.filter((id) => {
-    if (id.startsWith(RUSTAVI_PREFIX)) {
-      return !RUSTAVI_STOP_NAMES || Object.keys(RUSTAVI_STOP_NAMES).length === 0
-        ? true // lookup არ არსებობს -> fail-open
-        : Object.prototype.hasOwnProperty.call(RUSTAVI_STOP_NAMES, id);
-    }
-    return Object.keys(STOP_NAMES).length === 0 || Object.prototype.hasOwnProperty.call(STOP_NAMES, id);
-  });
+  // ვალიდაცია — ცნობილი stop-id უნდა იყოს VALID_STOP_IDS-ში (ორივე
+  // ქალაქის stop-ები, გაერთიანებული key-ების sub-ID-ების ჩათვლით)
+  ids = ids.filter((id) => VALID_STOP_IDS.size === 0 || VALID_STOP_IDS.has(id));
 
   if (!ids.length) return Response.json({ error: "no valid ids" }, { status: 400 });
 
