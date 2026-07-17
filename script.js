@@ -679,6 +679,7 @@ const sheetStatusBanner = document.getElementById("sheetStatusBanner");
 const sheetCaption = document.getElementById("sheetCaption");
 const sheetRouteChips = document.getElementById("sheetRouteChips");
 const arrivalsList = document.getElementById("arrivalsList");
+const arrivalsCompact = document.getElementById("arrivalsCompact");
 const btnInspector = document.getElementById("btnInspector");
 const btnClear = document.getElementById("btnClear");
 const sheetClose = document.getElementById("sheetClose");
@@ -807,14 +808,63 @@ function renderArrivalsList(result, stop) {
     .join("");
 }
 
+/* კომპაქტური (peek) მდგომარეობის მოკლე პრევიუ — mobile-ზე ჩანს
+   swipe-up-მდე. ცალკე, უფრო მოკლე markup-ია (routeChip-ის სრული
+   სტილის გარეშე), 1-2 უახლოესი მოსვლა + "კიდევ N" მინიშნება, თუ
+   მეტია. ცარიელი/loading/error მდგომარეობებში მოკლედ ვაჩვენებთ
+   იმავე ტექსტს, რაც სრულ სიაშია, ილუსტრაციების გარეშე. */
+function renderArrivalsCompact(result, stop) {
+  if (!arrivalsCompact) return;
+  const { arrivals, failed } = result;
+
+  if (failed) {
+    arrivalsCompact.innerHTML = `<div class="arrivalsCompact__item">⚠️ დროებით მიუწვდომელია</div>`;
+    return;
+  }
+
+  if (!arrivals || arrivals.length === 0) {
+    if (!isWithinServiceHours()) {
+      arrivalsCompact.innerHTML = `<div class="arrivalsCompact__item">🌙 ავტობუსები ამჟამად არ დადის</div>`;
+      return;
+    }
+    arrivalsCompact.innerHTML = `<div class="arrivalsCompact__item">🚏 მოსვლის დროები ჯერ არ არის</div>`;
+    return;
+  }
+
+  const shown = arrivals.slice(0, 2);
+  const extraCount = arrivals.length - shown.length;
+
+  arrivalsCompact.innerHTML =
+    shown
+      .map((a) => {
+        const isMinibus = (stop.routesMinibus || []).includes(a.route);
+        const chipClass = isMinibus ? "routeChip--minibus" : "routeChip--bus";
+        return `
+        <div class="arrivalsCompact__item">
+          <span class="arrivalsCompact__route ${chipClass}">${escapeHtml(a.route)}</span>
+          <span class="arrivalsCompact__direction">${escapeHtml(a.direction || "—")}</span>
+          <span class="arrivalsCompact__time">${formatEta(a.etaMs)}</span>
+        </div>`;
+      })
+      .join("") +
+    (extraCount > 0
+      ? `<div class="arrivalsCompact__more">კიდევ ${extraCount} მარშრუტი ▲</div>`
+      : "");
+}
+
 async function loadArrivalsForStop(stopId, stop) {
   arrivalsList.innerHTML = `
     <div class="emptyState">
       <div class="emptyState__icon">⏳</div>
       <div class="emptyState__title">იტვირთება...</div>
     </div>`;
+  if (arrivalsCompact) {
+    arrivalsCompact.innerHTML = `<div class="arrivalsCompact__item">⏳ იტვირთება...</div>`;
+  }
   const result = await fetchArrivals(stop.ids && stop.ids.length ? stop.ids : [stop.id]);
-  if (activeStopId === stopId) renderArrivalsList(result, stop);
+  if (activeStopId !== stopId) return;
+  renderArrivalsList(result, stop);
+  renderArrivalsCompact(result, stop);
 }
 
 function renderSheetInfo(stopId) {
@@ -859,13 +909,10 @@ function openSheet(stopId) {
   // Desktop-ზე ბოლოს შენახული (გადათრეული) პოზიცია აღვადგინოთ — sheet
   // ახლა ხილვადია, ასე რომ getBoundingClientRect() სწორ ზომებს დააბრუნებს
   restoreSheetPosition();
-  // Mobile-ზე sheet ნაგულისხმევად კომპაქტურია და arrivalsSection
-  // დამალულია (display:none) — იქ ჩატვირთვა expandSheet()-ს მივანდოთ,
-  // რომ ტყუილად API არ დაიტვირთოს ყოველ stop-არჩევაზე. Desktop-ზე კი
-  // ყველა დეტალი ერთდროულადაა ხილვადი, ასე რომ დაუყოვნებლივ ვტვირთავთ.
-  if (!isMobileSheetLayout()) {
-    loadArrivalsForStop(stopId, stop);
-  }
+  // Mobile-ზეც კომპაქტურ (peek) მდგომარეობაში 1-2 უახლოესი მოსვლის
+  // დროის პრევიუ ჩანს (.arrivalsCompact), ამიტომ ჩატვირთვა ყოველთვის
+  // საჭიროა — არა მხოლოდ expandSheet()-ის დროს.
+  loadArrivalsForStop(stopId, stop);
 }
 
 /* "ჩაკეცვა" — sheet იმალება, მაგრამ პატარა ზოლი გაჩერების სახელით
@@ -1088,11 +1135,24 @@ function isMobileSheetLayout() {
       expandSheet();
     }
   });
+
+  // კომპაქტური arrivals-პრევიუც ღილაკივით მოქმედებს — მასზე tap-ი
+  // ასევე შლის sheet-ს (ცალკე ვიზუალური მინიშნებაა "▲ კიდევ N
+  // მარშრუტი", რომ ცხადია, ეს ინტერაქტიულია)
+  if (arrivalsCompact) {
+    arrivalsCompact.addEventListener("click", () => {
+      if (!isMobileSheetLayout()) return;
+      expandSheet();
+    });
+  }
 })();
 
 function expandSheet() {
   sheet.classList.add("sheet--expanded");
-  if (activeStopId) loadArrivalsForStop(activeStopId, STOPS_BY_ID[activeStopId]);
+  // openSheet()-მა უკვე დატვირთა arrivals (compact preview-სთვის),
+  // ასე რომ აქ ხელახლა fetch საჭირო აღარაა — renderArrivalsList
+  // (სრული სია) და renderArrivalsCompact ორივე ერთი და იმავე
+  // loadArrivalsForStop-ის call-ში ივსება.
 }
 function collapseSheet() {
   sheet.classList.remove("sheet--expanded");
