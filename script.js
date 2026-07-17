@@ -833,10 +833,12 @@ function showPeek(stopId) {
   if (!stop) return;
   sheetPeekName.textContent = stop.name;
   sheetPeek.classList.remove("hidden");
+  document.body.classList.add("has-sheet-peek");
 }
 
 function hidePeek() {
   sheetPeek.classList.add("hidden");
+  document.body.classList.remove("has-sheet-peek");
 }
 
 function openSheet(stopId) {
@@ -850,6 +852,13 @@ function openSheet(stopId) {
   renderSheetInfo(stopId);
   overlay.classList.remove("hidden");
   sheet.classList.remove("hidden");
+  // ყოველი ახალი გახსნა კომპაქტურ (peek) მდგომარეობით იწყება mobile-ზე —
+  // მომხმარებელი თავად swipe-up-ით ან handle-ზე tap-ით გაშლის
+  sheet.classList.remove("sheet--expanded");
+  sheet.style.transform = "";
+  // Desktop-ზე ბოლოს შენახული (გადათრეული) პოზიცია აღვადგინოთ — sheet
+  // ახლა ხილვადია, ასე რომ getBoundingClientRect() სწორ ზომებს დააბრუნებს
+  restoreSheetPosition();
   // ARRIVALS დროებით გამორთულია — TTC-ის ნებართვის მოლოდინში
   // loadArrivalsForStop(stopId, STOPS_BY_ID[stopId]);
 }
@@ -860,6 +869,8 @@ function openSheet(stopId) {
 function closeSheet() {
   overlay.classList.add("hidden");
   sheet.classList.add("hidden");
+  sheet.classList.remove("sheet--expanded");
+  sheet.style.transform = "";
   activeStopId = null;
   if (selectedStopId) showPeek(selectedStopId);
 }
@@ -955,60 +966,244 @@ sheetClose.addEventListener("click", () => { vibrate(20); closeSheet(); });
 overlay.addEventListener("click", closeSheet);
 
 /* ============================================================
-   Swipe-to-close (თითით ჩამოსმა) bottom sheet-ისთვის
+   Swipe up/down + handle-tap — bottom sheet-ის კომპაქტური/სრული
+   მდგომარეობებს შორის გადართვისთვის (მხოლოდ mobile ეკრანებზე,
+   იხ. .sheet--expanded კლასის CSS წესები @media (max-width:767px)).
    ------------------------------------------------------------
    GPU-accelerated: transform: translateY() + opacity.
    თითის მოძრაობა სინქრონულია, ყოველგვარი lag-ის გარეშე.
+
+   ლოგიკა:
+   - ჩაკეცილი (კომპაქტური) მდგომარეობაში ზემოთ swipe → იშლება
+     (.sheet--expanded emატება)
+   - გაშლილ მდგომარეობაში ქვემოთ swipe → იკეცება (.sheet--expanded
+     იხსნება), კიდევ უფრო ქვემოთ swipe (ან სწრაფი flick) → იხურება
+     მთლიანად
+   - handle-ზე უბრალო tap (drag-ის გარეშე) → toggle expand/collapse
    ============================================================ */
-(function initSwipeToClose() {
+function isMobileSheetLayout() {
+  return window.matchMedia("(max-width: 767px)").matches;
+}
+
+(function initSwipeSheet() {
   let startY = 0;
-  let startTranslate = 0;
   let isDragging = false;
+  let movedEnough = false; // განასხვავებს swipe-ს ჩვეულებრივი tap-ისგან
 
   sheet.addEventListener("touchstart", (e) => {
     if (e.target.closest("button, .routeChip, a, input")) return;
-    // მხოლოდ მაშინ გავააქტიუროთ, თუ scroll არის top-ზე
+    // მხოლოდ მაშინ გავააქტიუროთ, თუ scroll არის top-ზე (გაშლილ
+    // მდგომარეობაში sheet შიგნით scroll-დება)
     if (sheet.scrollTop > 5) return;
     startY = e.touches[0].clientY;
-    startTranslate = 0;
     isDragging = true;
+    movedEnough = false;
     sheet.style.transition = "none";
   }, { passive: true });
 
   sheet.addEventListener("touchmove", (e) => {
     if (!isDragging) return;
     const dy = e.touches[0].clientY - startY;
-    if (dy < 0) {
-      // თუ ზემოთ სწევს, არ ვბლოკავთ — მხოლოდ ქვემოთ swipe-ზე რეაგირება
-      isDragging = false;
-      sheet.style.transition = "";
-      sheet.style.transform = "";
+    if (Math.abs(dy) > 6) movedEnough = true;
+
+    const expanded = sheet.classList.contains("sheet--expanded");
+
+    if (!isMobileSheetLayout()) {
+      // Desktop/tablet: მხოლოდ ძველი ქცევა — ქვემოთ swipe = დახურვა
+      if (dy < 0) { isDragging = false; sheet.style.transition = ""; sheet.style.transform = ""; return; }
+      e.preventDefault();
+      sheet.style.transform = `translateY(${dy}px)`;
+      overlay.style.opacity = 1 - Math.min(1, dy / 250);
       return;
     }
-    e.preventDefault();
-    sheet.style.transform = `translateY(${dy}px)`;
-    // overlay-ის opacity-იც თანდათან ქრება
-    const progress = Math.min(1, dy / 250);
-    overlay.style.opacity = 1 - progress;
+
+    if (!expanded && dy < 0) {
+      // კომპაქტურ მდგომარეობაში ზემოთ swipe — ვცემთ ვიზუალურ feedback-ს,
+      // მაგრამ ნამდვილი expand ჟესტის დასრულებისას ხდება (touchend)
+      e.preventDefault();
+      const progress = Math.min(1, -dy / 120);
+      sheet.style.transform = `translateY(${-progress * 6}px)`; // მცირე "აწევის" მინიშნება
+      return;
+    }
+
+    if (expanded && dy > 0) {
+      // გაშლილ მდგომარეობაში ქვემოთ swipe — თანდათან იკეცება/იხურება
+      e.preventDefault();
+      sheet.style.transform = `translateY(${dy}px)`;
+      overlay.style.opacity = 1 - Math.min(1, dy / 350);
+      return;
+    }
+
+    // საწინააღმდეგო მიმართულება (already expanded + swipe up, ან
+    // collapsed + swipe down) — არაფერს ვაკეთებთ, ბუნებრივ scroll-საც
+    // ხელს არ ვუშლით
+    isDragging = false;
+    sheet.style.transition = "";
+    sheet.style.transform = "";
   }, { passive: false });
 
-  sheet.addEventListener("touchend", () => {
+  sheet.addEventListener("touchend", (e) => {
     if (!isDragging) return;
     isDragging = false;
     sheet.style.transition = "";
-    const currentTransform = sheet.style.transform;
-    const match = currentTransform.match(/translateY\(([\d.]+)px\)/);
-    const dy = match ? parseFloat(match[1]) : 0;
-    if (dy > 80) {
-      // საკმარისად ქვემოთ — დახურვა
+    sheet.style.transform = "";
+    overlay.style.opacity = "";
+
+    const endY = (e.changedTouches && e.changedTouches[0]) ? e.changedTouches[0].clientY : startY;
+    const dy = endY - startY; // დადებითი = ქვემოთ, უარყოფითი = ზემოთ
+
+    if (!isMobileSheetLayout()) {
+      if (dy > 80) closeSheet();
+      return;
+    }
+
+    const expanded = sheet.classList.contains("sheet--expanded");
+
+    if (!movedEnough) {
+      // ეს იყო ჩვეულებრივი tap, არა swipe — handle-ის დაწკაპუნების
+      // toggle-ს (ქვემოთ, ცალკე listener-ში) მივანდოთ
+      return;
+    }
+
+    if (!expanded && dy < -40) {
+      expandSheet();
+    } else if (expanded && dy > 130) {
       closeSheet();
+    } else if (expanded && dy > 40) {
+      collapseSheet();
+    }
+  });
+
+  // handle-ზე მარტივი tap (swipe-ის გარეშე) — toggle
+  sheet.querySelector(".sheet__handle").addEventListener("click", () => {
+    if (!isMobileSheetLayout()) return;
+    if (sheet.classList.contains("sheet--expanded")) {
+      collapseSheet();
     } else {
-      // უკან დაბრუნება
-      sheet.style.transform = "";
-      overlay.style.opacity = "";
+      expandSheet();
     }
   });
 })();
+
+function expandSheet() {
+  sheet.classList.add("sheet--expanded");
+  if (activeStopId) loadArrivalsForStop(activeStopId, STOPS_BY_ID[activeStopId]);
+}
+function collapseSheet() {
+  sheet.classList.remove("sheet--expanded");
+}
+
+/* ============================================================
+   Desktop: სრული გადათრევა (drag-and-drop) sheet__handle-ით
+   ------------------------------------------------------------
+   Mouse-ით (pointer events) მუშაობს მხოლოდ desktop/tablet
+   ეკრანებზე (>=768px) — mobile-ზე handle-ს swipe-up/down-ის
+   ლოგიკა უკვე მართავს ცალკე listener-ებით (initSwipeSheet).
+   პოზიცია ინახება localStorage-ში, refresh-ის შემდეგაც დარჩეს.
+   ============================================================ */
+const SHEET_POS_KEY = "kontrolio_sheet_pos";
+
+function clampSheetPosition(x, y) {
+  const rect = sheet.getBoundingClientRect();
+  const margin = 8;
+  const maxX = window.innerWidth - rect.width - margin;
+  const maxY = window.innerHeight - rect.height - margin;
+  return {
+    x: Math.min(Math.max(x, margin), Math.max(margin, maxX)),
+    y: Math.min(Math.max(y, margin), Math.max(margin, maxY)),
+  };
+}
+
+function applySheetPosition(x, y) {
+  sheet.classList.add("sheet--dragged");
+  sheet.style.setProperty("--sheet-drag-x", `${x}px`);
+  sheet.style.setProperty("--sheet-drag-y", `${y}px`);
+}
+
+function saveSheetPosition(x, y) {
+  try {
+    localStorage.setItem(SHEET_POS_KEY, JSON.stringify({ x, y }));
+  } catch (_) {
+    // localStorage მიუწვდომელია (private mode და ა.შ.) — უბრალოდ არ ვინახავთ
+  }
+}
+
+function restoreSheetPosition() {
+  if (!isMobileSheetLayout()) {
+    try {
+      const raw = localStorage.getItem(SHEET_POS_KEY);
+      if (raw) {
+        const { x, y } = JSON.parse(raw);
+        if (typeof x === "number" && typeof y === "number") {
+          const clamped = clampSheetPosition(x, y);
+          applySheetPosition(clamped.x, clamped.y);
+        }
+      }
+    } catch (_) {
+      // ცუდი მონაცემი localStorage-ში — უბრალოდ ვტოვებთ ნაგულისხმევ პოზიციას
+    }
+  }
+}
+
+(function initDesktopDrag() {
+  const handle = sheet.querySelector(".sheet__handle");
+  let isDragging = false;
+  let pointerStartX = 0;
+  let pointerStartY = 0;
+  let sheetStartX = 0;
+  let sheetStartY = 0;
+  let moved = false;
+
+  handle.addEventListener("pointerdown", (e) => {
+    if (isMobileSheetLayout()) return; // mobile-ზე ამას touch-swipe ლოგიკა უმართავს
+    if (e.pointerType === "touch") return; // touch — mobile swipe-ს მივანდოთ
+    isDragging = true;
+    moved = false;
+    const rect = sheet.getBoundingClientRect();
+    sheetStartX = rect.left;
+    sheetStartY = rect.top;
+    pointerStartX = e.clientX;
+    pointerStartY = e.clientY;
+    handle.setPointerCapture(e.pointerId);
+    sheet.classList.add("dragging");
+  });
+
+  handle.addEventListener("pointermove", (e) => {
+    if (!isDragging) return;
+    const dx = e.clientX - pointerStartX;
+    const dy = e.clientY - pointerStartY;
+    if (Math.abs(dx) > 3 || Math.abs(dy) > 3) moved = true;
+    const clamped = clampSheetPosition(sheetStartX + dx, sheetStartY + dy);
+    applySheetPosition(clamped.x, clamped.y);
+  });
+
+  function endDrag(e) {
+    if (!isDragging) return;
+    isDragging = false;
+    sheet.classList.remove("dragging");
+    if (moved) {
+      const rect = sheet.getBoundingClientRect();
+      saveSheetPosition(rect.left, rect.top);
+    }
+    try { handle.releasePointerCapture(e.pointerId); } catch (_) {}
+  }
+  handle.addEventListener("pointerup", endDrag);
+  handle.addEventListener("pointercancel", endDrag);
+
+  // ეკრანის resize-ისას (მაგ. window-ის ზომის შეცვლა) პოზიცია ისევ
+  // ეკრანის ფარგლებში მოთავსდეს
+  window.addEventListener("resize", () => {
+    if (!sheet.classList.contains("sheet--dragged")) return;
+    const rect = sheet.getBoundingClientRect();
+    const clamped = clampSheetPosition(rect.left, rect.top);
+    applySheetPosition(clamped.x, clamped.y);
+  });
+})();
+
+// შენიშვნა: restoreSheetPosition() აქ თავიდან აღარ გვიძახია — sheet
+// გვერდის ჩატვირთვისას .hidden მდგომარეობაშია (0×0 ზომით), ასე რომ
+// clampSheetPosition-ს სწორი გაზომვები არ ექნებოდა. openSheet()-ში
+// გამოძახება საკმარისია, რადგან იქ sheet უკვე ხილვადია.
 
 /* ---------- Night mode (00:00 – 07:00) ---------- */
 function getTbilisiHour() {
