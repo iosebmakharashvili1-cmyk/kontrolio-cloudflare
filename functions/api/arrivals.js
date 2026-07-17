@@ -1,4 +1,4 @@
-/*============================================================
+/* ============================================================
    functions/api/arrivals.js — GET /api/arrivals?ids=<id1>,<id2>
    ------------------------------------------------------------
    ორ ქალაქს ემსახურება — Tbilisi (TTC) და Rustavi (AzRy Cloud),
@@ -17,9 +17,16 @@
    ============================================================ */
 
 import { STOP_NAMES } from "./_stopNames.js";
-// STOP_NAMES უკვე შეიცავს ორივე ქალაქის stop-ებს ერთ ობიექტში —
-// რუსთავის ID-ები "rustavi-" პრეფიქსით (იხ. _stopNames.js-ის თავზე
-// კომენტარი). ცალკე _rustaviStopNames.js საჭირო აღარაა.
+
+let RUSTAVI_STOP_NAMES = null;
+try {
+  const mod = await import("./_rustaviStopNames.js");
+  RUSTAVI_STOP_NAMES = mod.STOP_NAMES;
+} catch (_) {
+  // _rustaviStopNames.js ჯერ არ არსებობს — Rustavi ID-ების
+  // ვალიდაცია გამოტოვდება (fail-open), ისევე როგორც STOP_NAMES-ის
+  // შემთხვევაში სხვაგან ამ პროექტში.
+}
 
 const TBILISI_BASE = "https://transit.ttc.com.ge/pis-gateway/api/v2/stops";
 const RUSTAVI_BASE = "https://rustavi-transit.azrycloud.com/pis-gateway/api/v2/stops";
@@ -85,11 +92,16 @@ export async function onRequestGet({ request, env }) {
 
   let ids = idsParam.split(",").map((s) => s.trim()).filter(Boolean).slice(0, 4);
 
-  // ვალიდაცია — ცნობილი stop-id უნდა იყოს STOP_NAMES-ში (ორივე ქალაქი
-  // ერთ ობიექტშია, რუსთავის ჩანაწერები "rustavi-" პრეფიქსით)
-  ids = ids.filter(
-    (id) => Object.keys(STOP_NAMES).length === 0 || Object.prototype.hasOwnProperty.call(STOP_NAMES, id)
-  );
+  // ვალიდაცია — ცნობილი stop-id უნდა იყოს, თბილისის ან რუსთავის
+  // lookup-ში (ორივე ცალკეა, პრეფიქსით ვარჩევთ, რომელი გამოვიყენოთ)
+  ids = ids.filter((id) => {
+    if (id.startsWith(RUSTAVI_PREFIX)) {
+      return !RUSTAVI_STOP_NAMES || Object.keys(RUSTAVI_STOP_NAMES).length === 0
+        ? true // lookup არ არსებობს -> fail-open
+        : Object.prototype.hasOwnProperty.call(RUSTAVI_STOP_NAMES, id);
+    }
+    return Object.keys(STOP_NAMES).length === 0 || Object.prototype.hasOwnProperty.call(STOP_NAMES, id);
+  });
 
   if (!ids.length) return Response.json({ error: "no valid ids" }, { status: 400 });
 
