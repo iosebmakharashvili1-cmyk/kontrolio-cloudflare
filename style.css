@@ -722,6 +722,48 @@ body.has-sheet-peek .leaflet-control-zoom{
   box-shadow: var(--shadow);
 }
 
+/* ---------- Arrivals: კომპაქტური (peek) პრევიუ ----------
+   ნაგულისხმევად დამალულია — mobile-ის collapsed state-ში
+   @media (max-width:767px) წესი აჩვენებს. Desktop-ზე და
+   expanded state-ში ყოველთვის დამალულია, რადგან იქ სრული
+   arrivalsSection ისედაც ხილვადია. */
+.arrivalsCompact{
+  display: none;
+  cursor: pointer;
+}
+.arrivalsCompact__item{
+  display:flex; align-items:center; gap:8px;
+  padding: 6px 0;
+  font-size: 13px;
+  color: var(--text);
+}
+.arrivalsCompact__item + .arrivalsCompact__item{
+  border-top: 1px solid var(--grey-soft);
+}
+.arrivalsCompact__route{
+  display:inline-flex; align-items:center; justify-content:center;
+  min-width: 24px;
+  padding: 3px 7px 2.5px;
+  border-radius: 7px;
+  font-size: 11.5px; font-weight:700;
+  color: #fff;
+  flex-shrink: 0;
+}
+.arrivalsCompact__direction{
+  flex:1; min-width:0;
+  overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
+  color: var(--grey);
+}
+.arrivalsCompact__time{
+  font-weight:700;
+  flex-shrink:0;
+}
+.arrivalsCompact__more{
+  font-size: 12px;
+  color: var(--grey);
+  padding-top: 4px;
+}
+
 /* ---------- Arrivals ---------- */
 .arrivalsSection h3{
   margin: 0 0 8px;
@@ -1548,6 +1590,15 @@ body.has-sheet-peek .leaflet-control-zoom{
   .sheet:not(.sheet--expanded) .arrivalsSection,
   .sheet:not(.sheet--expanded) .sheet__legendWrap,
   .sheet:not(.sheet--expanded) .sheet__close{
+    display: none;
+  }
+  /* კომპაქტურ მდგომარეობაში მოკლე პრევიუ ჩანს (1-2 ხაზი), expanded-ში
+     კი სრული სია ჩანს ზემოთა წესის მიხედვით — ეს ორი ურთიერთგამომრიცხავია */
+  .sheet:not(.sheet--expanded) .arrivalsCompact{
+    display: block;
+    margin-bottom: 8px;
+  }
+  .sheet.sheet--expanded .arrivalsCompact{
     display: none;
   }
 
