@@ -711,6 +711,20 @@ body.has-sheet-peek .leaflet-control-zoom{
 }
 .routeChip--empty:hover{ opacity: 1; }
 
+/* ერთი მარშრუტის არჩევისას (routeChip-ზე dawtsk'apuneba) — არჩეული
+   chip გამოკვეთილია (მსუბუქი scale + outline), დანარჩენები
+   მიბინდულია. ამ ორი კლასიდან ერთდროულად მხოლოდ ერთი გამოიყენება
+   ერთ chip-ზე. */
+.routeChip--active{
+  outline: 2px solid #fff;
+  outline-offset: 1px;
+  transform: scale(1.06);
+}
+.routeChip--dimmed{
+  opacity: 0.35;
+}
+.routeChip--dimmed:hover{ opacity: 0.55; }
+
 /* ---------- მარშრუტების ხაზების tooltip რუკაზე ---------- */
 .leaflet-tooltip{
   font-family: inherit;
