@@ -19,6 +19,7 @@
 import { serviceDayKey, checkRateLimit } from "./_middleware.js";
 import { STOP_NAMES } from "./_stopNames.js";
 import { awardFirstReportPoint } from "./_leaderboard.js";
+import { recordPatternSample } from "./_patternHistory.js";
 
 const VALID_STATUSES = new Set(["inspector", "clear"]);
 const CONFIRM_WINDOW_MS = 90 * 60 * 1000; // 90 წუთი
@@ -77,7 +78,7 @@ export async function onRequestGet({ request, env }) {
   return Response.json(out);
 }
 
-export async function onRequestPost({ request, env }) {
+export async function onRequestPost({ request, env, waitUntil }) {
   const ip = request.headers.get("CF-Connecting-IP") ||
              request.headers.get("X-Forwarded-For") || "unknown";
 
@@ -131,6 +132,19 @@ export async function onRequestPost({ request, env }) {
   await env.KV.put(reportKey, JSON.stringify({ status, ts, confirmations }), {
     expirationTtl: 27 * 3600,
   });
+
+  // გრძელვადიანი პატერნის ისტორია — მხოლოდ ახალი სტატუსის დაწყებისას
+  // (არა ყოველ განმეორებით დადასტურებაზე), რომ ერთმა "დანახვამ",
+  // რომელსაც რამდენიმე ადამიანი ადასტურებს 90 წუთში, ისტორიულ
+  // სტატისტიკაში ერთხელ ჩაითვალოს და არა N-ჯერ. ჩავარდნისას (KV
+  // შეცდომა) მთავარ flow-ს არ ვაჩერებთ — "fire and forget".
+  if (statusChanged) {
+    // waitUntil-ს ვანდობთ, რომ ეს KV-write request-ის response-ის
+    // გაგზავნის შემდეგაც დასრულდეს — უბრალო "დაუველოდებელი" Promise-ი
+    // Workers-ის runtime-მა შეიძლება ნაადრევად შეწყვიტოს
+    const p = recordPatternSample(env, stopId, status, new Date(ts)).catch(() => {});
+    if (typeof waitUntil === "function") waitUntil(p);
+  }
 
   // daily count
   const dcKey = `dailycount:${day}:${stopId}`;

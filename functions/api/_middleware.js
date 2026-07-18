@@ -27,6 +27,27 @@ export function serviceDayKey(date = new Date()) {
   return `${p.year}-${pad2(p.month)}-${pad2(p.day)}`;
 }
 
+/* ---------- ისტორიული პატერნის bucketing (predictions.js-ისთვის) ----------
+   კვირის დღე (0=კვირა..6=შაბათი) + 2-საათიანი ბაკეტი (0-11, თითო
+   ბაკეტი 2 საათს მოიცავს: 00-02, 02-04, ..., 22-24). ეს granularity
+   საკმარისია "დღეს ამ საათებში ხშირად კონტროლიორი იყო" ტიპის
+   პატერნისთვის, საათობრივზე გაცილებით ნაკლებ storage-ს მოითხოვს
+   (12 ბაკეტი დღეში, 84 კვირაში — ვიდრე 24/168). */
+export function patternBucketKey(date = new Date()) {
+  const p = tbilisiParts(date);
+  // JS-ის Date.getDay()-ის ეკვივალენტი Tbilisi-ის დროის მიხედვით
+  const utcMidnight = Date.UTC(p.year, p.month - 1, p.day);
+  const dayOfWeek = new Date(utcMidnight).getUTCDay(); // 0=კვირა
+  const hourBucket = Math.floor(p.hour / 2); // 0..11
+  return `${dayOfWeek}:${hourBucket}`;
+}
+
+export function patternBucketLabel(hourBucket) {
+  const startH = hourBucket * 2;
+  const endH = (startH + 2) % 24;
+  return `${pad2(startH)}:00–${pad2(endH)}:00`;
+}
+
 /* ---------- Rate limiting (POST /api/reports) ----------
    key = "rl:<ip>:<day>", max 12 / 5 წუთი, TTL = 300 წმ */
 const RL_MAX = 12;
