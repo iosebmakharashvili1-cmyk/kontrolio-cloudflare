@@ -466,6 +466,7 @@ body.has-sheet-peek .leaflet-control-zoom{
 
 /* ---------- Custom markers ---------- */
 .stopMarker{
+  position: relative; /* .stopMarker__predictionBadge-ის absolute positioning-ისთვის */
   width: 30px; height:30px;
   border-radius:50%;
   display:flex; align-items:center; justify-content:center;
@@ -481,6 +482,23 @@ body.has-sheet-peek .leaflet-control-zoom{
 .stopMarker--inspector{
   background: var(--red);
   animation: pulseMarker 1.6s infinite;
+}
+
+/* ისტორიული პატერნის ბეჯი — "ამ დღეს/საათებში ხშირად კონტროლიორი
+   იყო" მინიშნება. მხოლოდ მაშინ ჩანს, როცა ცოცხალი report არ
+   არსებობს (იხ. buildIcon()-ის showPredictionBadge ლოგიკა JS-ში). */
+.stopMarker__predictionBadge{
+  position: absolute;
+  top: -4px; right: -4px;
+  width: 15px; height: 15px;
+  border-radius: 50%;
+  background: var(--amber);
+  color: #1a1a1a;
+  font-size: 9px;
+  line-height: 15px;
+  text-align: center;
+  border: 1.5px solid var(--bg, #1a1a1a);
+  box-shadow: 0 1px 3px rgba(0,0,0,0.4);
 }
 
 @keyframes pulseMarker{
@@ -675,6 +693,24 @@ body.has-sheet-peek .leaflet-control-zoom{
 .statusBanner--clear{ background: var(--green-soft); color: #14685f; }
 .statusBanner--inspector{ background: var(--red-soft); color: #8a1f17; }
 .statusBanner--stale{ background: #fef3c7; color: #92400e; }
+
+/* ისტორიული პატერნის ბანერი — statusBanner-ზე ვიზუალურად მსუბუქი
+   (მცირე font, ნაკლები padding), რომ ცხადი იყოს, ეს დამატებითი
+   კონტექსტია და არა ცოცხალი სტატუსი. */
+.predictionBanner{
+  display:flex; align-items:center; gap:6px;
+  padding: 7px 12px;
+  border-radius: 10px;
+  font-size: 12.5px;
+  font-weight: 500;
+  background: #fef3c7;
+  color: #92400e;
+  margin-bottom: 6px;
+}
+.predictionBanner__sample{
+  opacity: 0.75;
+  font-weight: 400;
+}
 .statusDot--stale{ background: var(--amber); }
 
 /* ---------- Route chips ---------- */

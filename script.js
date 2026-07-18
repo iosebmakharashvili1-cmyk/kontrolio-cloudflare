@@ -71,6 +71,10 @@ const API_BASE = (() => {
   return "/api";
 })();
 let reportsCache = {};
+// ისტორიული პატერნის სტატისტიკა (stopId -> {probability, sampleSize, bucket}).
+// განსხვავებით reportsCache-სგან, ეს იშვიათად იცვლება (ბაკეტი 2სთ-ში
+// ერთხელ იცვლება) — ამიტომ ცალკე, ნაკლებად ხშირი polling-ით ვტვირთავთ.
+let predictionsCache = {};
 
 /* ---------- სესიის იდენტიფიკატორი ----------
    ერთი და იგივე sid გამოიყენება heartbeat-ისთვის (ონლაინ მთვლელი),
@@ -99,6 +103,49 @@ async function refreshReportsFromServer() {
     console.error("reports fetch failed:", err);
     return false;
   }
+}
+
+/* ისტორიული პატერნის ("ამ დღეს/საათებში ხშირად კონტროლიორი იყო")
+   ჩატვირთვა — ეკრანზე ხილული ყველა stop-ისთვის ერთდროულად. ეს
+   ცალკეა reportsCache-სგან და გაცილებით იშვიათად ტვირთება (იხ.
+   pollAndRender-თან შედარებით predictions-ის setInterval ქვემოთ). */
+async function refreshPredictionsFromServer() {
+  try {
+    const ids = STOPS.map((s) => s.id);
+    // ერთბაშად ყველა ID-ის გაგზავნა ერთ request-ში შესაძლოა URL-ის
+    // სიგრძის ლიმიტს გადააჭარბოს ქალაქებში ბევრი გაჩერებით — ამიტომ
+    // batch-ებად ვყოფთ (predictions.js-ს ისედაც აქვს 60-იანი ზედა
+    // ზღვარი თითო request-ზე).
+    const BATCH_SIZE = 60;
+    const merged = {};
+    for (let i = 0; i < ids.length; i += BATCH_SIZE) {
+      const batch = ids.slice(i, i + BATCH_SIZE);
+      const res = await fetch(`${API_BASE}/predictions?ids=${encodeURIComponent(batch.join(","))}`, {
+        cache: "no-store",
+      });
+      if (!res.ok) continue; // ერთი batch-ის ჩავარდნა დანარჩენებს არ აჩერებს
+      const data = await res.json();
+      Object.assign(merged, data);
+    }
+    predictionsCache = merged;
+    return true;
+  } catch (err) {
+    console.error("predictions fetch failed:", err);
+    return false;
+  }
+}
+
+function getPrediction(stopId) {
+  return predictionsCache[stopId] || null;
+}
+
+/* ალბათობა UI-ისთვის სასარგებლო "მაღალია" კატეგორიად მხოლოდ მაშინ
+   ითვლება, თუ საკმარისად მაღალია და საკმარისი sample-ითაა
+   გამყარებული — თორემ 50%-იანი probability 4 sample-ზე დაყრდნობით
+   არც ისე სანდო მინიშნებაა. */
+const PREDICTION_HIGH_THRESHOLD = 0.5;
+function isHighPrediction(prediction) {
+  return !!prediction && prediction.probability >= PREDICTION_HIGH_THRESHOLD;
 }
 
 function getReport(stopId) {
@@ -591,11 +638,20 @@ function visualStatus(report) {
   return report.status === "inspector" ? "inspector" : "clear";
 }
 
-function buildIcon(report, isSelected) {
+function buildIcon(report, isSelected, prediction) {
   const cls = `stopMarker ${statusClass(report)}${isSelected ? " stopMarker--selected" : ""}`;
+  // ისტორიული პატერნის ბეჯი მხოლოდ მაშინ ჩანს, როცა ცოცხალი report
+  // არ არსებობს (unknown/clear) — რეალურ დროში დადასტურებული
+  // ინფორმაცია ყოველთვის აჯობებს ისტორიულ ალბათობას, ამიტომ inspector
+  // სტატუსზე ბეჯს აღარ ვამატებთ (ისედაც წითელია, ზედმეტია).
+  const showPredictionBadge =
+    isHighPrediction(prediction) && (!report || visualStatus(report) === "clear");
+  const badgeHtml = showPredictionBadge
+    ? `<span class="stopMarker__predictionBadge" title="ისტორიულად ხშირად კონტროლიორია ამ დროს">⏱</span>`
+    : "";
   return L.divIcon({
     className: "",
-    html: `<div class="${cls}">${BUS_SVG}</div>`,
+    html: `<div class="${cls}">${BUS_SVG}${badgeHtml}</div>`,
     iconSize: [30, 30],
     iconAnchor: [15, 15],
   });
@@ -604,7 +660,8 @@ function buildIcon(report, isSelected) {
 function renderAllMarkers() {
   STOPS.forEach((stop) => {
     const report = getReport(stop.id);
-    const icon = buildIcon(report, stop.id === selectedStopId);
+    const prediction = getPrediction(stop.id);
+    const icon = buildIcon(report, stop.id === selectedStopId, prediction);
 
     if (markers[stop.id]) {
       markers[stop.id].setIcon(icon);
@@ -627,9 +684,10 @@ function renderAllMarkers() {
 
 function refreshMarker(stopId) {
   const report = getReport(stopId);
+  const prediction = getPrediction(stopId);
   const marker = markers[stopId];
   if (marker) {
-    marker.setIcon(buildIcon(report, stopId === selectedStopId));
+    marker.setIcon(buildIcon(report, stopId === selectedStopId, prediction));
     marker.options.reportStatus = visualStatus(report);
     if (clusterGroup.refreshClusters) clusterGroup.refreshClusters(marker);
   }
@@ -676,6 +734,7 @@ const overlay = document.getElementById("overlay");
 const sheet = document.getElementById("sheet");
 const sheetStopName = document.getElementById("sheetStopName");
 const sheetStatusBanner = document.getElementById("sheetStatusBanner");
+const predictionBanner = document.getElementById("predictionBanner");
 const sheetCaption = document.getElementById("sheetCaption");
 const sheetRouteChips = document.getElementById("sheetRouteChips");
 const arrivalsList = document.getElementById("arrivalsList");
@@ -690,27 +749,50 @@ const sheetPeekDeselect = document.getElementById("sheetPeekDeselect");
 
 let activeStopId = null;
 
-function renderStatusBanner(report) {
+function renderStatusBanner(report, stopId) {
   if (!report) {
     sheetStatusBanner.className = "statusBanner statusBanner--unknown";
     sheetStatusBanner.innerHTML = '<span class="statusDot statusDot--unknown"></span> სტატუსი უცნობია';
     sheetCaption.textContent = "ჯერ არავის შეუტყობინებია";
+    renderPredictionBanner(stopId);
     return;
   }
   if (report.status === "inspector" && isStale(report)) {
     sheetStatusBanner.className = "statusBanner statusBanner--stale";
     sheetStatusBanner.innerHTML = '<span class="statusDot statusDot--stale"></span> შესაძლოა აღარ არის';
     sheetCaption.textContent = `ბოლო შეტყობინება: ${timeAgo(report.ts)} (2 სთ-ზე მეტია)`;
+    renderPredictionBanner(stopId);
     return;
   }
   if (report.status === "inspector") {
     sheetStatusBanner.className = "statusBanner statusBanner--inspector";
     sheetStatusBanner.innerHTML = '<span class="statusDot statusDot--inspector"></span> კონტროლიორი დგას';
+    // ცოცხალი, დადასტურებული "inspector" report ყოველთვის აჯობებს
+    // ისტორიულ prediction-ს — ამ შემთხვევაში prediction banner-ს
+    // საერთოდ არ ვაჩვენებთ (ზედმეტი/ხელისშემშლელია).
+    if (predictionBanner) predictionBanner.classList.add("hidden");
   } else {
     sheetStatusBanner.className = "statusBanner statusBanner--clear";
     sheetStatusBanner.innerHTML = '<span class="statusDot statusDot--clear"></span> თავისუფალია';
+    renderPredictionBanner(stopId);
   }
   sheetCaption.textContent = buildCaptionText(report);
+}
+
+/* ისტორიული პატერნის ცალკე ბანერი — "ამ დღეს/საათებში ისტორიულად
+   ხშირად იყო კონტროლიორი" მინიშნება. statusBanner-ის ქვემოთ ჩნდება,
+   მხოლოდ საკმარისი sample-size-ისა და მაღალი probability-ის დროს
+   (იხ. isHighPrediction). */
+function renderPredictionBanner(stopId) {
+  if (!predictionBanner) return;
+  const prediction = getPrediction(stopId);
+  if (!isHighPrediction(prediction)) {
+    predictionBanner.classList.add("hidden");
+    return;
+  }
+  const pct = Math.round(prediction.probability * 100);
+  predictionBanner.classList.remove("hidden");
+  predictionBanner.innerHTML = `⏱ ისტორიულად ამ დროს <strong>${pct}%</strong> შემთხვევაში იყო კონტროლიორი <span class="predictionBanner__sample">(${prediction.sampleSize} დაკვირვება)</span>`;
 }
 
 /* ---------- სანდოობის დონე (verification, არა raw report-count) ----------
@@ -924,7 +1006,7 @@ function renderSheetInfo(stopId) {
   const stop = STOPS_BY_ID[stopId];
   const report = getReport(stopId);
   sheetStopName.textContent = stop.name;
-  renderStatusBanner(report);
+  renderStatusBanner(report, stopId);
   renderRouteChips(stop);
 }
 
@@ -1903,6 +1985,19 @@ async function pollAndRender() {
 
 setInterval(pollAndRender, 15 * 1000);
 
+/* Predictions (ისტორიული პატერნი) — ბაკეტი 2 საათში ერთხელ იცვლება,
+   ამიტომ 15წ-იანი polling-ი საკმარისზე მეტია და ტყუილად დატვირთავს
+   KV-ს ყოველ client-ზე. Marker-ების ვიზუალი (ბეჯი) და ღია sheet-ის
+   ბანერი ორივე re-render-დება ახალი მონაცემის მისვლისას. */
+async function pollPredictions() {
+  const ok = await refreshPredictionsFromServer();
+  if (ok) {
+    renderAllMarkers();
+    if (activeStopId) renderPredictionBanner(activeStopId);
+  }
+}
+setInterval(pollPredictions, 15 * 60 * 1000);
+
 /* ---------- ონლაინ მომხმარებლების badge ----------
    (გადმოტანილი index.html-ის ინლაინ <script>-დან — CSP-ში script-src
    'unsafe-inline'-ს განზრახ არ ვტოვებთ, ამიტომ ეს გარეშე ფაილში
@@ -1928,6 +2023,9 @@ setInterval(pollAndRender, 15 * 1000);
 (async function init() {
   checkNightMode();
   await refreshReportsFromServer();
+  // predictions დამოუკიდებელია reports-ისგან — პარალელურად, sequential
+  // ჩატვირთვას არ ველოდებით (page-load-ის დაყოვნების თავიდან ასაცილებლად)
+  refreshPredictionsFromServer().then((ok) => { if (ok) renderAllMarkers(); });
   renderAllMarkers();
   renderContribSection();
   renderCommunitySection();
