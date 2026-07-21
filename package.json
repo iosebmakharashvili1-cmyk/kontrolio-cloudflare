@@ -1,0 +1,8 @@
+{
+  "name": "kontrolio",
+  "private": true,
+  "description": "Kontrolio — Rustavi/Tbilisi საზოგადოებრივი ტრანსპორტის კონტროლიორის მდებარეობის თანამშრომლური აპლიკაცია (Cloudflare Pages + Functions)",
+  "dependencies": {
+    "@block65/webcrypto-web-push": "^1.0.2"
+  }
+}

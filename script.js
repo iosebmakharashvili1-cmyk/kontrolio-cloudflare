@@ -735,6 +735,14 @@ const sheet = document.getElementById("sheet");
 const sheetStopName = document.getElementById("sheetStopName");
 const sheetStatusBanner = document.getElementById("sheetStatusBanner");
 const predictionBanner = document.getElementById("predictionBanner");
+const sheetFavoriteBtn = document.getElementById("sheetFavoriteBtn");
+const pushToggleBtn = document.getElementById("pushToggleBtn");
+const pushPanel = document.getElementById("pushPanel");
+const pushPanelClose = document.getElementById("pushPanelClose");
+const pushMasterToggle = document.getElementById("pushMasterToggle");
+const pushMasterLabel = document.getElementById("pushMasterLabel");
+const pushFavoritesSection = document.getElementById("pushFavoritesSection");
+const pushFavoritesList = document.getElementById("pushFavoritesList");
 const sheetCaption = document.getElementById("sheetCaption");
 const sheetRouteChips = document.getElementById("sheetRouteChips");
 const arrivalsList = document.getElementById("arrivalsList");
@@ -1008,6 +1016,7 @@ function renderSheetInfo(stopId) {
   sheetStopName.textContent = stop.name;
   renderStatusBanner(report, stopId);
   renderRouteChips(stop);
+  renderFavoriteButton(stopId);
 }
 
 /* გაჩერების მონიშვნა (მარკერზე ring) რჩება მანამ, სანამ სხვა
@@ -2017,6 +2026,235 @@ setInterval(pollPredictions, 15 * 60 * 1000);
 
   beat();
   setInterval(beat, 20 * 1000);
+})();
+
+/* ============================================================
+   Push Notifications
+   ------------------------------------------------------------
+   Service Worker რეგისტრაცია + subscribe/unsubscribe + საყვარელი
+   (favorite) გაჩერებების მართვა. ყველა state localStorage-შიც
+   ინახება (რომ page-reload-ის შემდეგაც სწრაფად ვიცოდეთ მდგომარეობა
+   server-ის round-trip-ის გარეშე), მაგრამ server (KV) წყაროა
+   truth-ისთვის subscription-ის ვალიდურობაზე.
+   ============================================================ */
+const PUSH_FAVORITES_KEY = "kontrolio_push_favorites";
+const PUSH_ENABLED_KEY = "kontrolio_push_enabled";
+
+function getPushFavorites() {
+  try {
+    const raw = localStorage.getItem(PUSH_FAVORITES_KEY);
+    return raw ? JSON.parse(raw) : [];
+  } catch (_) {
+    return [];
+  }
+}
+
+function savePushFavorites(list) {
+  try {
+    localStorage.setItem(PUSH_FAVORITES_KEY, JSON.stringify(list));
+  } catch (_) {
+    // localStorage მიუწვდომელია — favorite-ები სესიის დასრულებამდე
+    // მაინც იმუშავებს in-memory, უბრალოდ არ დარჩება refresh-ის შემდეგ
+  }
+}
+
+function isPushSupported() {
+  return "serviceWorker" in navigator && "PushManager" in window && "Notification" in window;
+}
+
+function urlBase64ToUint8Array(base64String) {
+  const padding = "=".repeat((4 - (base64String.length % 4)) % 4);
+  const base64 = (base64String + padding).replace(/-/g, "+").replace(/_/g, "/");
+  const rawData = atob(base64);
+  const outputArray = new Uint8Array(rawData.length);
+  for (let i = 0; i < rawData.length; i++) outputArray[i] = rawData.charCodeAt(i);
+  return outputArray;
+}
+
+let swRegistration = null;
+
+async function registerServiceWorker() {
+  if (!isPushSupported()) return null;
+  try {
+    swRegistration = await navigator.serviceWorker.register("/sw.js");
+    return swRegistration;
+  } catch (err) {
+    console.error("service worker registration failed:", err);
+    return null;
+  }
+}
+
+async function subscribeToPush(favorites) {
+  if (!isPushSupported() || !swRegistration) return false;
+
+  const permission = await Notification.requestPermission();
+  if (permission !== "granted") return false;
+
+  try {
+    const keyRes = await fetch(`${API_BASE}/push/vapid-key`);
+    if (!keyRes.ok) return false;
+    const { publicKey } = await keyRes.json();
+
+    let sub = await swRegistration.pushManager.getSubscription();
+    if (!sub) {
+      sub = await swRegistration.pushManager.subscribe({
+        userVisibleOnly: true,
+        applicationServerKey: urlBase64ToUint8Array(publicKey),
+      });
+    }
+
+    const res = await fetch(`${API_BASE}/push/subscribe`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ subscription: sub.toJSON(), favoriteStopIds: favorites }),
+    });
+    return res.ok;
+  } catch (err) {
+    console.error("push subscribe failed:", err);
+    return false;
+  }
+}
+
+async function unsubscribeFromPush() {
+  if (!swRegistration) return;
+  try {
+    const sub = await swRegistration.pushManager.getSubscription();
+    if (sub) {
+      await fetch(`${API_BASE}/push/subscribe`, {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ endpoint: sub.endpoint }),
+      });
+      await sub.unsubscribe();
+    }
+  } catch (err) {
+    console.error("push unsubscribe failed:", err);
+  }
+}
+
+/* favorites-ის სერვერზე სინქრონიზაცია — მხოლოდ მაშინ, თუ push უკვე
+   ჩართულია (subscription არსებობს). თუ push გამორთულია, favorites
+   მხოლოდ localStorage-ში ინახება მომავალი subscribe-ისთვის. */
+async function syncPushFavorites() {
+  if (!swRegistration) return;
+  const sub = await swRegistration.pushManager.getSubscription();
+  if (!sub) return; // push გამორთულია — სერვერზე სინქრონიზაცია არ სჭირდება
+  try {
+    await fetch(`${API_BASE}/push/subscribe`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ subscription: sub.toJSON(), favoriteStopIds: getPushFavorites() }),
+    });
+  } catch (_) {
+    // best-effort — მომდევნო toggle-ზე ისედაც სინქრონდება
+  }
+}
+
+function toggleFavoriteStop(stopId) {
+  const favorites = getPushFavorites();
+  const idx = favorites.indexOf(stopId);
+  if (idx >= 0) {
+    favorites.splice(idx, 1);
+  } else {
+    favorites.push(stopId);
+  }
+  savePushFavorites(favorites);
+  syncPushFavorites();
+  return favorites.includes(stopId);
+}
+
+function renderFavoriteButton(stopId) {
+  if (!sheetFavoriteBtn) return;
+  const isFav = getPushFavorites().includes(stopId);
+  sheetFavoriteBtn.textContent = isFav ? "★" : "☆";
+  sheetFavoriteBtn.classList.toggle("sheet__favoriteBtn--active", isFav);
+  sheetFavoriteBtn.setAttribute("aria-pressed", String(isFav));
+}
+
+function renderPushFavoritesList() {
+  if (!pushFavoritesList) return;
+  const favorites = getPushFavorites();
+  if (!favorites.length) {
+    pushFavoritesList.innerHTML = `<p class="pushPanel__empty">გაჩერების პანელში ვარსკვლავზე დაწკაპუნებით დაამატე</p>`;
+    return;
+  }
+  pushFavoritesList.innerHTML = favorites
+    .map((id) => {
+      const stop = STOPS_BY_ID[id];
+      const name = stop ? stop.name : id;
+      return `
+        <div class="pushPanel__favoriteItem" data-stop-id="${id}">
+          <span>${escapeHtml(name)}</span>
+          <button class="pushPanel__favoriteRemove" data-stop-id="${id}" aria-label="ამოშლა">✕</button>
+        </div>`;
+    })
+    .join("");
+}
+
+function renderPushPanelState() {
+  const enabled = localStorage.getItem(PUSH_ENABLED_KEY) === "true";
+  if (pushMasterToggle) pushMasterToggle.checked = enabled;
+  if (pushMasterLabel) pushMasterLabel.textContent = enabled ? "შეტყობინებები ჩართულია" : "შეტყობინებები გამორთულია";
+  if (pushFavoritesSection) pushFavoritesSection.classList.toggle("hidden", !enabled);
+  if (pushToggleBtn) pushToggleBtn.classList.toggle("pushToggleBtn--active", enabled);
+  renderPushFavoritesList();
+}
+
+(function initPush() {
+  if (!isPushSupported()) {
+    // ძველი browser/iOS-ის Safari<16.4 და ა.შ. — ღილაკი უბრალოდ
+    // დამალულია, თავს არ ვახვევთ მხარდაუჭერელ ფუნქციას
+    if (pushToggleBtn) pushToggleBtn.style.display = "none";
+    return;
+  }
+
+  registerServiceWorker();
+
+  pushToggleBtn?.addEventListener("click", () => {
+    pushPanel.classList.remove("hidden");
+    renderPushPanelState();
+  });
+  pushPanelClose?.addEventListener("click", () => pushPanel.classList.add("hidden"));
+
+  pushMasterToggle?.addEventListener("change", async (e) => {
+    const wantsEnabled = e.target.checked;
+    if (wantsEnabled) {
+      const ok = await subscribeToPush(getPushFavorites());
+      if (ok) {
+        localStorage.setItem(PUSH_ENABLED_KEY, "true");
+      } else {
+        e.target.checked = false; // permission უარყოფილია ან შეცდომა
+      }
+    } else {
+      await unsubscribeFromPush();
+      localStorage.setItem(PUSH_ENABLED_KEY, "false");
+    }
+    renderPushPanelState();
+  });
+
+  pushFavoritesList?.addEventListener("click", (e) => {
+    const btn = e.target.closest(".pushPanel__favoriteRemove");
+    if (!btn) return;
+    toggleFavoriteStop(btn.dataset.stopId);
+    renderPushFavoritesList();
+    if (activeStopId === btn.dataset.stopId) renderFavoriteButton(activeStopId);
+  });
+
+  sheetFavoriteBtn?.addEventListener("click", () => {
+    if (!activeStopId) return;
+    toggleFavoriteStop(activeStopId);
+    renderFavoriteButton(activeStopId);
+  });
+
+  // URL-ში ?stop=<id> query param — push notification-ის "url"-იდან
+  // მოსული deep-link (იხ. reports.js-ის push message url ველი)
+  const urlParams = new URLSearchParams(window.location.search);
+  const deepLinkStop = urlParams.get("stop");
+  if (deepLinkStop && STOPS_BY_ID[deepLinkStop]) {
+    // map-ის load-ის შემდეგ გავხსნათ, არა დაუყოვნებლივ (marker-ები
+    // ჯერ არ არსებობს ამ წერტილში initPush-ის გამოძახებისას)
+    setTimeout(() => openSheet(deepLinkStop), 300);
+  }
 })();
 
 /* ---------- გაშვება ---------- */

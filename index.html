@@ -36,9 +36,34 @@
         <span class="onlineBadge__count" id="onlineCount">—</span>
       </div>
       <button id="themeBtn" class="iconbtn themeBtn" title="თემის შეცვლა (ღია/მუქი)" aria-label="თემის შეცვლა"><i data-lucide="sun" id="themeIcon" aria-hidden="true"></i></button>
+      <button id="pushToggleBtn" class="iconbtn pushToggleBtn" title="შეტყობინებები საყვარელ გაჩერებებზე" aria-label="Push შეტყობინებების მართვა" aria-pressed="false"><i data-lucide="bell-ring" aria-hidden="true"></i></button>
       <button id="activityBtn" class="iconbtn activityToggleBtn" title="აქტივობის პანელი" aria-label="აქტივობის პანელის გახსნა"><i data-lucide="bell" aria-hidden="true"></i></button>
     </div>
   </header>
+
+  <!-- Push notification-ების მართვის პანელი — pushToggleBtn-ზე
+       დაწკაპუნებით იხსნება. საყვარელი (favorite) გაჩერებების სია +
+       საერთო subscribe/unsubscribe ჩართვა-გამორთვა. -->
+  <div class="pushPanel hidden" id="pushPanel">
+    <div class="pushPanel__header">
+      <h3>შეტყობინებები</h3>
+      <button class="pushPanel__close" id="pushPanelClose" aria-label="დახურვა">✕</button>
+    </div>
+    <p class="pushPanel__desc">აირჩიე გაჩერებები — შეგატყობინებთ, როცა კონტროლიორი დაფიქსირდება იქ. ასევე შეგატყობინებთ ახალი მარშრუტის დამატებისას.</p>
+    <div class="pushPanel__masterToggle">
+      <label class="switch">
+        <input type="checkbox" id="pushMasterToggle">
+        <span class="switch__track"><span class="switch__thumb"></span></span>
+      </label>
+      <span id="pushMasterLabel">შეტყობინებები გამორთულია</span>
+    </div>
+    <div class="pushPanel__favorites hidden" id="pushFavoritesSection">
+      <h4>საყვარელი გაჩერებები</h4>
+      <div class="pushPanel__favoritesList" id="pushFavoritesList">
+        <p class="pushPanel__empty">გაჩერების პანელში ვარსკვლავზე დაწკაპუნებით დაამატე</p>
+      </div>
+    </div>
+  </div>
 
   <div class="searchInputWrap" id="searchInputWrap">
     <i data-lucide="search" class="searchIcon"></i>
@@ -60,7 +85,10 @@
   <div class="overlay hidden" id="overlay"></div>
   <div class="sheet hidden" id="sheet">
     <div class="sheet__handle"></div>
-    <h2 id="sheetStopName">გაჩერება</h2>
+    <div class="sheet__titleRow">
+      <h2 id="sheetStopName">გაჩერება</h2>
+      <button class="sheet__favoriteBtn" id="sheetFavoriteBtn" aria-label="საყვარელ გაჩერებებში დამატება" title="შეტყობინებების მისაღებად დაამატე საყვარლებში">☆</button>
+    </div>
  
     <div class="statusBanner" id="sheetStatusBanner"><span class="statusDot statusDot--unknown"></span> სტატუსი უცნობია</div>
     <div class="predictionBanner hidden" id="predictionBanner"></div>
@@ -216,7 +244,7 @@
         <div class="menuDrawer__accBody">
           <div class="menuDrawer__accBodyInner">
             <p class="menuDrawer__text">
-              მონაცემები ნაწილობრივ იშლება ღამის 12 საათზე, და გროვდება მომავალი ფუნქციების დასამატებლად და გასაუმჯობესებლად.
+              ავტობუსების მოსვლის დრო მალე დაემატება.
               კონტროლიორების ინფო მომხმარებლებისგანაა და შეიძლება 100% ზუსტი არ იყოს.
             </p>
           </div>
@@ -351,7 +379,7 @@
       document.write('<script src="' + routesSrc + '"><\/script>');
     })();
   </script>
-  <script src="script.js?v=8"></script>
+  <script src="script.js?v=9"></script>
 <script defer src="https://static.cloudflareinsights.com/beacon.min.js/v4513226cdae34746b4dedf0b4dfa099e1781791509496" integrity="sha512-ZE9pZaUXND66v380QUtch/5sE9tPFh2zg45pR2PB0CVkCtOREv2AJKkSidISWkysEuQ0EH8faUU5du78bx87UQ==" data-cf-beacon='{"version":"2024.11.0","token":"3279d41ec7804124a29acc6e692f9a2b","server_timing":{"name":{"cfCacheStatus":true,"cfEdge":true,"cfExtPri":true,"cfL4":true,"cfOrigin":true,"cfSpeedBrain":true},"location_startswith":null}}' crossorigin="anonymous"></script>
 </body>
 </html>

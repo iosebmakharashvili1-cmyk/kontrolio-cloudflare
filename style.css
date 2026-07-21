@@ -1467,6 +1467,112 @@ body.has-sheet-peek .leaflet-control-zoom{
 /* ---------- Activity toggle ---------- */
 .activityToggleBtn{ display:flex; align-items:center; justify-content:center; }
 
+/* ---------- Push notification toggle button + panel ---------- */
+.pushToggleBtn{ display:flex; align-items:center; justify-content:center; }
+.pushToggleBtn--active{
+  background: var(--red-soft);
+  color: var(--red);
+}
+
+.pushPanel{
+  position: absolute;
+  top: 68px; right: 16px;
+  z-index: 950;
+  width: min(340px, calc(100vw - 32px));
+  max-height: min(70vh, 520px);
+  background: var(--surface);
+  border-radius: 16px;
+  box-shadow: var(--shadow);
+  overflow-y: auto;
+  padding: 16px;
+}
+.pushPanel__header{
+  display:flex; align-items:center; justify-content:space-between;
+  margin-bottom: 8px;
+}
+.pushPanel__header h3{ margin:0; font-size:16px; font-weight:700; color:var(--text); }
+.pushPanel__close{
+  background:none; border:none; cursor:pointer;
+  font-size: 16px; color: var(--grey);
+  width: 28px; height: 28px;
+  display:flex; align-items:center; justify-content:center;
+  border-radius: 50%;
+}
+.pushPanel__close:hover{ background: var(--grey-soft); }
+.pushPanel__desc{
+  font-size: 12.5px; color: var(--grey);
+  margin: 0 0 14px;
+  line-height: 1.4;
+}
+.pushPanel__masterToggle{
+  display:flex; align-items:center; gap:10px;
+  padding: 10px 0;
+  border-top: 1px solid var(--grey-soft);
+  border-bottom: 1px solid var(--grey-soft);
+  margin-bottom: 12px;
+}
+.pushPanel__favorites h4{
+  margin: 0 0 8px; font-size: 13px; font-weight:700; color: var(--grey);
+  text-transform: uppercase; letter-spacing: 0.3px;
+}
+.pushPanel__favoritesList{ display:flex; flex-direction:column; gap:6px; }
+.pushPanel__favoriteItem{
+  display:flex; align-items:center; justify-content:space-between;
+  padding: 8px 10px;
+  background: var(--grey-soft);
+  border-radius: 10px;
+  font-size: 13.5px;
+  color: var(--text);
+}
+.pushPanel__favoriteRemove{
+  background:none; border:none; cursor:pointer;
+  color: var(--grey); font-size: 13px;
+  width: 22px; height: 22px;
+  border-radius: 50%;
+  flex-shrink:0;
+}
+.pushPanel__favoriteRemove:hover{ background: rgba(0,0,0,0.08); color: var(--red); }
+.pushPanel__empty{
+  font-size: 12.5px; color: var(--grey);
+  padding: 10px 0;
+  text-align: center;
+}
+
+/* iOS-style switch toggle */
+.switch{ position:relative; display:inline-block; width:42px; height:24px; flex-shrink:0; }
+.switch input{ opacity:0; width:0; height:0; }
+.switch__track{
+  position:absolute; inset:0; cursor:pointer;
+  background: var(--grey-soft);
+  border-radius: 999px;
+  transition: background 0.2s;
+}
+.switch__thumb{
+  position:absolute; left:3px; top:3px;
+  width:18px; height:18px;
+  background:#fff;
+  border-radius:50%;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.3);
+  transition: transform 0.2s;
+}
+.switch input:checked + .switch__track{ background: var(--green); }
+.switch input:checked + .switch__track .switch__thumb{ transform: translateX(18px); }
+
+/* sheet-ის სათაურის რიგი (სახელი + favorite ვარსკვლავი) */
+.sheet__titleRow{
+  display:flex; align-items:center; justify-content:space-between;
+  gap: 8px;
+}
+.sheet__titleRow h2{ margin:0; }
+.sheet__favoriteBtn{
+  background:none; border:none; cursor:pointer;
+  font-size: 22px; line-height:1;
+  color: var(--grey);
+  flex-shrink:0;
+  padding: 4px;
+}
+.sheet__favoriteBtn--active{ color: #f5a623; }
+
 /* ---------- Activity panel ---------- */
 .activityPanel{
   position:absolute; z-index: 700;
