@@ -20,6 +20,7 @@ import { serviceDayKey, checkRateLimit } from "./_middleware.js";
 import { STOP_NAMES } from "./_stopNames.js";
 import { awardFirstReportPoint } from "./_leaderboard.js";
 import { recordPatternSample } from "./_patternHistory.js";
+import { notifyStopSubscribers } from "./_webPush.js";
 
 const VALID_STATUSES = new Set(["inspector", "clear"]);
 const CONFIRM_WINDOW_MS = 90 * 60 * 1000; // 90 წუთი
@@ -144,6 +145,22 @@ export async function onRequestPost({ request, env, waitUntil }) {
     // Workers-ის runtime-მა შეიძლება ნაადრევად შეწყვიტოს
     const p = recordPatternSample(env, stopId, status, new Date(ts)).catch(() => {});
     if (typeof waitUntil === "function") waitUntil(p);
+  }
+
+  // Push notification — მხოლოდ ახალი "კონტროლიორი" sighting-ისას
+  // (არა "თავისუფალია"-ზე, არა განმეორებით confirmation-ზე). ისევე
+  // fire-and-forget, waitUntil-ით.
+  if (statusChanged && status === "inspector" && env.VAPID_PUBLIC_KEY) {
+    const pushPromise = notifyStopSubscribers(env, stopId, {
+      data: JSON.stringify({
+        title: "🚨 კონტროლიორი",
+        body: `${safeName} — კონტროლიორი დაფიქსირდა`,
+        url: `/?stop=${encodeURIComponent(stopId)}`,
+        tag: `inspector-${stopId}`,
+      }),
+      options: { ttl: 60 * 30, urgency: "high" }, // 30 წუთი — მოძველებული alert-ი აზრს კარგავს
+    }).catch(() => {});
+    if (typeof waitUntil === "function") waitUntil(pushPromise);
   }
 
   // daily count

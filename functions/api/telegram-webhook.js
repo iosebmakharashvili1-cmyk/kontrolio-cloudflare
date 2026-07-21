@@ -10,8 +10,9 @@
    მექანიზმი webhook-ების დასაცავად spoofing-ისგან). */
 
 import { setCustomRouteStatus, getCustomRoute } from "./_customRoutes.js";
+import { broadcastToAllSubscribers } from "./_webPush.js";
 
-export async function onRequestPost({ request, env }) {
+export async function onRequestPost({ request, env, waitUntil }) {
   // Telegram webhook secret ვალიდაცია — ვინმემ ამ URL-ზე პირდაპირ
   // POST რომ არ გამოგზავნოს route-ების ყალბად დასამტკიცებლად/უარსაყოფად
   const secretHeader = request.headers.get("X-Telegram-Bot-Api-Secret-Token");
@@ -35,6 +36,22 @@ export async function onRequestPost({ request, env }) {
 
   const newStatus = action === "approve" ? "approved" : "rejected";
   const updated = await setCustomRouteStatus(env, routeId, newStatus);
+
+  // ახალი მარშრუტის დამტკიცებისას — broadcast ყველა push-subscriber-ს.
+  // waitUntil-ს ვანდობთ, რომ Telegram-ის ack-ის დაბრუნებას არ დააყოვნოს.
+  if (newStatus === "approved" && updated && env.VAPID_PUBLIC_KEY) {
+    const label = updated.routeNumber ? `#${updated.routeNumber}` : "";
+    const broadcastPromise = broadcastToAllSubscribers(env, {
+      data: JSON.stringify({
+        title: "🚌 ახალი მარშრუტი დაემატა",
+        body: `${label} ${updated.name || ""}`.trim(),
+        url: "/",
+        tag: `new-route-${updated.id}`,
+      }),
+      options: { ttl: 60 * 60 * 24, urgency: "normal" }, // 24სთ — ეს ინფო არ "ძველდება" წუთებში
+    }).catch(() => {});
+    if (typeof waitUntil === "function") waitUntil(broadcastPromise);
+  }
 
   // Telegram-ს ვპასუხობთ callback_query-ს დასადასტურებლად (loading-spinner-ის მოსაშორებლად)
   const ackUrl = `https://api.telegram.org/bot${env.TELEGRAM_BOT_TOKEN}/answerCallbackQuery`;
