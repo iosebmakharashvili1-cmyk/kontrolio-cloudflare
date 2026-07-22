@@ -2238,11 +2238,33 @@ function renderPushPanelState() {
 
   registerServiceWorker();
 
-  pushToggleBtn?.addEventListener("click", () => {
-    pushPanel.classList.remove("hidden");
-    renderPushPanelState();
+  pushToggleBtn?.addEventListener("click", (e) => {
+    e.stopPropagation(); // rom map-ის click-outside listener-მა დაუყოვნებლივ არ დახუროს
+    const isOpen = !pushPanel.classList.contains("hidden");
+    if (isOpen) {
+      pushPanel.classList.add("hidden");
+    } else {
+      pushPanel.classList.remove("hidden");
+      renderPushPanelState();
+    }
   });
   pushPanelClose?.addEventListener("click", () => pushPanel.classList.add("hidden"));
+
+  // Panel-ის გარეთ (რუკაზე, ან ნებისმიერ სხვა ადგილას) დაწკაპუნებით
+  // დახურვა — panel-ის შიგნით დაწკაპუნება (checkbox, favorite-ღილაკები
+  // და ა.შ.) არ უნდა დახუროს იგი, ამიტომ closest()-ით ვამოწმებთ.
+  document.addEventListener("click", (e) => {
+    if (pushPanel.classList.contains("hidden")) return;
+    if (e.target.closest("#pushPanel") || e.target.closest("#pushToggleBtn")) return;
+    pushPanel.classList.add("hidden");
+  });
+
+  // Leaflet-ის map-ის click ცალკე event system-ს იყენებს (არა
+  // ჩვეულებრივი DOM bubbling ყოველთვის ხელმისაწვდომია იმავე გზით),
+  // ამიტომ map.on("click")-საც ცალკე ვამატებთ დაცვის დუბლირებისთვის
+  map.on("click", () => {
+    if (!pushPanel.classList.contains("hidden")) pushPanel.classList.add("hidden");
+  });
 
   pushMasterToggle?.addEventListener("change", async (e) => {
     const wantsEnabled = e.target.checked;
