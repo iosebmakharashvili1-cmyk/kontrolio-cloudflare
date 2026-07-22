@@ -1485,6 +1485,21 @@ body.has-sheet-peek .leaflet-control-zoom{
   box-shadow: var(--shadow);
   overflow-y: auto;
   padding: 16px;
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(0);
+  transition: opacity 0.2s ease, transform 0.2s ease, visibility 0.2s;
+}
+/* ეს პროექტი გლობალურ .hidden{display:none}-ს არ იყენებს — ყველა
+   panel-ს თავისი element-specific .hidden ვარიანტი აქვს (იხ.
+   .overlay.hidden, .sheet.hidden და ა.შ. ზემოთ), ამიტომ pushPanel-საც
+   სჭირდება საკუთარი წესი, თორემ classList.add("hidden") არაფერს
+   არ ცვლის ვიზუალურად. */
+.pushPanel.hidden{
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(-8px);
+  pointer-events: none;
 }
 .pushPanel__header{
   display:flex; align-items:center; justify-content:space-between;
