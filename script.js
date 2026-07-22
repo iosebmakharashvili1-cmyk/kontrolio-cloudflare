@@ -2090,11 +2090,32 @@ async function subscribeToPush(favorites) {
   const permission = await Notification.requestPermission();
   if (permission !== "granted") return false;
 
+  let publicKey;
   try {
     const keyRes = await fetch(`${API_BASE}/push/vapid-key`);
-    if (!keyRes.ok) return false;
-    const { publicKey } = await keyRes.json();
+    if (!keyRes.ok) {
+      // 503 ნიშნავს, რომ VAPID_PUBLIC_KEY env variable production-ზე
+      // ჯერ არ დაყენებულა — ეს კონფიგურაციის საკითხია, არა browser-ის
+      // შეცდომა, ამიტომ ცალკე მკაფიო შეტყობინებას ვაჩვენებთ
+      // (subscribe()-ისთვის undefined key-ს გადაცემა კრიპტულ
+      // DOMException-ს იწვევდა console-ში, რაც დიაგნოსტიკას ართულებდა)
+      showToast("შეტყობინებები დროებით მიუწვდომელია — სცადეთ მოგვიანებით");
+      return false;
+    }
+    const data = await keyRes.json();
+    publicKey = data.publicKey;
+    if (!publicKey || typeof publicKey !== "string") {
+      console.error("push subscribe failed: vapid-key endpoint returned no publicKey", data);
+      showToast("შეტყობინებები დროებით მიუწვდომელია — სცადეთ მოგვიანებით");
+      return false;
+    }
+  } catch (err) {
+    console.error("push subscribe failed: could not fetch vapid key:", err);
+    showToast("შეტყობინებები დროებით მიუწვდომელია — სცადეთ მოგვიანებით");
+    return false;
+  }
 
+  try {
     let sub = await swRegistration.pushManager.getSubscription();
     if (!sub) {
       sub = await swRegistration.pushManager.subscribe({
@@ -2108,9 +2129,14 @@ async function subscribeToPush(favorites) {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ subscription: sub.toJSON(), favoriteStopIds: favorites }),
     });
-    return res.ok;
+    if (!res.ok) {
+      showToast("ვერ მოხერხდა შეტყობინებების ჩართვა — სცადეთ ხელახლა");
+      return false;
+    }
+    return true;
   } catch (err) {
     console.error("push subscribe failed:", err);
+    showToast("ვერ მოხერხდა შეტყობინებების ჩართვა — სცადეთ ხელახლა");
     return false;
   }
 }
@@ -2137,16 +2163,18 @@ async function unsubscribeFromPush() {
    მხოლოდ localStorage-ში ინახება მომავალი subscribe-ისთვის. */
 async function syncPushFavorites() {
   if (!swRegistration) return;
-  const sub = await swRegistration.pushManager.getSubscription();
-  if (!sub) return; // push გამორთულია — სერვერზე სინქრონიზაცია არ სჭირდება
   try {
+    const sub = await swRegistration.pushManager.getSubscription();
+    if (!sub) return; // push გამორთულია — სერვერზე სინქრონიზაცია არ სჭირდება
     await fetch(`${API_BASE}/push/subscribe`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ subscription: sub.toJSON(), favoriteStopIds: getPushFavorites() }),
     });
   } catch (_) {
-    // best-effort — მომდევნო toggle-ზე ისედაც სინქრონდება
+    // best-effort — მომდევნო toggle-ზე ისედაც სინქრონდება. getSubscription()-იც
+    // შესაძლოა ჩავარდეს, თუ service worker ჯერ არაა სრულად აქტიური —
+    // ეს ჩუმად უნდა წავიდეს, subscribe-ის UI-ს ეს არ უნდა შეეხოს.
   }
 }
 
