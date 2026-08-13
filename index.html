@@ -27,8 +27,11 @@
 
 <link rel="stylesheet" href="style.css?v=9">
 <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/animejs@3.2.2/lib/anime.min.js"></script>
 </head>
 <body>
+
+  <div class="heroAura" aria-hidden="true"></div>
 
   <header class="topbar">
     <div class="topbar__title">
@@ -273,6 +276,48 @@
             <p class="menuDrawer__text">
               საიტი TTC-ის ოფიციალური პროდუქტი არ არის.
               მონაცემები შეიძლება სრული ან ზუსტი არ იყოს.
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <div class="menuDrawer__divider"></div>
+
+      <div class="menuDrawer__accordion">
+        <button class="menuDrawer__accHeader" type="button" aria-expanded="false">
+          <div class="menuDrawer__sectionIcon"><i data-lucide="shield-check"></i></div>
+          <h3 class="menuDrawer__sectionTitle">კონფიდენციალურობის პოლიტიკა</h3>
+          <i data-lucide="chevron-down" class="menuDrawer__accChevron"></i>
+        </button>
+        <div class="menuDrawer__accBody">
+          <div class="menuDrawer__accBodyInner privacyPolicy">
+            <p class="menuDrawer__text">
+              ჩვენთვის მნიშვნელოვანია, რომ ზუსტად იცოდე რა ინფორმაციას ვამუშავებთ და როგორ ვიცავთ მას.
+            </p>
+            <ul class="privacyPolicy__list">
+              <li>
+                <strong>რომელ მონაცემებს ვაგროვებთ:</strong>
+                მხოლოდ იმ ინფორმაციას, რასაც მომხმარებელი თავად გვაწვდის (მაგ. გაჩერების სტატუსის შეტყობინება, ნებაყოფლობითი მეტსახელი, არჩევანი საყვარელ გაჩერებებზე).
+              </li>
+              <li>
+                <strong>AI-ის გამოყენება:</strong>
+                ამ საიტის განვითარების პროცესში გამოიყენება ხელოვნური ინტელექტის ინსტრუმენტები კოდის და ინტერფეისის გაუმჯობესებისთვის.
+              </li>
+              <li>
+                <strong>მესამე მხარეები:</strong>
+                საჭიროების შემთხვევაში ნაწილი მონაცემებისა მუშავდება სანდო მესამე მხარის ინფრასტრუქტურაში (მაგ. Cloudflare-ის ჰოსტინგი/ანალიტიკა ან Push ინფრასტრუქტურა), მხოლოდ სერვისის ტექნიკური მუშაობისთვის.
+              </li>
+              <li>
+                <strong>მონაცემების წაშლა:</strong>
+                მომხმარებლისგან მიღებულ ოპერაციულ მონაცემებს პერიოდულად ვშლით; დროებით მონაცემებს ვასუფთავებთ რეგულარულად, რათა საიტი დარჩეს უსაფრთხო და გამართული.
+              </li>
+              <li>
+                <strong>შენზე კონტროლი:</strong>
+                შეგიძლია ნებისმიერ დროს წაშალო ლოკალური მონაცემები ბრაუზერის პარამეტრებიდან (localStorage/cache) და გააუქმო შეტყობინებების ნებართვა.
+              </li>
+            </ul>
+            <p class="menuDrawer__text">
+              პოლიტიკის დეტალებს რეგულარულად განვაახლებთ, რათა ინფორმაცია იყოს გამჭვირვალე და საიტის ფუნქციონირებასთან თავსებადი.
             </p>
           </div>
         </div>

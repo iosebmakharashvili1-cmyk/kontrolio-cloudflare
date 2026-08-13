@@ -1447,10 +1447,44 @@ const menuBtn = document.getElementById("menuBtn");
 const menuOverlay = document.getElementById("menuOverlay");
 const menuDrawer = document.getElementById("menuDrawer");
 const menuClose = document.getElementById("menuClose");
+const prefersReducedMotion = window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches === true;
+
+function animateMenuOpen() {
+  if (!window.anime || prefersReducedMotion) return;
+  anime({
+    targets: ".menuDrawer__body > .menuDrawer__navItem, .menuDrawer__body > .menuDrawer__accordion, .menuDrawer__body > .menuDrawer__divider",
+    opacity: [0, 1],
+    translateX: [-18, 0],
+    easing: "easeOutExpo",
+    duration: 540,
+    delay: anime.stagger(28, { start: 80 }),
+  });
+}
+
+function initVisualMotion() {
+  if (!window.anime || prefersReducedMotion) return;
+  anime({
+    targets: ".topbar__title h1, .topbar__dot",
+    translateY: [-12, 0],
+    opacity: [0, 1],
+    easing: "easeOutExpo",
+    duration: 760,
+    delay: anime.stagger(100),
+  });
+  anime({
+    targets: ".heroAura",
+    opacity: [0.45, 0.95],
+    direction: "alternate",
+    easing: "easeInOutSine",
+    duration: 3200,
+    loop: true,
+  });
+}
 
 function openMenu() {
   menuOverlay.classList.remove("hidden");
   menuDrawer.classList.remove("hidden");
+  animateMenuOpen();
 }
 function closeMenu() {
   menuOverlay.classList.add("hidden");
@@ -2327,6 +2361,7 @@ function renderPushPanelState() {
   tryAutoUpdateUserLocation();
 
   lucide.createIcons();
+  initVisualMotion();
 
   /* თუ ავტო-რეჟიმში ვართ, ყოველ წუთში ერთხელ ვამოწმებთ დროს */
   setInterval(() => {

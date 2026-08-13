@@ -190,6 +190,27 @@ html, body{
   overflow:hidden;
 }
 
+body{
+  position: relative;
+}
+
+.heroAura{
+  position: absolute;
+  inset: 0 0 auto 0;
+  height: 220px;
+  pointer-events: none;
+  z-index: 2;
+  background:
+    radial-gradient(120% 90% at 16% 0%, rgba(122, 92, 255, 0.35), transparent 62%),
+    radial-gradient(110% 80% at 78% 2%, rgba(0, 209, 255, 0.22), transparent 65%),
+    radial-gradient(80% 65% at 50% -8%, rgba(255, 95, 109, 0.22), transparent 70%);
+  filter: saturate(1.08);
+}
+
+[data-theme="dark"] .heroAura{
+  opacity: 0.92;
+}
+
 /* ---------- Map ---------- */
 #map{
   position:absolute; top:0; left:0; bottom:0; right:0;
@@ -259,7 +280,7 @@ body.has-sheet-peek .leaflet-control-zoom{
   padding: calc(14px + env(safe-area-inset-top)) calc(16px + env(safe-area-inset-right)) 20px calc(16px + env(safe-area-inset-left)); /* compact — search moved to bottom */
   
   /* მყარი ფერის მაგივრად ვიყენებთ რბილ გრადიენტს, რომელიც ნელ-ნელა ქრება */
-  background: linear-gradient(180deg, rgba(15,17,21,0.95) 0%, rgba(15,17,21,0.70) 60%, rgba(15,17,21,0) 100%);
+  background: linear-gradient(180deg, rgba(10,13,31,0.9) 0%, rgba(10,13,31,0.56) 62%, rgba(10,13,31,0) 100%);
   pointer-events:none;
   box-shadow: none;
 }
@@ -284,7 +305,7 @@ body.has-sheet-peek .leaflet-control-zoom{
   text-transform: uppercase;
   letter-spacing: 0.4px;
   margin:0;
-  text-shadow: 0 2px 4px rgba(0,0,0,0.5); /* ტექსტს მცირე ჩრდილი დავადეთ უკეთესი კითხვადობისთვის */
+  text-shadow: 0 2px 12px rgba(10,16,46,0.42);
   /* ვიწრო ეკრანებზე h1 იკუმშება და იჭრება (ellipsis), ნაცვლად იმისა,
      რომ მარჯვენა მხარეს (online badge, თემის/ზარის ღილაკები) გადააფაროს */
   min-width: 0;
@@ -331,14 +352,15 @@ body.has-sheet-peek .leaflet-control-zoom{
 
 /* ჰედერის ღილაკების გაუმჯობესებული სტილი */
 .topbar .iconbtn{
-  border: 1px solid rgba(255,255,255,0.08);
-  background: rgba(255,255,255,0.1); 
+  border: 1px solid rgba(255,255,255,0.14);
+  background: rgba(255,255,255,0.14);
   color: #e8e6e1;
-  backdrop-filter: blur(8px); /* რუკის ფონი ოდნავ დაილურება ღილაკის უკან */
+  backdrop-filter: blur(10px);
   flex-shrink: 0; /* ღილაკები არასდროს იკუმშება — მხოლოდ h1-ის ტექსტი იჭრება */
+  box-shadow: 0 8px 20px rgba(2, 7, 28, 0.25);
 }
 .topbar .iconbtn:hover{ 
-  background: rgba(255,255,255,0.18); 
+  background: rgba(255,255,255,0.22); 
 }
 
 /* ---------- Search (button in topbar, bar drops below) ---------- */
@@ -1120,8 +1142,9 @@ body.has-sheet-peek .leaflet-control-zoom{
   z-index: 1010;
   background: var(--surface);
   display:flex; flex-direction:column;
-  box-shadow: 4px 0 30px rgba(0,0,0,0.25);
+  box-shadow: 8px 0 44px rgba(6,10,28,0.28);
   overflow: hidden;
+  border-right: 1px solid var(--grey-soft);
   
   /* ახალი გლუვი ანიმაცია მენიუსთვის */
   transform: translateX(0);
@@ -1144,6 +1167,7 @@ body.has-sheet-peek .leaflet-control-zoom{
   padding: 16px 18px;
   border-bottom: 1px solid var(--grey-soft);
   flex-shrink: 0;
+  background: linear-gradient(125deg, var(--surface) 0%, var(--grey-soft) 100%);
 }
 .menuDrawer__brand{
   display:flex; align-items:center; gap:10px;
@@ -1292,6 +1316,16 @@ body.has-sheet-peek .leaflet-control-zoom{
   cursor:pointer;
   text-align:left;
   font-family: inherit;
+  position: relative;
+}
+.menuDrawer__accHeader::after{
+  content: "";
+  position: absolute;
+  left: 20px;
+  right: 20px;
+  bottom: 0;
+  height: 1px;
+  background: var(--grey-soft);
 }
 .menuDrawer__accHeader .menuDrawer__sectionIcon{ margin-bottom:0; flex-shrink:0; }
 .menuDrawer__accHeader .menuDrawer__sectionTitle{ flex:1; margin:0; }
@@ -1311,10 +1345,35 @@ body.has-sheet-peek .leaflet-control-zoom{
   transition: max-height 0.3s ease;
 }
 .menuDrawer__accHeader[aria-expanded="true"] + .menuDrawer__accBody{
-  max-height: 600px;
+  max-height: 960px;
 }
 .menuDrawer__accBodyInner{
   padding: 0 20px 18px;
+}
+
+.privacyPolicy{
+  background: var(--grey-soft);
+  border-radius: 14px;
+  padding-top: 14px;
+  border: 1px solid var(--chrome-btn-border);
+}
+
+.privacyPolicy .menuDrawer__text{
+  margin: 0 0 12px;
+}
+
+.privacyPolicy__list{
+  margin: 0 0 12px;
+  padding-left: 18px;
+  display: grid;
+  gap: 10px;
+  color: var(--text);
+  font-size: 13px;
+  line-height: 1.55;
+}
+
+.privacyPolicy__list li{
+  margin: 0;
 }
 
 /* ---------- წვლილის ბეჯი (menu drawer) ---------- */
