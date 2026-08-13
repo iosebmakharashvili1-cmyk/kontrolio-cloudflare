@@ -1463,6 +1463,14 @@ function animateMenuOpen() {
     duration: 540,
     delay: anime.stagger(28, { start: 80 }),
   });
+  anime({
+    targets: ".menuDrawer__footerLink",
+    opacity: [0, 1],
+    translateY: [8, 0],
+    easing: "easeOutExpo",
+    duration: 480,
+    delay: 220,
+  });
 }
 
 function initVisualMotion() {
@@ -1501,9 +1509,56 @@ menuOverlay.addEventListener("click", closeMenu);
 function openPrivacyModal() {
   if (!privacyModal) return;
   privacyModal.classList.remove("hidden");
+  if (!window.anime || prefersReducedMotion) return;
+  anime({
+    targets: "#privacyModalBackdrop",
+    opacity: [0, 1],
+    easing: "linear",
+    duration: 220,
+  });
+  anime({
+    targets: ".privacyModal__card",
+    opacity: [0, 1],
+    translateY: [16, 0],
+    scale: [0.98, 1],
+    easing: "easeOutExpo",
+    duration: 340,
+  });
+  anime({
+    targets: ".privacyModal__header, .privacyModal__body > .menuDrawer__text, .privacyModal__body > .privacyPolicy__list li",
+    opacity: [0, 1],
+    translateY: [8, 0],
+    easing: "easeOutExpo",
+    duration: 320,
+    delay: anime.stagger(45, { start: 100 }),
+  });
 }
 function closePrivacyModal() {
   if (!privacyModal) return;
+  if (!window.anime || prefersReducedMotion) {
+    privacyModal.classList.add("hidden");
+    return;
+  }
+  anime({
+    targets: ".privacyModal__card",
+    opacity: [1, 0],
+    translateY: [0, 10],
+    scale: [1, 0.99],
+    easing: "easeInOutQuad",
+    duration: 180,
+  });
+  anime({
+    targets: "#privacyModalBackdrop",
+    opacity: [1, 0],
+    easing: "linear",
+    duration: 180,
+    complete: () => privacyModal.classList.add("hidden"),
+  });
+}
+document.addEventListener("keydown", (event) => {
+  if (event.key === "Escape" && privacyModal && !privacyModal.classList.contains("hidden")) {
+    closePrivacyModal();
+  }
   privacyModal.classList.add("hidden");
 }
 if (privacyPolicyLink) {
