@@ -1455,13 +1455,22 @@ const prefersReducedMotion = window.matchMedia?.("(prefers-reduced-motion: reduc
 
 function animateMenuOpen() {
   if (!window.anime || prefersReducedMotion) return;
+  anime.remove(".menuDrawer__body > *, .menuDrawer__footer, .menuDrawer__footerLink");
   anime({
-    targets: ".menuDrawer__body > .menuDrawer__navItem, .menuDrawer__body > .menuDrawer__accordion, .menuDrawer__body > .menuDrawer__divider",
+    targets: ".menuDrawer__body > *",
     opacity: [0, 1],
     translateX: [-18, 0],
     easing: "easeOutExpo",
     duration: 540,
     delay: anime.stagger(28, { start: 80 }),
+  });
+  anime({
+    targets: ".menuDrawer__footer, .menuDrawer__footerLink",
+    opacity: [0, 1],
+    translateY: [10, 0],
+    easing: "easeOutExpo",
+    duration: 480,
+    delay: 260,
   });
 }
 
@@ -1501,9 +1510,58 @@ menuOverlay.addEventListener("click", closeMenu);
 function openPrivacyModal() {
   if (!privacyModal) return;
   privacyModal.classList.remove("hidden");
+  if (!window.anime || prefersReducedMotion) return;
+  anime.remove("#privacyModalBackdrop, .privacyModal__card, .privacyModal__header, .privacyModal__body > .menuDrawer__text, .privacyModal__body > .privacyPolicy__list li");
+  anime({
+    targets: "#privacyModalBackdrop",
+    opacity: [0, 1],
+    easing: "linear",
+    duration: 220,
+  });
+  anime({
+    targets: ".privacyModal__card",
+    opacity: [0, 1],
+    translateY: [16, 0],
+    scale: [0.98, 1],
+    easing: "easeOutExpo",
+    duration: 340,
+  });
+  anime({
+    targets: ".privacyModal__header, .privacyModal__body > .menuDrawer__text, .privacyModal__body > .privacyPolicy__list li",
+    opacity: [0, 1],
+    translateY: [8, 0],
+    easing: "easeOutExpo",
+    duration: 320,
+    delay: anime.stagger(45, { start: 100 }),
+  });
 }
 function closePrivacyModal() {
   if (!privacyModal) return;
+  if (!window.anime || prefersReducedMotion) {
+    privacyModal.classList.add("hidden");
+    return;
+  }
+  anime.remove("#privacyModalBackdrop, .privacyModal__card");
+  anime({
+    targets: ".privacyModal__card",
+    opacity: [1, 0],
+    translateY: [0, 10],
+    scale: [1, 0.99],
+    easing: "easeInOutQuad",
+    duration: 180,
+  });
+  anime({
+    targets: "#privacyModalBackdrop",
+    opacity: [1, 0],
+    easing: "linear",
+    duration: 180,
+    complete: () => privacyModal.classList.add("hidden"),
+  });
+}
+document.addEventListener("keydown", (event) => {
+  if (event.key === "Escape" && privacyModal && !privacyModal.classList.contains("hidden")) {
+    closePrivacyModal();
+  }
   privacyModal.classList.add("hidden");
 }
 if (privacyPolicyLink) {
