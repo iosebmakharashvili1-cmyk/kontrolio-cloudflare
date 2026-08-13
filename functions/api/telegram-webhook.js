@@ -13,6 +13,9 @@ import { setCustomRouteStatus, getCustomRoute } from "./_customRoutes.js";
 import { broadcastToAllSubscribers } from "./_webPush.js";
 
 export async function onRequestPost({ request, env, waitUntil }) {
+  if (!env.TELEGRAM_BOT_TOKEN) {
+    return new Response("telegram bot token missing", { status: 503 });
+  }
   // Telegram webhook secret ვალიდაცია — ვინმემ ამ URL-ზე პირდაპირ
   // POST რომ არ გამოგზავნოს route-ების ყალბად დასამტკიცებლად/უარსაყოფად
   const secretHeader = request.headers.get("X-Telegram-Bot-Api-Secret-Token");

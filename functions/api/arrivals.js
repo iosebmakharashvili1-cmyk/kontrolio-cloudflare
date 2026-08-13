@@ -37,12 +37,15 @@ const RUSTAVI_BASE = "https://rustavi-transit.azrycloud.com/pis-gateway/api/v2/s
 const RUSTAVI_PREFIX = "rustavi-";
 
 function baseHeaders(env) {
+  if (!env.TTC_API_KEY) {
+    throw new Error("missing TTC_API_KEY");
+  }
   const headers = {
     Accept: "application/json",
     "User-Agent":
       "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
   };
-  if (env.TTC_API_KEY) headers["X-api-key"] = env.TTC_API_KEY;
+  headers["X-api-key"] = env.TTC_API_KEY;
   return headers;
 }
 
@@ -57,6 +60,9 @@ function tbilisiHeaders(env) {
 }
 
 function rustaviHeaders(env) {
+  if (!env.RUSTAVI_API_KEY) {
+    throw new Error("missing RUSTAVI_API_KEY");
+  }
   const headers = {
     ...baseHeaders(env),
     Referer: "https://rustavi-transit.azrycloud.com/",
@@ -66,7 +72,7 @@ function rustaviHeaders(env) {
   // დადასტურებული), მაგრამ ჩვენ ჯერ არ გვაქვს ცოცხალი მნიშვნელობა.
   // თუ მომავალში მოიპოვება — env.RUSTAVI_COOKIE-ში ჩაწერე.
   if (env.RUSTAVI_COOKIE) headers["Cookie"] = env.RUSTAVI_COOKIE;
-  if (env.RUSTAVI_API_KEY) headers["X-api-key"] = env.RUSTAVI_API_KEY;
+  headers["X-api-key"] = env.RUSTAVI_API_KEY;
   return headers;
 }
 

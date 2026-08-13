@@ -1376,6 +1376,68 @@ body.has-sheet-peek .leaflet-control-zoom{
   margin: 0;
 }
 
+.menuDrawer__footer{
+  margin-top: auto;
+  padding: 14px 20px 20px;
+  border-top: 1px solid var(--chrome-btn-border);
+}
+.menuDrawer__footerLink{
+  border: none;
+  background: transparent;
+  color: var(--grey);
+  font-size: 12px;
+  text-decoration: underline;
+  cursor: pointer;
+  padding: 0;
+}
+.menuDrawer__footerLink:hover{
+  color: var(--text);
+}
+
+.privacyModal{
+  position: fixed;
+  inset: 0;
+  z-index: 1030;
+  display: grid;
+  place-items: center;
+  padding: 16px;
+}
+.privacyModal.hidden{ display: none; }
+.privacyModal__backdrop{
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.45);
+}
+.privacyModal__card{
+  position: relative;
+  z-index: 1;
+  width: min(680px, 100%);
+  max-height: min(82vh, 860px);
+  overflow: hidden;
+  border-radius: 16px;
+  border: 1px solid var(--chrome-btn-border);
+  background: var(--card);
+  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.28);
+}
+.privacyModal__header{
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--chrome-btn-border);
+}
+.privacyModal__header h3{
+  margin: 0;
+  font-size: 16px;
+  color: var(--text);
+}
+.privacyModal__body{
+  max-height: calc(82vh - 64px);
+  overflow: auto;
+  padding: 14px 16px 16px;
+}
+
 /* ---------- წვლილის ბეჯი (menu drawer) ---------- */
 .contribBadge{
   display:flex; align-items:center; gap:12px;
