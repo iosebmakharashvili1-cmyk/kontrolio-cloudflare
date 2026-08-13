@@ -1447,6 +1447,10 @@ const menuBtn = document.getElementById("menuBtn");
 const menuOverlay = document.getElementById("menuOverlay");
 const menuDrawer = document.getElementById("menuDrawer");
 const menuClose = document.getElementById("menuClose");
+const privacyPolicyLink = document.getElementById("privacyPolicyLink");
+const privacyModal = document.getElementById("privacyModal");
+const privacyModalClose = document.getElementById("privacyModalClose");
+const privacyModalBackdrop = document.getElementById("privacyModalBackdrop");
 const prefersReducedMotion = window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches === true;
 
 function animateMenuOpen() {
@@ -1493,6 +1497,24 @@ function closeMenu() {
 menuBtn.addEventListener("click", openMenu);
 menuClose.addEventListener("click", closeMenu);
 menuOverlay.addEventListener("click", closeMenu);
+
+function openPrivacyModal() {
+  if (!privacyModal) return;
+  privacyModal.classList.remove("hidden");
+}
+function closePrivacyModal() {
+  if (!privacyModal) return;
+  privacyModal.classList.add("hidden");
+}
+if (privacyPolicyLink) {
+  privacyPolicyLink.addEventListener("click", openPrivacyModal);
+}
+if (privacyModalClose) {
+  privacyModalClose.addEventListener("click", closePrivacyModal);
+}
+if (privacyModalBackdrop) {
+  privacyModalBackdrop.addEventListener("click", closePrivacyModal);
+}
 
 /* ---------- ბურგერ მენიუს ჩამოკეცილი სექციები (accordion) ----------
    ერთხელ ერთი სექცია ღიაა — მეორეზე დაჭერისას წინა იკეტება,
