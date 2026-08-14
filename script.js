@@ -1562,8 +1562,7 @@ document.addEventListener("keydown", (event) => {
   if (event.key === "Escape" && privacyModal && !privacyModal.classList.contains("hidden")) {
     closePrivacyModal();
   }
-  privacyModal.classList.add("hidden");
-}
+});
 if (privacyPolicyLink) {
   privacyPolicyLink.addEventListener("click", openPrivacyModal);
 }
